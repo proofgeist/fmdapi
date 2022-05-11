@@ -116,6 +116,12 @@ function fmDAPI(options: ClientObjectProps) {
   }
 
   return {
+    /**
+     * List all records from a given layout, no find criteria applied.
+     * @param layout The layout to use
+     * @param params Options for sorting, pagination
+     * @returns
+     */
     async list<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
@@ -127,6 +133,13 @@ function fmDAPI(options: ClientObjectProps) {
         query: params,
       });
     },
+    /**
+     * Create a new record in a given layout
+     * @param layout The layout to use
+     * @param fieldData Data to set into the new record
+     * @param params Additional options, including portal data if present on the layout
+     * @returns
+     */
     async create<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
@@ -140,6 +153,13 @@ function fmDAPI(options: ClientObjectProps) {
         body: { fieldData, ...params },
       });
     },
+    /**
+     * Get a single record by Internal RecordId
+     * @param layout The layout to use
+     * @param recordId Internal FileMaker record ID to retrieve
+     * @param params @deprecated Not working currently
+     * @returns
+     */
     async get<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
@@ -153,6 +173,14 @@ function fmDAPI(options: ClientObjectProps) {
         method: "GET",
       });
     },
+    /**
+     * Update a single record by internal RecordId
+     * @param layout The layout to use
+     * @param recordId Internal FileMaker record ID to update
+     * @param fieldData Data to set into the record
+     * @param params Portal data, modId, etc
+     * @returns
+     */
     async update<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
@@ -168,6 +196,13 @@ function fmDAPI(options: ClientObjectProps) {
         method: "PATCH",
       });
     },
+    /**
+     * Delete a single record by internal RecordId
+     * @param layout The layout to use
+     * @param recordId Internal FileMaker record ID to delete
+     * @param params Additional script params
+     * @returns
+     */
     async delete<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
@@ -182,6 +217,14 @@ function fmDAPI(options: ClientObjectProps) {
         method: "DELETE",
       });
     },
+    /**
+     * Find records in a given layout
+     * @param layout The layout to use
+     * @param query Array or object of FileMaker find criteria
+     * @param params params for portal data, etc
+     * @param ignoreEmptyResult If true, will NOT throw an error if the find returns no results
+     * @returns
+     */
     async find<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
@@ -210,7 +253,10 @@ function fmDAPI(options: ClientObjectProps) {
         throw e;
       }
     },
-
+    /**
+     * Forcibly logout of the Data API session
+     * @returns
+     */
     async disconnect() {
       if ("apiKey" in options.auth)
         throw new Error("Cannot disconnect when using Otto API key.");
