@@ -7,6 +7,9 @@
   "author": "Eric <37158449+eluce2@users.noreply.github.com>",
   "license": "MIT",
   "private": false,
+  "scripts": {
+    "build": "tsc"
+  },
   "dependencies": {
     "node-fetch": "2.6.7"
   },
