@@ -107,3 +107,40 @@ export type Query<T extends FieldData = FieldData> = Partial<{
 }> & {
   omit?: boolean;
 };
+
+export type MetadataResponse = {
+  fieldMetaData: FieldMetaData[];
+  portalMetaData: { [key: string]: FieldMetaData[] };
+  valueLists?: ValueList[];
+};
+
+type FieldMetaData = {
+  name: string;
+  type: "normal" | "calculation" | "summary";
+  displayType:
+    | "editText"
+    | "popupList"
+    | "popupMenu"
+    | "checkBox"
+    | "calendar"
+    | "radioButtons"
+    | "secureText";
+  result: "text" | "number" | "date" | "time" | "timeStamp" | "container";
+  global: boolean;
+  autoEnter: boolean;
+  fourDigitYear: boolean;
+  maxRepeat: number;
+  maxCharacters: number;
+  notEmpty: boolean;
+  numeric: boolean;
+  repetitions: number;
+  timeOfDay: boolean;
+  valueList?: string;
+};
+
+type ValueList = {
+  name: string;
+  // TODO need to test type of value list from other file
+  type: "customList" | "byField";
+  values: Array<{ value: string; displayValue: string }>;
+};

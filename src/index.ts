@@ -12,6 +12,7 @@ import {
   UpdateParams,
   UpdateResponse,
   DeleteParams,
+  MetadataResponse,
 } from "./client-types";
 
 type ClientObjectProps = {
@@ -35,7 +36,7 @@ class FileMakerError extends Error {
   }
 }
 
-function fmDAPI(options: ClientObjectProps) {
+function DataApi(options: ClientObjectProps) {
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
   );
@@ -254,6 +255,19 @@ function fmDAPI(options: ClientObjectProps) {
       }
     },
     /**
+     * Get the metadata for a given layout
+     */
+    async metadata(args: {
+      /**
+       * The layout to use
+       */
+      layout: string;
+    }): Promise<MetadataResponse> {
+      const { layout } = args;
+      const resp = await request({ method: "GET", url: `/layouts/${layout}` });
+      return resp;
+    },
+    /**
      * Forcibly logout of the Data API session
      * @returns
      */
@@ -295,5 +309,5 @@ function fmDAPI(options: ClientObjectProps) {
   };
 }
 
-export default fmDAPI;
-export { fmDAPI, FileMakerError };
+export default DataApi;
+export { DataApi, FileMakerError };
