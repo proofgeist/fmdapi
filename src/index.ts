@@ -158,7 +158,7 @@ function DataApi(options: ClientObjectProps) {
      * Get a single record by Internal RecordId
      * @param layout The layout to use
      * @param recordId Internal FileMaker record ID to retrieve
-     * @param params @deprecated Not working currently
+     * @param params
      * @returns
      */
     async get<
