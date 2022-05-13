@@ -7,13 +7,13 @@ if (!process.env.OTTO_API_KEY) throw new Error("No API key");
 
 const client = DataApi({
   auth: { apiKey: process.env.OTTO_API_KEY },
-  db: "Portal.fmp12",
-  server: "https://shallan-web.gicloud.net",
+  db: "Demo_NextAuth.fmp12",
+  server: "https://foundations-dev.proof-cloud.com",
 });
 const main = async () => {
   await generateSchemas({
     client,
-    schemas: [{ layout: "edd_customer_web", schemaName: "Customer" }],
+    schemas: [{ layout: "metadataTest", schemaName: "Test" }],
   });
 };
 

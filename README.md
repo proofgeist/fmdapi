@@ -101,12 +101,14 @@ export const ZCustomer = z.object({
 export type TCustomer = z.infer<typeof ZCustomer>;
 ```
 
+#### `generateSchemas` options
+
 ## FAQ
-**Do I have to install `dotenv` or `zod` for this package to work?**  
+#### Do I have to install `dotenv` or `zod` for this package to work?
 No. Those packages are only required if you want to use the automatic type generation feature. The pure DataAPI client installs all its neccesary dependencies automatically.
 
-**Why are number fields typed as a string?**  
-FileMaker will return numbers as strings if the field is empty. The important thing is that
+#### Why are number fields typed as a string?
+FileMaker will return numbers as strings if the field is empty. This ensures you can properly account for this in your frontend code.
 
 
 

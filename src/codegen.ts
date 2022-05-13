@@ -5,19 +5,62 @@ import fmDAPI from ".";
 
 type TSchema = {
   name: string;
-  type: "string" | string;
+  type: "string" | "fmnumber" | "valueList";
+  values?: string[];
 };
 
-export const buildSchema = (schemaName: string, schema: TSchema[]) => {
+const stringProperty = (name: string) =>
+  factory.createPropertySignature(
+    undefined,
+    factory.createIdentifier(name),
+    undefined,
+    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
+  );
+const stringOrNumberProperty = (name: string) =>
+  factory.createPropertySignature(
+    undefined,
+    factory.createIdentifier(name),
+    undefined,
+    factory.createUnionTypeNode([
+      factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
+      factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+    ])
+  );
+const valueListProperty = (name: string, vl: string[]) =>
+  factory.createPropertySignature(
+    undefined,
+    factory.createIdentifier(name),
+    undefined,
+    factory.createUnionTypeNode(
+      vl.map((v) =>
+        factory.createLiteralTypeNode(factory.createStringLiteral(v))
+      )
+    )
+  );
+
+export const buildSchema = (
+  schemaName: string,
+  schema: Array<TSchema>,
+  type: "zod" | "ts"
+) => {
   // make sure schema has unique keys, in case a field is on the layout mulitple times
   schema = schema.reduce(
     (acc: TSchema[], el) =>
-      acc.find((o) => o.name === el.name) ? acc : ([...acc, el] as TSchema[]),
+      acc.find((o) => o.name === el.name)
+        ? acc
+        : ([...acc, el] as Array<TSchema>),
     []
   );
-
   const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
-  const file = factory.updateSourceFile(
+  const file =
+    type === "zod"
+      ? buildZodSchema(schemaName, schema)
+      : buildTSSchema(schemaName, schema);
+  return printer.printFile(file);
+};
+
+const buildZodSchema = (schemaName: string, schema: Array<TSchema>) => {
+  return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
       factory.createImportDeclaration(
@@ -96,7 +139,30 @@ export const buildSchema = (schemaName: string, schema: TSchema[]) => {
       ),
     ]
   );
-  return printer.printFile(file);
+};
+
+const buildTSSchema = (schemaName: string, schema: Array<TSchema>) => {
+  return factory.updateSourceFile(
+    createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
+    [
+      factory.createTypeAliasDeclaration(
+        undefined,
+        undefined,
+        factory.createIdentifier(`T${schemaName}`),
+        undefined,
+        factory.createTypeLiteralNode(
+          // for each field, create a property
+          schema.map((item) => {
+            return item.type === "fmnumber"
+              ? stringOrNumberProperty(item.name)
+              : item.values
+              ? valueListProperty(item.name, item.values)
+              : stringProperty(item.name);
+          })
+        )
+      ),
+    ]
+  );
 };
 
 export const getSchema = async (
@@ -104,10 +170,19 @@ export const getSchema = async (
   layout: string
 ) => {
   const meta = await client.metadata({ layout });
+  // console.log(meta);
   const schema = meta.fieldMetaData.map<TSchema>((field) => {
+    if (field.valueList && meta.valueLists) {
+      const list = meta.valueLists.find((o) => o.name === field.valueList);
+      return {
+        name: field.name,
+        type: "valueList",
+        values: list?.values.map((o) => o.value),
+      };
+    }
     return {
       name: field.name,
-      type: field.result === "number" ? "number" : "string",
+      type: field.result === "number" ? "fmnumber" : "string",
     };
   });
   return schema;
@@ -122,7 +197,7 @@ export const generateSchemas = async (options: {
   await fs.ensureDir(path);
   schemas.forEach(async (item) => {
     const schema = await getSchema(client, item.layout);
-    const code = buildSchema(item.schemaName, schema);
+    const code = buildZodSchema(item.schemaName, schema);
     fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
   });
 };
