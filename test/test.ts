@@ -13,7 +13,15 @@ const client = DataApi({
 const main = async () => {
   await generateSchemas({
     client,
-    schemas: [{ layout: "metadataTest", schemaName: "Test" }],
+    schemas: [
+      { layout: "metadataTest", schemaName: "TestSchema" },
+      {
+        layout: "metadataTest",
+        schemaName: "TestSchema2",
+        strictValueLists: true,
+      },
+    ],
+    useZod: false,
   });
 };
 

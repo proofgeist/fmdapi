@@ -47,6 +47,13 @@ Basic Example:
 ```typescript
 const result = await client.list({ layout: "Contacts" });
 ```
+### Client Setup Options
+| Option | Type | Description |
+| ------ | ---- | ----------- |
+| `auth` | `object` | Authentication object. Must contain either `apiKey` or `username` and `password` |
+| `db` | `string` | FileMaker database name |
+| `server` | `string` | FileMaker server URL (must include `https://`) |
+| `layout` | `string` | *(optional)* If provided, will be the layout used for all methods if not otherwise specified |
 
 ## TypeScript Support
 The basic client will return the generic FileMaker response object by default. You can also create a type for your exepcted response and get a fully typed response that includes your own fields.
@@ -76,7 +83,7 @@ import dotenv from "dotenv";
 const result = dotenv.config({ path: "./.env.local" });
 if (!process.env.OTTO_API_KEY) throw new Error("No API key");
 
-// initialize client, like normal
+// initialize client, like normal (only requires read-only access)
 const client = DataApi({
   auth: { apiKey: process.env.OTTO_API_KEY },
   db: process.env.FM_DATABASE,
@@ -103,14 +110,24 @@ export type TCustomer = z.infer<typeof ZCustomer>;
 
 #### `generateSchemas` options
 
-## FAQ
-#### Do I have to install `dotenv` or `zod` for this package to work?
-No. Those packages are only required if you want to use the automatic type generation feature. The pure DataAPI client installs all its neccesary dependencies automatically.
+| Option | Type | Description |
+| ---| --- | --- |
+| client | DataAPI Client object | Whether to run the generated code through [`ts-node`]
 
-#### Why are number fields typed as a string?
+## FAQ
+
+### This sounds too good to be true. What's the catch?
+No catch! Really! But keep in mind this is a v1 release and we hope to imporve it in the future to support more use cases! Feel free to create an issue or pull request if you have any questions or suggestions.
+### Do I have to install `dotenv` or `zod` for this package to work?
+No. Those packages are only required if you want to use the automatic type generation feature. The pure DataAPI client installs all its neccesary dependencies automatically. If you want to generate types directly instead of Zod objects, set the `useZod` flag to `false` in the `generateSchemas` function.
+
+### Why are number fields typed as a `string | number`?
 FileMaker will return numbers as strings if the field is empty. This ensures you can properly account for this in your frontend code.
 
+### How does the code generation handle Value Lists?
+Values lists are exported as their own types within the schema file, but they are not enforced within the schema by default because the actual data in the field may not be fully validated.
 
+If you want the type to be enforced to a value from the value list, you can enable the `strictValueLists` flag per schema in your definition. This feature is only reccommended when you're also using the Zod library, as your returned data will fail the validation if the value is not in the value list.
 
-
-
+### What about date/time/timestamp fields?
+For now, these are all typed as strings. You probably want to transform these values anyway, so we keep it simple at the automated level.

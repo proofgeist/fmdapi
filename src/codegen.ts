@@ -16,6 +16,18 @@ const stringProperty = (name: string) =>
     undefined,
     factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
   );
+const stringPropertyZod = (name: string) =>
+  factory.createPropertyAssignment(
+    factory.createIdentifier(name),
+    factory.createCallExpression(
+      factory.createPropertyAccessExpression(
+        factory.createIdentifier("z"),
+        factory.createIdentifier("string")
+      ),
+      undefined,
+      []
+    )
+  );
 const stringOrNumberProperty = (name: string) =>
   factory.createPropertySignature(
     undefined,
@@ -25,6 +37,40 @@ const stringOrNumberProperty = (name: string) =>
       factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
       factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
     ])
+  );
+const stringOrNumberPropertyZod = (name: string) =>
+  factory.createPropertyAssignment(
+    factory.createIdentifier(name),
+    factory.createCallExpression(
+      factory.createPropertyAccessExpression(
+        factory.createIdentifier("z"),
+        factory.createIdentifier("union")
+      ),
+      undefined,
+      [
+        factory.createArrayLiteralExpression(
+          [
+            factory.createCallExpression(
+              factory.createPropertyAccessExpression(
+                factory.createIdentifier("z"),
+                factory.createIdentifier("string")
+              ),
+              undefined,
+              []
+            ),
+            factory.createCallExpression(
+              factory.createPropertyAccessExpression(
+                factory.createIdentifier("z"),
+                factory.createIdentifier("number")
+              ),
+              undefined,
+              []
+            ),
+          ],
+          false
+        ),
+      ]
+    )
   );
 const valueListProperty = (name: string, vl: string[]) =>
   factory.createPropertySignature(
@@ -37,7 +83,23 @@ const valueListProperty = (name: string, vl: string[]) =>
       )
     )
   );
-
+const valueListPropertyZod = (name: string, vl: string[]) =>
+  factory.createPropertyAssignment(
+    factory.createIdentifier(name),
+    factory.createCallExpression(
+      factory.createPropertyAccessExpression(
+        factory.createIdentifier("z"),
+        factory.createIdentifier("enum")
+      ),
+      undefined,
+      [
+        factory.createArrayLiteralExpression(
+          vl.map((v) => factory.createStringLiteral(v)),
+          false
+        ),
+      ]
+    )
+  );
 export const buildSchema = (
   schemaName: string,
   schema: Array<TSchema>,
@@ -53,9 +115,9 @@ export const buildSchema = (
   );
   const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
   const file =
-    type === "zod"
-      ? buildZodSchema(schemaName, schema)
-      : buildTSSchema(schemaName, schema);
+    type === "ts"
+      ? buildTSSchema(schemaName, schema)
+      : buildZodSchema(schemaName, schema);
   return printer.printFile(file);
 };
 
@@ -99,17 +161,11 @@ const buildZodSchema = (schemaName: string, schema: Array<TSchema>) => {
                   factory.createObjectLiteralExpression(
                     // for each field, create a z property
                     schema.map((item) =>
-                      factory.createPropertyAssignment(
-                        factory.createIdentifier(item.name),
-                        factory.createCallExpression(
-                          factory.createPropertyAccessExpression(
-                            factory.createIdentifier("z"),
-                            factory.createIdentifier(item.type)
-                          ),
-                          undefined,
-                          []
-                        )
-                      )
+                      item.type === "fmnumber"
+                        ? stringOrNumberPropertyZod(item.name)
+                        : item.values
+                        ? valueListPropertyZod(item.name, item.values)
+                        : stringPropertyZod(item.name)
                     ),
                     true
                   ),
@@ -147,7 +203,7 @@ const buildTSSchema = (schemaName: string, schema: Array<TSchema>) => {
     [
       factory.createTypeAliasDeclaration(
         undefined,
-        undefined,
+        [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
         factory.createIdentifier(`T${schemaName}`),
         undefined,
         factory.createTypeLiteralNode(
@@ -167,12 +223,13 @@ const buildTSSchema = (schemaName: string, schema: Array<TSchema>) => {
 
 export const getSchema = async (
   client: ReturnType<typeof fmDAPI>,
-  layout: string
+  layout: string,
+  strictValueLists = false
 ) => {
   const meta = await client.metadata({ layout });
-  // console.log(meta);
+  console.log(meta);
   const schema = meta.fieldMetaData.map<TSchema>((field) => {
-    if (field.valueList && meta.valueLists) {
+    if (field.valueList && meta.valueLists && strictValueLists) {
       const list = meta.valueLists.find((o) => o.name === field.valueList);
       return {
         name: field.name,
@@ -190,14 +247,19 @@ export const getSchema = async (
 
 export const generateSchemas = async (options: {
   client: ReturnType<typeof fmDAPI>;
-  schemas: Array<{ layout: string; schemaName: string }>;
+  schemas: Array<{
+    layout: string;
+    schemaName: string;
+    strictValueLists?: boolean;
+  }>;
   path?: string;
+  useZod?: boolean;
 }) => {
-  const { client, schemas, path = "schema" } = options;
+  const { client, schemas, path = "schema", useZod = true } = options;
   await fs.ensureDir(path);
   schemas.forEach(async (item) => {
-    const schema = await getSchema(client, item.layout);
-    const code = buildZodSchema(item.schemaName, schema);
+    const schema = await getSchema(client, item.layout, item.strictValueLists);
+    const code = buildSchema(item.schemaName, schema, useZod ? "zod" : "ts");
     fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
   });
 };
