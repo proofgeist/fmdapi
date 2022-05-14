@@ -122,8 +122,9 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
   };
   type ListArgs<
     T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
-  > = { params?: ListParams<T, U>; zodSchema?: z.AnyZodObject };
+    U extends GenericPortalData = GenericPortalData,
+    Z extends z.AnyZodObject | undefined = undefined
+  > = { params?: ListParams<T, U>; zodSchema?: Z };
 
   return {
     /**
@@ -134,13 +135,17 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
      */
     async list<
       T extends FieldData = FieldData,
-      U extends GenericPortalData = GenericPortalData
+      U extends GenericPortalData = GenericPortalData,
+      Z extends z.AnyZodObject | undefined = undefined
     >(
       args: Opts["layout"] extends string
-        ? ListArgs & Partial<WithLayout>
-        : ListArgs & WithLayout
-    ): Promise<GetResponse<T, U>> {
+        ? ListArgs<T, U, Z> & Partial<WithLayout>
+        : ListArgs<T, U, Z> & WithLayout
+    ): Promise<Z extends z.AnyZodObject ? Z : GetResponse<T, U>> {
       const { layout = options.layout, params, zodSchema } = args;
+      if (zodSchema) {
+        zodSchema.parse;
+      }
       return await request({
         url: `/layouts/${layout}/records`,
         method: "GET",
