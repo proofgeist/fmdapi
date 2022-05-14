@@ -16,15 +16,18 @@ import {
   MetadataResponse,
 } from "./client-types";
 
+type OttoAuth = {
+  apiKey: string;
+  ottoPort?: number;
+};
+type UserPasswordAuth = { username: string; password: string };
 type ClientObjectProps = {
   server: string;
   db: string;
-  auth:
-    | {
-        apiKey: string;
-        ottoPort?: number;
-      }
-    | { username: string; password: string };
+  auth: OttoAuth | UserPasswordAuth;
+  /**
+   * The layout to use by default for all requests. Can be overrridden on each request.
+   */
   layout?: string;
 };
 
@@ -123,10 +126,37 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
      */
     layout: string;
   };
-  type ListArgs<
+  type CreateArgs<
     T extends FieldData = FieldData,
     U extends GenericPortalData = GenericPortalData
-  > = { params?: ListParams<T, U> };
+  > = CreateParams<U> & {
+    fieldData: Partial<T>;
+  };
+  type GetArgs<U extends GenericPortalData = GenericPortalData> =
+    GetParams<U> & {
+      recordId: number;
+    };
+  type UpdateArgs<
+    T extends FieldData = FieldData,
+    U extends GenericPortalData = GenericPortalData
+  > = UpdateParams<U> & {
+    fieldData: Partial<T>;
+    recordId: number;
+  };
+  type DeleteArgs = DeleteParams & {
+    recordId: number;
+  };
+  type FindArgs<
+    T extends FieldData = FieldData,
+    U extends GenericPortalData = GenericPortalData
+  > = ListParams<T, U> & {
+    query: Query<T> | Array<Query<T>>;
+    /**
+     * If true, a find that returns no results will retun an empty array instead of throwing an error.
+     * @default false
+     */
+    ignoreEmptyResult?: boolean;
+  };
 
   return {
     /**
@@ -137,10 +167,10 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
       U extends GenericPortalData = GenericPortalData
     >(
       args: Opts["layout"] extends string
-        ? ListArgs<T, U> & Partial<WithLayout>
-        : ListArgs<T, U> & WithLayout
+        ? ListParams<T, U> & Partial<WithLayout>
+        : ListParams<T, U> & WithLayout
     ): Promise<GetResponse<T, U>> {
-      const { layout = options.layout, params } = args;
+      const { layout = options.layout, ...params } = args;
       return await request({
         url: `/layouts/${layout}/records`,
         method: "GET",
@@ -150,115 +180,100 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
     },
     /**
      * Create a new record in a given layout
-     * @param layout The layout to use
-     * @param fieldData Data to set into the new record
-     * @param params Additional options, including portal data if present on the layout
-     * @returns
      */
     async create<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
     >(
-      layout: string,
-      fieldData: Partial<T>,
-      params?: CreateParams<U>
+      args: Opts["layout"] extends string
+        ? CreateArgs<T, U> & Partial<WithLayout>
+        : CreateArgs<T, U> & WithLayout
     ): Promise<CreateResponse> {
+      const { fieldData, layout = options.layout, ...params } = args;
       return await request({
         url: `/layouts/${layout}/records`,
-        body: { fieldData, ...params },
+        body: { fieldData, ...(params ?? {}) },
       });
     },
     /**
      * Get a single record by Internal RecordId
-     * @param layout The layout to use
-     * @param recordId Internal FileMaker record ID to retrieve
-     * @param params
-     * @returns
      */
     async get<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
     >(
-      layout: string,
-      recordId: number,
-      params?: GetParams<U>
+      args: Opts["layout"] extends string
+        ? GetArgs<U> & Partial<WithLayout>
+        : GetArgs<U> & WithLayout
     ): Promise<GetResponse<T, U>> {
+      const { recordId, layout = options.layout, ...params } = args;
       return await request({
         url: `/layouts/${layout}/records/${recordId}`,
         method: "GET",
+        // @ts-ignore
+        query: params,
       });
     },
     /**
      * Update a single record by internal RecordId
-     * @param layout The layout to use
-     * @param recordId Internal FileMaker record ID to update
-     * @param fieldData Data to set into the record
-     * @param params Portal data, modId, etc
-     * @returns
      */
     async update<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
     >(
-      layout: string,
-      recordId: number,
-      fieldData: Partial<T>,
-      params?: UpdateParams<U>
+      args: Opts["layout"] extends string
+        ? UpdateArgs<T, U> & Partial<WithLayout>
+        : UpdateArgs<T, U> & WithLayout
     ): Promise<UpdateResponse> {
+      const { recordId, fieldData, layout = options.layout, ...params } = args;
       return await request({
         url: `/layouts/${layout}/records/${recordId}`,
-        body: { fieldData, ...params },
+        body: { fieldData, ...(params ?? {}) },
         method: "PATCH",
       });
     },
     /**
      * Delete a single record by internal RecordId
-     * @param layout The layout to use
-     * @param recordId Internal FileMaker record ID to delete
-     * @param params Additional script params
-     * @returns
      */
     async delete<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
     >(
-      layout: string,
-      recordId: number,
-      params?: DeleteParams
+      args: Opts["layout"] extends string
+        ? DeleteArgs & Partial<WithLayout>
+        : DeleteArgs & WithLayout
     ): Promise<DeleteResponse> {
+      const { recordId, layout = options.layout, ...params } = args;
       return await request({
         url: `/layouts/${layout}/records/${recordId}`,
+        // @ts-ignore
         query: params,
         method: "DELETE",
       });
     },
     /**
      * Find records in a given layout
-     * @param layout The layout to use
-     * @param query Array or object of FileMaker find criteria
-     * @param params params for portal data, etc
-     * @param ignoreEmptyResult If true, will NOT throw an error if the find returns no results
-     * @returns
      */
     async find<
       T extends FieldData = FieldData,
       U extends GenericPortalData = GenericPortalData
     >(
-      layout: string,
-      query: Query<T> | Array<Query<T>>,
-      params: ListParams<T, U> = {},
-      ignoreEmptyResult = false
+      args: Opts["layout"] extends string
+        ? FindArgs<T, U> & Partial<WithLayout>
+        : FindArgs<T, U> & WithLayout
     ): Promise<GetResponse<T, U>> {
-      if (!Array.isArray(query)) {
-        query = [query];
-      }
-      try {
-        return await request({
-          url: `/layouts/${layout}/_find`,
-          body: { query, ...params },
-          method: "POST",
-        });
-      } catch (e) {
+      const {
+        query: queryInput,
+        layout = options.layout,
+        ignoreEmptyResult = false,
+        ...params
+      } = args;
+      const query = !Array.isArray(queryInput) ? [queryInput] : queryInput;
+      return await request({
+        url: `/layouts/${layout}/_find`,
+        body: { query, ...params },
+        method: "POST",
+      }).catch((e) => {
         if (
           ignoreEmptyResult &&
           e instanceof FileMakerError &&
@@ -266,59 +281,58 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
         )
           return { data: [] };
         throw e;
-      }
+      });
     },
     /**
      * Get the metadata for a given layout
      */
-    async metadata(args: {
-      /**
-       * The layout to use
-       */
-      layout: string;
-    }): Promise<MetadataResponse> {
-      const { layout } = args;
-      const resp = await request({ method: "GET", url: `/layouts/${layout}` });
-      return resp;
+    async metadata(
+      args: Opts["layout"] extends string ? Partial<WithLayout> : WithLayout
+    ): Promise<MetadataResponse> {
+      const { layout = options.layout } = args;
+      return await request({ method: "GET", url: `/layouts/${layout}` });
     },
     /**
      * Forcibly logout of the Data API session
-     * @returns
      */
-    async disconnect() {
+    disconnect(): Opts["auth"] extends OttoAuth ? never : Promise<void> {
       if ("apiKey" in options.auth)
         throw new Error("Cannot disconnect when using Otto API key.");
 
-      const token = await getToken();
-      const url = new URL(`${baseUrl}/sessions/${token}`);
+      const func = async () => {
+        const token = await getToken();
+        const url = new URL(`${baseUrl}/sessions/${token}`);
 
-      const res = await fetch(url.toString(), {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+        const res = await fetch(url.toString(), {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-      let respData: any;
-      try {
-        respData = await res.json();
-      } catch {
-        respData = {};
-      }
+        let respData: any;
+        try {
+          respData = await res.json();
+        } catch {
+          respData = {};
+        }
 
-      if (!res.ok) {
-        throw new FileMakerError(
-          respData?.messages?.[0].code ?? "500",
-          `Filemaker Data API failed with (${res.status}): ${JSON.stringify(
-            respData,
-            null,
-            2
-          )}`
-        );
-      }
+        if (!res.ok) {
+          throw new FileMakerError(
+            respData?.messages?.[0].code ?? "500",
+            `Filemaker Data API failed with (${res.status}): ${JSON.stringify(
+              respData,
+              null,
+              2
+            )}`
+          );
+        }
 
-      return respData.response;
+        return respData.response;
+      };
+      // @ts-ignore
+      return func();
     },
   };
 }
