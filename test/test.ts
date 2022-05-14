@@ -1,4 +1,4 @@
-import DataApi from "../src";
+import { DataApi } from "../src";
 import { generateSchemas } from "../src/codegen";
 import dotenv from "dotenv";
 const result = dotenv.config({ path: "./.env.local" });
@@ -10,6 +10,7 @@ const client = DataApi({
   db: "Demo_NextAuth.fmp12",
   server: "https://foundations-dev.proof-cloud.com",
 });
+
 const main = async () => {
   await generateSchemas({
     client,
