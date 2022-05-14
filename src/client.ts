@@ -118,34 +118,29 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
   }
 
   type WithLayout = {
+    /**
+     * The layout to use for the request.
+     */
     layout: string;
   };
   type ListArgs<
     T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData,
-    Z extends z.AnyZodObject | undefined = undefined
-  > = { params?: ListParams<T, U>; zodSchema?: Z };
+    U extends GenericPortalData = GenericPortalData
+  > = { params?: ListParams<T, U> };
 
   return {
     /**
      * List all records from a given layout, no find criteria applied.
-     * @param layout The layout to use
-     * @param params Options for sorting, pagination
-     * @returns
      */
     async list<
       T extends FieldData = FieldData,
-      U extends GenericPortalData = GenericPortalData,
-      Z extends z.AnyZodObject | undefined = undefined
+      U extends GenericPortalData = GenericPortalData
     >(
       args: Opts["layout"] extends string
-        ? ListArgs<T, U, Z> & Partial<WithLayout>
-        : ListArgs<T, U, Z> & WithLayout
-    ): Promise<Z extends z.AnyZodObject ? Z : GetResponse<T, U>> {
-      const { layout = options.layout, params, zodSchema } = args;
-      if (zodSchema) {
-        zodSchema.parse;
-      }
+        ? ListArgs<T, U> & Partial<WithLayout>
+        : ListArgs<T, U> & WithLayout
+    ): Promise<GetResponse<T, U>> {
+      const { layout = options.layout, params } = args;
       return await request({
         url: `/layouts/${layout}/records`,
         method: "GET",
