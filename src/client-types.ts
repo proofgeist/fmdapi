@@ -114,7 +114,7 @@ export type MetadataResponse = {
   valueLists?: ValueList[];
 };
 
-type FieldMetaData = {
+export type FieldMetaData = {
   name: string;
   type: "normal" | "calculation" | "summary";
   displayType:
