@@ -113,6 +113,15 @@ export type TCustomer = z.infer<typeof ZCustomer>;
 | Option | Type | Description |
 | ---| --- | --- |
 | client | DataAPI Client object | Whether to run the generated code through [`ts-node`]
+| schemas | `Schema[]` | An array of `Schema` objects to generate types for |
+
+#### `Schema` options
+| Option | Type | Default | Description |
+| ---| --- | --- | --- |
+| layout | `string` | *(required)* | The FileMaker source layout name |
+| schemaName | `string` | *(required)* | The label for your schema (will also be the name of the generated file) |
+| path | `string` | `./schema` | Path to folder where generated files should be saved. |
+| valueLists | `strict` `allowEmpty` `ignore` | `ignore` | If `strict`, will add enum types based on the value list defined for the field. If `allowEmpty`, will append `""` to the value list. Otherwise, fields are typed as normal. |
 
 ## FAQ
 
