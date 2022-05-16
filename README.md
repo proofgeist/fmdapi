@@ -136,6 +136,10 @@ export type TCustomer = z.infer<typeof ZCustomer>;
 
 ### This sounds too good to be true. What's the catch?
 No catch! Really! But keep in mind this is a v1 release and we hope to imporve it in the future to support more use cases! Feel free to create an issue or pull request if you have any questions or suggestions.
+
+### I don't like the way the code is generated. Can I edit the generated files?
+They are just files added to your project, so you technically can, but we don't recommend it, as it would undermine the main benefit of being able to re-run the script at a later date when the schema changes—all your edits would be overritten. If you need to extend the types, it's better to do extend them into a new type/zod schema in another file. Or, if you have suggesstions for the underlying engine, Pull Requests are welcome!
+
 ### Do I have to install `dotenv` or `zod` for this package to work?
 No. Those packages are only required if you want to use the automatic type generation feature. The pure DataAPI client installs all its neccesary dependencies automatically. If you want to generate types directly instead of Zod objects, set the `useZod` flag to `false` in the `generateSchemas` function.
 
@@ -150,5 +154,12 @@ If you want the type to be enforced to a value from the value list, you can enab
 ### What about date/time/timestamp fields?
 For now, these are all typed as strings. You probably want to transform these values anyway, so we keep it simple at the automated level.
 
+### Can I run the `generateSchemas` function in a CI/CD environment?
+Yes, great idea! This could be a great way to catch errors that would arise from any changes to the FileMaker schema. 
+
 ### Why Zod instead of just TypeScript?
-Zod 
+**In short:** Zod is a TypeScript-first schema declaration and validation library. When you use it, you get *runtime* validation of your data instead of just compile-time validation.
+
+FileMaker is great for being able to change schema very quickly and easily. Yes, you probably have naming conventions in place that help protect against these changes in your web apps, but no system is perfect. Zod lets you start with the assumption that any data coming from an external API might be in a format that you don't expect and then valdiates it so that you can catch errors early. This allows the typed object that it returns to you to be much more trusted throughout your app.
+
+**But wait, does this mean that I might get a fatal error in my production app if the FileMaker schema changes?** Yes, yes it does. This is actually what you'd want to happen. Without validating the data returned from an API, it's possible to get other unexpcted side-effects in your app that don't present as errors, which may lead to bugs that are hard to track down or inconsistencies in your data.

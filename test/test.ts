@@ -1,33 +1,32 @@
 import { DataApi } from "../src";
 import { generateSchemas } from "../src/codegen";
 import dotenv from "dotenv";
-import { z } from "zod";
 const result = dotenv.config({ path: "./.env.local" });
 
 if (!process.env.OTTO_API_KEY) throw new Error("No API key");
 
-const client = DataApi({
-  auth: { apiKey: process.env.OTTO_API_KEY },
-  db: "Demo_NextAuth.fmp12",
-  server: "https://foundations-dev.proof-cloud.com",
-  layout: "",
-});
+if (
+  !process.env.FM_USERNAME ||
+  !process.env.FM_PASSWORD ||
+  !process.env.FM_DATABASE ||
+  !process.env.FM_SERVER
+)
+  throw new Error("Missing ENV vars");
 
-// client.list({ layout: "test" }).then((data) => {});
-// client.find({ query: {}, ignoreEmptyResult: true });
+const client = DataApi({
+  auth: {
+    username: process.env.FM_USERNAME,
+    password: process.env.FM_PASSWORD,
+  },
+  db: process.env.FM_DATABASE,
+  server: process.env.FM_SERVER,
+  layout: "dapi",
+});
 
 const main = async () => {
   await generateSchemas({
     client,
-    schemas: [
-      { layout: "metadataTest", schemaName: "TestSchema" },
-      {
-        layout: "metadataTest",
-        schemaName: "TestSchema2",
-        valueLists: "strict",
-      },
-    ],
-    useZod: true,
+    schemas: [{ layout: "dapi", schemaName: "Person", valueLists: "strict" }],
   });
 };
 

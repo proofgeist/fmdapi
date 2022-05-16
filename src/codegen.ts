@@ -1,4 +1,5 @@
 import fs, { writeFile } from "fs-extra";
+
 import { join } from "path";
 import ts, {
   factory,
@@ -15,6 +16,9 @@ type TSchema = {
   type: "string" | "fmnumber" | "valueList";
   values?: string[];
 };
+
+const varname = (name: string) =>
+  name.replace(/[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, "");
 
 const stringProperty = (name: string) =>
   factory.createPropertySignature(
@@ -117,7 +121,7 @@ const buildTypeZod = (
     factory.createVariableDeclarationList(
       [
         factory.createVariableDeclaration(
-          factory.createIdentifier(`Z${schemaName}`),
+          factory.createIdentifier(`Z${varname(schemaName)}`),
           undefined,
           undefined,
           factory.createCallExpression(
@@ -148,14 +152,18 @@ const buildTypeZod = (
   factory.createTypeAliasDeclaration(
     undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    factory.createIdentifier(`T${schemaName}`),
+    factory.createIdentifier(`T${varname(schemaName)}`),
     undefined,
     factory.createTypeReferenceNode(
       factory.createQualifiedName(
         factory.createIdentifier("z"),
         factory.createIdentifier("infer")
       ),
-      [factory.createTypeQueryNode(factory.createIdentifier(`Z${schemaName}`))]
+      [
+        factory.createTypeQueryNode(
+          factory.createIdentifier(`Z${varname(schemaName)}`)
+        ),
+      ]
     )
   ),
 ];
@@ -165,7 +173,7 @@ const buildValueListZod = (name: string, values: string[]): Statement[] => [
     factory.createVariableDeclarationList(
       [
         factory.createVariableDeclaration(
-          factory.createIdentifier(`ZVL${name}`),
+          factory.createIdentifier(`ZVL${varname(name)}`),
           undefined,
           undefined,
           factory.createCallExpression(
@@ -189,14 +197,18 @@ const buildValueListZod = (name: string, values: string[]): Statement[] => [
   factory.createTypeAliasDeclaration(
     undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    factory.createIdentifier(`TVL${name}`),
+    factory.createIdentifier(`TVL${varname(name)}`),
     undefined,
     factory.createTypeReferenceNode(
       factory.createQualifiedName(
         factory.createIdentifier("z"),
         factory.createIdentifier("infer")
       ),
-      [factory.createTypeQueryNode(factory.createIdentifier(`ZVL${name}`))]
+      [
+        factory.createTypeQueryNode(
+          factory.createIdentifier(`ZVL${varname(name)}`)
+        ),
+      ]
     )
   ),
 ];
@@ -204,7 +216,7 @@ const buildValueListTS = (name: string, values: string[]): Statement =>
   factory.createTypeAliasDeclaration(
     undefined,
     undefined,
-    factory.createIdentifier(`TVL${name}`),
+    factory.createIdentifier(`TVL${varname(name)}`),
     undefined,
     factory.createUnionTypeNode(
       values.map((v) =>
@@ -217,7 +229,7 @@ const buildTypeTS = (schemaName: string, schema: Array<TSchema>): Statement =>
   factory.createTypeAliasDeclaration(
     undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    factory.createIdentifier(`T${schemaName}`),
+    factory.createIdentifier(`T${varname(schemaName)}`),
     undefined,
     factory.createTypeLiteralNode(
       // for each field, create a property
