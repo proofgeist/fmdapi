@@ -8,9 +8,9 @@ This package is designed to make working with the FileMaker Data API much easier
 ## Installation
 
 ```sh
-npm install @proofgeist/fm-dapi
+npm install @proofgeist/fmdapi
 # or
-yarn add @proofgeist/fm-dapi
+yarn add @proofgeist/fmdapi
 ```
 
 ## Usage
@@ -25,7 +25,7 @@ FM_SERVER=https://filemaker.example.com
 Initialize the client with your FileMaker Server credentials:
 
 ```typescript
-import { DataApi } from "@proofgeist/fm-dapi";
+import { DataApi } from "@proofgeist/fmdapi";
 
 const client = DataApi({
   auth: { apiKey: process.env.OTTO_API_KEY },
@@ -75,8 +75,8 @@ The example below also assumes you have have the [`dotenv`](https://github.com/m
 
 ```typescript
 // sample node script
-import DataApi from "../src";
-import { generateSchemas } from "../src/codegen";
+import DataApi from "@proofgeist/fmdapi";
+import { generateSchemas } from "@proofgeist/fmdapi/codegen";
 
 // load environment variables
 import dotenv from "dotenv";
