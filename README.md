@@ -1,4 +1,12 @@
+
+
+<div style="display:flex;justify-content:center; align-items:center;">
+   <img height="64px" src="logo-fm.png" style="margin-right:10px;" />
+   <img height="50px" src="logo-ts.png" />   
+</div>
+
 # Claris FileMaker Data API Client for TypeScript
+
 This package is designed to make working with the FileMaker Data API much easier. Here's just a few key features:
 - [Otto](https://ottofms.com/) Data API proxy support
 - A lightweight code bundle
@@ -110,17 +118,18 @@ export type TCustomer = z.infer<typeof ZCustomer>;
 
 #### `generateSchemas` options
 
-| Option | Type | Description |
-| ---| --- | --- |
-| client | DataAPI Client object | Whether to run the generated code through [`ts-node`]
-| schemas | `Schema[]` | An array of `Schema` objects to generate types for |
+| Option | Type | Default | Description |
+| ---| --- | --- | --- |
+| client | DataAPI Client object | *(required)* | Used for making the metadata API call to your server |
+| schemas | `Schema[]` | *(required)* | An array of `Schema` objects to generate types for (see below) |
+| path | `string` | `"./schema"` | Path to folder where generated files should be saved. |
+| useZod | `boolean` | `true` | An array of `Schema` objects to generate types for |
 
 #### `Schema` options
 | Option | Type | Default | Description |
 | ---| --- | --- | --- |
 | layout | `string` | *(required)* | The FileMaker source layout name |
 | schemaName | `string` | *(required)* | The label for your schema (will also be the name of the generated file) |
-| path | `string` | `./schema` | Path to folder where generated files should be saved. |
 | valueLists | `strict` `allowEmpty` `ignore` | `ignore` | If `strict`, will add enum types based on the value list defined for the field. If `allowEmpty`, will append `""` to the value list. Otherwise, fields are typed as normal. |
 
 ## FAQ
@@ -131,7 +140,7 @@ No catch! Really! But keep in mind this is a v1 release and we hope to imporve i
 No. Those packages are only required if you want to use the automatic type generation feature. The pure DataAPI client installs all its neccesary dependencies automatically. If you want to generate types directly instead of Zod objects, set the `useZod` flag to `false` in the `generateSchemas` function.
 
 ### Why are number fields typed as a `string | number`?
-FileMaker will return numbers as strings if the field is empty. This ensures you can properly account for this in your frontend code.
+FileMaker will return numbers as strings if the field is empty. This ensures you properly account for this in your frontend code.
 
 ### How does the code generation handle Value Lists?
 Values lists are exported as their own types within the schema file, but they are not enforced within the schema by default because the actual data in the field may not be fully validated.
@@ -140,3 +149,6 @@ If you want the type to be enforced to a value from the value list, you can enab
 
 ### What about date/time/timestamp fields?
 For now, these are all typed as strings. You probably want to transform these values anyway, so we keep it simple at the automated level.
+
+### Why Zod instead of just TypeScript?
+Zod 
