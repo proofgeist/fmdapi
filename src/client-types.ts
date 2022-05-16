@@ -43,7 +43,7 @@ export type ScriptResponse = {
   "scriptError.presort"?: string;
 };
 
-export type CreateParams<U> = ScriptParams & { portalData: U };
+export type CreateParams<U> = ScriptParams & { portalData?: U };
 
 export type CreateResponse = ScriptResponse & {
   recordId: string;
