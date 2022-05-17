@@ -10,7 +10,7 @@ type TransformedFields<T extends Record<string, any>> = U.Merge<
   }[keyof T]
 >;
 
-export function removeFMTableName<T extends Record<string, any>>(
+export function removeFMTableNames<T extends Record<string, any>>(
   obj: T
 ): TransformedFields<T> {
   const newObj: any = {};

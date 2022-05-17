@@ -6,8 +6,8 @@ import ts, {
   createPrinter,
   Statement,
 } from "typescript";
-import fmDAPI from ".";
-import { FieldMetaData } from "./client-types";
+import fmDAPI from "..";
+import { FieldMetaData } from "../client-types";
 import { F } from "ts-toolbelt";
 
 type TSchema = {
