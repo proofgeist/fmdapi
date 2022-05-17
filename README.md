@@ -62,7 +62,6 @@ const result = await client.list({ layout: "Contacts" });
 | `db` | `string` | FileMaker database name |
 | `server` | `string` | FileMaker server URL (must include `https://`) |
 | `layout` | `string` | *(optional)* If provided, will be the layout used for all methods if not otherwise specified |
-
 ## TypeScript Support
 The basic client will return the generic FileMaker response object by default. You can also create a type for your exepcted response and get a fully typed response that includes your own fields.
 ```typescript
@@ -83,13 +82,12 @@ The example below also assumes you have have the [`dotenv`](https://github.com/m
 
 ```typescript
 // sample node script
-import DataApi from "@proofgeist/fmdapi";
-import { generateSchemas } from "@proofgeist/fmdapi/codegen";
+const { DataApi } = require("@proofgeist/fmdapi");
+const { generateSchemas } = require("@proofgeist/fmdapi/dist/utils/codegen");
 
 // load environment variables
-import dotenv from "dotenv";
-const result = dotenv.config({ path: "./.env.local" });
-if (!process.env.OTTO_API_KEY) throw new Error("No API key");
+require("dotenv").config({ path: ".env.local" });
+if (!process.env.OTTO_API_KEY) throw new Error("Need Otto API key");
 
 // initialize client, like normal (only requires read-only access)
 const client = DataApi({
