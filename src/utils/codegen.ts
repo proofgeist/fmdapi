@@ -279,6 +279,53 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
     .map((vl) => buildValueListZod(vl.name, vl.values))
     .flat();
 
+  const portalStatements = [
+    factory.createVariableStatement(
+      [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+      factory.createVariableDeclarationList(
+        [
+          factory.createVariableDeclaration(
+            factory.createIdentifier("ZPortal"),
+            undefined,
+            undefined,
+            factory.createCallExpression(
+              factory.createPropertyAccessExpression(
+                factory.createIdentifier("z"),
+                factory.createIdentifier("object")
+              ),
+              undefined,
+              [
+                factory.createObjectLiteralExpression(
+                  portalSchema.map((portal) =>
+                    factory.createPropertyAssignment(
+                      factory.createStringLiteral(portal.schemaName),
+                      factory.createIdentifier(`Z${varname(portal.schemaName)}`)
+                    )
+                  ),
+                  true
+                ),
+              ]
+            )
+          ),
+        ],
+        ts.NodeFlags.Const
+      )
+    ),
+    factory.createTypeAliasDeclaration(
+      undefined,
+      [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+      factory.createIdentifier(`TPortal`),
+      undefined,
+      factory.createTypeReferenceNode(
+        factory.createQualifiedName(
+          factory.createIdentifier("z"),
+          factory.createIdentifier("infer")
+        ),
+        [factory.createTypeQueryNode(factory.createIdentifier(`ZPortal`))]
+      )
+    ),
+  ];
+
   return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
@@ -305,6 +352,9 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       // now the same for each portal
       ...portals,
 
+      // if there are portals, export single portal type for the layout
+      ...(portalSchema.length > 0 ? portalStatements : []),
+
       // now add types for any values lists
       ...vls,
     ]
@@ -315,10 +365,37 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
   const { schema, schemaName, portalSchema = [], valueLists = [] } = args;
   const portals = portalSchema.map((p) => buildTypeTS(p.schemaName, p.schema));
   const vls = valueLists.map((vl) => buildValueListTS(vl.name, vl.values));
+  const portalStatement = factory.createTypeAliasDeclaration(
+    undefined,
+    [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    factory.createIdentifier("TPortal"),
+    undefined,
+    factory.createTypeLiteralNode(
+      portalSchema.map((portal) =>
+        factory.createPropertySignature(
+          undefined,
+          factory.createIdentifier(portal.schemaName),
+          undefined,
+          factory.createArrayTypeNode(
+            factory.createTypeReferenceNode(
+              factory.createIdentifier(`T${varname(portal.schemaName)}`),
+              undefined
+            )
+          )
+        )
+      )
+    )
+  );
 
   return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
-    [buildTypeTS(schemaName, schema), ...portals, ...vls]
+    [
+      buildTypeTS(schemaName, schema),
+      ...portals,
+      // if there are portals, export single portal type for the layout
+      ...(portalSchema.length > 0 ? [portalStatement] : []),
+      ...vls,
+    ]
   );
 };
 
