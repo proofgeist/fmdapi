@@ -295,7 +295,7 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       factory.createVariableDeclarationList(
         [
           factory.createVariableDeclaration(
-            factory.createIdentifier("ZPortal"),
+            factory.createIdentifier(`Z${schemaName}Portals`),
             undefined,
             undefined,
             factory.createCallExpression(
@@ -324,14 +324,14 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
     factory.createTypeAliasDeclaration(
       undefined,
       [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-      factory.createIdentifier(`TPortal`),
+      factory.createIdentifier(`T${schemaName}Portals`),
       undefined,
       factory.createTypeReferenceNode(
         factory.createQualifiedName(
           factory.createIdentifier("z"),
           factory.createIdentifier("infer")
         ),
-        [factory.createTypeQueryNode(factory.createIdentifier(`ZPortal`))]
+        [factory.createTypeQueryNode(factory.createIdentifier(`Z${schemaName}Portals`))]
       )
     ),
   ];
@@ -378,7 +378,7 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
   const portalStatement = factory.createTypeAliasDeclaration(
     undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    factory.createIdentifier("TPortal"),
+    factory.createIdentifier(`T${schemaName}Portals`),
     undefined,
     factory.createTypeLiteralNode(
       portalSchema.map((portal) =>
