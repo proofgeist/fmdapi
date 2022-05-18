@@ -6,10 +6,12 @@ import ts, {
   createPrinter,
   Statement,
 } from "typescript";
-import fmDAPI from "..";
+import { FileMakerError, DataApi } from "..";
 import { FieldMetaData } from "../client-types";
 import { F } from "ts-toolbelt";
 import dayjs from "dayjs";
+import chalk from "chalk";
+import { ClientObjectProps } from "../client";
 
 type TSchema = {
   name: string;
@@ -408,13 +410,18 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
 };
 
 export const getSchema = async (args: {
-  client: ReturnType<typeof fmDAPI>;
+  client: ReturnType<typeof DataApi>;
   layout: string;
   valueLists?: ValueListsOptions;
 }) => {
   const schemaMap: F.Function<[FieldMetaData[]], TSchema[]> = (schema) =>
     schema.map((field) => {
-      if (field.valueList && meta.valueLists && valueLists !== "ignore") {
+      if (
+        meta &&
+        field.valueList &&
+        meta.valueLists &&
+        valueLists !== "ignore"
+      ) {
         const list = meta.valueLists.find((o) => o.name === field.valueList);
         const values = list?.values.map((o) => o.value) ?? [];
         return {
@@ -429,7 +436,20 @@ export const getSchema = async (args: {
       };
     });
   const { client, layout, valueLists = "ignore" } = args;
-  const meta = await client.metadata({ layout });
+  const meta = await client.metadata({ layout }).catch((err) => {
+    if (err instanceof FileMakerError && err.code === "105") {
+      console.log(
+        chalk.bold.red("ERROR:"),
+        // chalk.red("Layout", chalk.underline(layout), "not found"),
+        "Skipping schema generation for layout:",
+        chalk.bold.underline(layout),
+        "(not found)"
+      );
+      return;
+    }
+    throw err;
+  });
+  if (!meta) return;
   // console.log(meta);
   const schema = schemaMap(meta.fieldMetaData);
   const portalSchema = Object.keys(meta.portalMetaData).map((schemaName) => {
@@ -445,8 +465,8 @@ export const getSchema = async (args: {
 };
 
 export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
-export const generateSchemas = async (options: {
-  client: ReturnType<typeof fmDAPI>;
+export type GenerateSchemaOptions = {
+  clientConfig: ClientObjectProps;
   schemas: Array<{
     layout: string;
     schemaName: string;
@@ -454,22 +474,27 @@ export const generateSchemas = async (options: {
   }>;
   path?: string;
   useZod?: boolean;
-}) => {
-  const { client, schemas, path = "schema", useZod = true } = options;
+};
+export const generateSchemas = async (options: GenerateSchemaOptions) => {
+  const { clientConfig, schemas, path = "schema", useZod = true } = options;
+  const client = DataApi(clientConfig);
   await fs.ensureDir(path);
   schemas.forEach(async (item) => {
-    const { schema, portalSchema, valueLists } = await getSchema({
+    const result = await getSchema({
       client,
       layout: item.layout,
       valueLists: item.valueLists,
     });
-    const code = buildSchema({
-      schemaName: item.schemaName,
-      schema,
-      portalSchema,
-      valueLists,
-      type: useZod ? "zod" : "ts",
-    });
-    fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
+    if (result) {
+      const { schema, portalSchema, valueLists } = result;
+      const code = buildSchema({
+        schemaName: item.schemaName,
+        schema,
+        portalSchema,
+        valueLists,
+        type: useZod ? "zod" : "ts",
+      });
+      fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
+    }
   });
 };

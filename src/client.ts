@@ -21,7 +21,7 @@ type OttoAuth = {
   ottoPort?: number;
 };
 type UserPasswordAuth = { username: string; password: string };
-type ClientObjectProps = {
+export type ClientObjectProps = {
   server: string;
   db: string;
   auth: OttoAuth | UserPasswordAuth;

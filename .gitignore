@@ -2,3 +2,4 @@ node_modules
 dist
 schema
 .env.local
+fmschema.config.js

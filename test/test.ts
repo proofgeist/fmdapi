@@ -15,5 +15,6 @@ generateSchemas({
   schemas: [
     { layout: "edd_customer_web", schemaName: "EDDCustomer" },
     { layout: "edd_license_full_web", schemaName: "EDDLicense" },
+    { layout: "not_a_layout", schemaName: "BadSchema" },
   ],
 });
