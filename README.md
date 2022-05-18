@@ -1,9 +1,9 @@
 
 
-<div style="display:flex;justify-content:center; align-items:center;">
+<p align="center" style="display:flex;justify-content:center; align-items:center;">
    <img height="64px" src="logo-fm.png" style="margin-right:10px;" />
    <img height="50px" src="logo-ts.png" />   
-</div>
+</p>
 
 # Claris FileMaker Data API Client for TypeScript
 
@@ -55,6 +55,7 @@ Basic Example:
 ```typescript
 const result = await client.list({ layout: "Contacts" });
 ```
+
 ### Client Setup Options
 | Option | Type | Description |
 | ------ | ---- | ----------- |
@@ -78,30 +79,17 @@ This package also includes a helper function that will automatically generate ty
 
 The generated code uses the [`zod`](https://github.com/colinhacks/zod) library so that you can also implement runtime validation for all calls to the Data API.
 
-The example below also assumes you have have the [`dotenv`](https://github.com/motdotla/dotenv) package installed in order to use the same environment variables that you defined in the node script.
-
-```typescript
-// sample node script
-const { DataApi } = require("@proofgeist/fmdapi");
-const { generateSchemas } = require("@proofgeist/fmdapi/dist/utils/codegen");
-
-// load environment variables
-require("dotenv").config({ path: ".env.local" });
-if (!process.env.OTTO_API_KEY) throw new Error("Need Otto API key");
-
-// initialize client, like normal (only requires read-only access)
-const client = DataApi({
-  auth: { apiKey: process.env.OTTO_API_KEY },
-  db: process.env.FM_DATABASE,
-  server: process.env.FM_SERVER,
-});
-
-// run codegen, passing in schema for each layout that you want to generate types
-generateSchemas({
-    client,
-    schemas: [{ layout: "customer_api", schemaName: "Customer" }],
-});
+### Setup instructions:
+1. Add a schema configuation file to the root of your project
+```sh
+yarn codegen --init
 ```
+2. Edit the configuration file (`fmschema.config.js`) to include your FileMaker layouts, and read-only credentials to your server.
+3. Run the `codegen` command to generate your types!
+```sh
+yarn codegen
+```
+
 Assuming you have a layout called `customer_api` containing `name` `phone` and `email` fields for a customer, the generated code will look like this:
 ```typescript
 // schema/Customer.ts
@@ -118,7 +106,7 @@ export type TCustomer = z.infer<typeof ZCustomer>;
 
 | Option | Type | Default | Description |
 | ---| --- | --- | --- |
-| client | DataAPI Client object | *(required)* | Used for making the metadata API call to your server |
+| clientConfig | `object` | *(required)* | Configuration params passed to the DataApi client (see [Client Setup Options](##client-setup-options)). Used for making the metadata API call to your server |
 | schemas | `Schema[]` | *(required)* | An array of `Schema` objects to generate types for (see below) |
 | path | `string` | `"./schema"` | Path to folder where generated files should be saved. |
 | useZod | `boolean` | `true` | An array of `Schema` objects to generate types for |

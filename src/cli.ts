@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Command, program } from "commander";
+import { program } from "commander";
 import chalk from "chalk";
 import fs from "fs-extra";
 import { generateSchemas } from "./utils";
@@ -8,8 +8,23 @@ import { GenerateSchemaOptions } from "./utils/codegen";
 
 const configLocation = path.resolve(`./fmschema.config.js`);
 
-const codegen = new Command("run");
-codegen.action(async () => {
+function init() {
+  console.log();
+  if (fs.existsSync(configLocation)) {
+    console.log(
+      chalk.yellow(`⚠️ ${path.basename(configLocation)} already exists`)
+    );
+  } else {
+    const stubFile = fs.readFileSync(
+      path.resolve(__dirname, "../stubs/fmschema.config.stub.js"),
+      "utf8"
+    );
+    fs.writeFileSync(configLocation, stubFile, "utf8");
+    console.log(`✅ Created config file: ${path.basename(configLocation)}`);
+  }
+}
+
+async function runCodegen() {
   if (!fs.existsSync(configLocation)) {
     console.error(
       chalk.red(
@@ -37,25 +52,15 @@ codegen.action(async () => {
   await generateSchemas(config).catch((err) => {
     console.error(err);
   });
-});
+}
 
-const init = new Command("init");
-init.action(() => {
-  console.log();
-  if (fs.existsSync(configLocation)) {
-    console.log(
-      chalk.yellow(`⚠️ ${path.basename(configLocation)} already exists`)
-    );
-  } else {
-    const stubFile = fs.readFileSync(
-      path.resolve(__dirname, "../stubs/fmschema.config.stub.js"),
-      "utf8"
-    );
-    fs.writeFileSync(configLocation, stubFile, "utf8");
-    console.log(`✅ Created config file: ${path.basename(configLocation)}`);
-  }
-});
+program
+  .option("--init", "Add the configuration file to your project")
+  .action(async (options) => {
+    if (options.init) return init();
 
-program.addCommand(codegen).addCommand(init).parse();
+    // default command
+    await runCodegen();
+  });
 
-export { codegen, init };
+program.parse();
