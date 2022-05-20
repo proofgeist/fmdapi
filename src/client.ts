@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { z } from "zod";
+import { z, ZodOptional } from "zod";
 import {
   CreateParams,
   CreateResponse,
@@ -22,7 +22,7 @@ type OttoAuth = {
 };
 type UserPasswordAuth = { username: string; password: string };
 export type ClientObjectProps = {
-  server: string;
+  server: `http${string}`;
   db: string;
   auth: OttoAuth | UserPasswordAuth;
   /**
@@ -30,6 +30,23 @@ export type ClientObjectProps = {
    */
   layout?: string;
 };
+const ZodOptions = z.object({
+  server: z
+    .string()
+    .refine((val) => val.startsWith("http"), { message: "must include http" }),
+  db: z.string().nonempty(),
+  auth: z.union([
+    z.object({
+      apiKey: z.string().nonempty(),
+      ottoPort: z.number().optional(),
+    }),
+    z.object({
+      username: z.string().nonempty(),
+      password: z.string().nonempty(),
+    }),
+  ]),
+  layout: z.string().optional(),
+});
 
 class FileMakerError extends Error {
   public readonly code: string;
@@ -40,7 +57,8 @@ class FileMakerError extends Error {
   }
 }
 
-function DataApi<Opts extends ClientObjectProps>(options: Opts) {
+function DataApi<Opts extends ClientObjectProps>(input: Opts) {
+  const options = ZodOptions.strict().parse(input); // validate options
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
   );
@@ -52,6 +70,7 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
 
   async function getToken(refresh = false): Promise<string> {
     if ("apiKey" in options.auth) return options.auth.apiKey;
+
     if (refresh) token = null; // clear token so are forced to get a new one
 
     if (!token) {
@@ -159,6 +178,7 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
   };
 
   return {
+    baseUrl,
     /**
      * List all records from a given layout, no find criteria applied.
      */
@@ -171,6 +191,17 @@ function DataApi<Opts extends ClientObjectProps>(options: Opts) {
         : ListParams<T, U> & WithLayout
     ): Promise<GetResponse<T, U>> {
       const { layout = options.layout, ...params } = args;
+
+      // rename and refactor limit, offset, and sort keys for this request
+      if (!!params.limit)
+        delete Object.assign(params, { _limit: params.limit })["limit"];
+      if (!!params.offset)
+        delete Object.assign(params, { _offset: params.offset })["offset"];
+      if (!!params.sort)
+        delete Object.assign(params, {
+          _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
+        })["sort"];
+
       return await request({
         url: `/layouts/${layout}/records`,
         method: "GET",
