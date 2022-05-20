@@ -22,7 +22,7 @@ type OttoAuth = {
 };
 type UserPasswordAuth = { username: string; password: string };
 export type ClientObjectProps = {
-  server: `http${string}`;
+  server: string;
   db: string;
   auth: OttoAuth | UserPasswordAuth;
   /**

@@ -7,7 +7,6 @@ describe("try to init client", () => {
       DataApi({
         auth: { apiKey: "anything" },
         db: "anything",
-        // @ts-expect-error
         server: "",
       })
     ).toThrow();
