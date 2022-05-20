@@ -1,12 +1,41 @@
-export type Numerish = string | number;
-export type FieldValue = string | Numerish;
-export type FieldData = { [key: string]: FieldValue };
+import { T } from "ts-toolbelt";
+import { z } from "zod";
 
-export type GenericPortalData = {
-  [key: string]: {
-    [key: string]: FieldValue;
-  };
+export const ZFieldValue = z.union([z.string(), z.number()]);
+export type FieldValue = z.infer<typeof ZFieldValue>;
+
+export const ZFieldData = z.record(z.string(), ZFieldValue);
+export type FieldData = z.infer<typeof ZFieldData>;
+
+export type ZodGenericPortalData = z.ZodObject<{
+  [key: string]: z.ZodObject<{ [x: string]: z.ZodString | z.ZodNumber }>;
+}>;
+export type GenericPortalData = z.infer<ZodGenericPortalData>;
+
+export type PortalsWithIds<U extends GenericPortalData = GenericPortalData> = {
+  [key in keyof U]: Array<
+    U[key] & {
+      recordId: string;
+      modId: string;
+    }
+  >;
 };
+
+export const getFMRecordAsZod = ({
+  fieldData = ZFieldData,
+  portalData,
+}: ZInput) => {
+  const obj = z.object({
+    fieldData: fieldData,
+    recordId: z.string(),
+    modId: z.string(),
+  });
+  if (portalData) {
+    obj.extend({ portalData });
+  }
+  return obj;
+};
+export type FMRecord2 = z.infer<ReturnType<typeof getFMRecordAsZod>>;
 
 export type FMRecord<
   T extends FieldData = FieldData,
@@ -15,14 +44,7 @@ export type FMRecord<
   fieldData: T;
   recordId: string;
   modId: string;
-  portalData: {
-    [key in keyof U]: Array<
-      U[key] & {
-        recordId: string;
-        modId: string;
-      }
-    >;
-  };
+  portalData: PortalsWithIds<U>;
 };
 
 export type ScriptParams = {
@@ -34,14 +56,15 @@ export type ScriptParams = {
   "script.presort.param"?: string;
 };
 
-export type ScriptResponse = {
-  scriptResult?: string;
-  scriptError?: string;
-  "scriptResult.prerequest"?: string;
-  "scriptError.prerequest"?: string;
-  "scriptResult.presort"?: string;
-  "scriptError.presort"?: string;
-};
+const ZScriptResponse = z.object({
+  scriptResult: z.string().optional(),
+  scriptError: z.string().optional(),
+  "scriptResult.prerequest": z.string().optional(),
+  "scriptError.prerequest": z.string().optional(),
+  "scriptResult.presort": z.string().optional(),
+  "scriptError.presort": z.string().optional(),
+});
+export type ScriptResponse = z.infer<typeof ZScriptResponse>;
 
 export type CreateParams<U> = ScriptParams & { portalData?: U };
 
@@ -108,6 +131,15 @@ export type GetResponseOne<
   data: FMRecord<T, U>;
 };
 
+type ZInput<T, U> = {
+  fieldData: z.ZodType<FieldData>;
+  portalData?: ZodGenericPortalData;
+};
+export const ZGetResponse = <T, U>({ fieldData, portalData }: ZInput<T, U>) =>
+  ZScriptResponse.extend({
+    data: z.array(getFMRecordAsZod({ fieldData, portalData })),
+  });
+type ZGetResponseReturnType<T, U> = z.infer<ReturnType<typeof ZGetResponse>>;
 export type Query<T extends FieldData = FieldData> = Partial<{
   [key in keyof T]: T[key] | string;
 }> & {
