@@ -191,6 +191,17 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
         : ListParams<T, U> & WithLayout
     ): Promise<GetResponse<T, U>> {
       const { layout = options.layout, ...params } = args;
+
+      // rename and refactor limit, offset, and sort keys for this request
+      if (!!params.limit)
+        delete Object.assign(params, { _limit: params.limit })["limit"];
+      if (!!params.offset)
+        delete Object.assign(params, { _offset: params.offset })["offset"];
+      if (!!params.sort)
+        delete Object.assign(params, {
+          _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
+        })["sort"];
+
       return await request({
         url: `/layouts/${layout}/records`,
         method: "GET",
