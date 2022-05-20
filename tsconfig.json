@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2016", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+    "types": [
+      "node",
+      "jest"
+    ],
     "module": "commonjs", /* Specify what module code is generated. */
     "rootDir": "./src",
     "outDir": "./dist", /* Specify an output folder for all emitted files. */
@@ -11,6 +15,7 @@
     "declaration": true /* Generates corresponding .d.ts files. */
   },
   "exclude": [
+    "*.config.ts",
     "test",
     "dist",
     "schema"
