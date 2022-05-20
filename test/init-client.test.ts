@@ -187,8 +187,4 @@ describe("client methods (otto)", () => {
 
     expect(scope.isDone()).toBe(true);
   });
-
-  test("failed test to prevent npm publish", () => {
-    expect(true).toBe(false);
-  });
 });
