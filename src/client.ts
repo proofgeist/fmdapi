@@ -74,16 +74,18 @@ type UpdateArgs<
 type DeleteArgs = DeleteParams & {
   recordId: number;
 };
-type FindArgs<
-  T extends FieldData = FieldData,
-  U extends GenericPortalData = GenericPortalData
-> = ListParams<T, U> & {
-  query: Query<T> | Array<Query<T>>;
+type IgnoreEmptyResult = {
   /**
    * If true, a find that returns no results will retun an empty array instead of throwing an error.
    * @default false
    */
   ignoreEmptyResult?: boolean;
+};
+type FindArgs<
+  T extends FieldData = FieldData,
+  U extends GenericPortalData = GenericPortalData
+> = ListParams<T, U> & {
+  query: Query<T> | Array<Query<T>>;
 };
 class FileMakerError extends Error {
   public readonly code: string;
@@ -340,8 +342,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
     U extends GenericPortalData = GenericPortalData
   >(
     args: Opts["layout"] extends string
-      ? FindArgs<T, U> & Partial<WithLayout>
-      : FindArgs<T, U> & WithLayout
+      ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout>
+      : FindArgs<T, U> & IgnoreEmptyResult & WithLayout
   ): Promise<GetResponse<T, U>> {
     const {
       query: queryInput,
@@ -385,8 +387,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
     U extends GenericPortalData = GenericPortalData
   >(
     args: Opts["layout"] extends string
-      ? FindArgs<T, U> & Partial<WithLayout>
-      : FindArgs<T, U> & WithLayout
+      ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout>
+      : FindArgs<T, U> & IgnoreEmptyResult & WithLayout
   ): Promise<GetResponseOne<T, U>> {
     const res = await find<T, U>(args);
     return { ...res, data: res.data[0] };

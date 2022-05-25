@@ -51,6 +51,12 @@ Then, use the client to query your FileMaker database. Availble methods:
 - `metadata` return metadata for a given layout
 - `disconnect` forcibly logout of your FileMaker session (available when not using Otto Data API proxy)
 
+This package also includes some helper methods to make working with Data API responses a little easier:
+- `findOne` return the first record from a find instead of an array. This method will error unless exactly 1 record is found.
+- `findFirst` return the first record from a find instead of an array, but will not error if multiple records are found.
+
+...more helper methods planned
+
 Basic Example:
 ```typescript
 const result = await client.list({ layout: "Contacts" });
