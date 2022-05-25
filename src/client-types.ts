@@ -101,6 +101,12 @@ export type GetResponse<
 > = ScriptResponse & {
   data: Array<FMRecord<T, U>>;
 };
+export type GetResponseOne<
+  T extends FieldData = FieldData,
+  U extends GenericPortalData = GenericPortalData
+> = ScriptResponse & {
+  data: FMRecord<T, U>;
+};
 
 export type Query<T extends FieldData = FieldData> = Partial<{
   [key in keyof T]: T[key] | string;

@@ -14,6 +14,7 @@ import {
   UpdateResponse,
   DeleteParams,
   MetadataResponse,
+  GetResponseOne,
 } from "./client-types";
 
 type OttoAuth = {
@@ -48,6 +49,42 @@ const ZodOptions = z.object({
   layout: z.string().optional(),
 });
 
+type WithLayout = {
+  /**
+   * The layout to use for the request.
+   */
+  layout: string;
+};
+type CreateArgs<
+  T extends FieldData = FieldData,
+  U extends GenericPortalData = GenericPortalData
+> = CreateParams<U> & {
+  fieldData: Partial<T>;
+};
+type GetArgs<U extends GenericPortalData = GenericPortalData> = GetParams<U> & {
+  recordId: number;
+};
+type UpdateArgs<
+  T extends FieldData = FieldData,
+  U extends GenericPortalData = GenericPortalData
+> = UpdateParams<U> & {
+  fieldData: Partial<T>;
+  recordId: number;
+};
+type DeleteArgs = DeleteParams & {
+  recordId: number;
+};
+type FindArgs<
+  T extends FieldData = FieldData,
+  U extends GenericPortalData = GenericPortalData
+> = ListParams<T, U> & {
+  query: Query<T> | Array<Query<T>>;
+  /**
+   * If true, a find that returns no results will retun an empty array instead of throwing an error.
+   * @default false
+   */
+  ignoreEmptyResult?: boolean;
+};
 class FileMakerError extends Error {
   public readonly code: string;
 
@@ -324,46 +361,39 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
     });
   }
 
-  type WithLayout = {
-    /**
-     * The layout to use for the request.
-     */
-    layout: string;
-  };
-  type CreateArgs<
+  /**
+   * Helper method for `find`. Will only return the first result or throw error if there is more than 1 result.
+   */
+  async function findOne<
     T extends FieldData = FieldData,
     U extends GenericPortalData = GenericPortalData
-  > = CreateParams<U> & {
-    fieldData: Partial<T>;
-  };
-  type GetArgs<U extends GenericPortalData = GenericPortalData> =
-    GetParams<U> & {
-      recordId: number;
-    };
-  type UpdateArgs<
+  >(
+    args: Opts["layout"] extends string
+      ? FindArgs<T, U> & Partial<WithLayout>
+      : FindArgs<T, U> & WithLayout
+  ): Promise<GetResponseOne<T, U>> {
+    const res = await find<T, U>(args);
+    if (res.data.length !== 1)
+      throw new Error(`${res.data.length} records found; expecting exactly 1`);
+    return { ...res, data: res.data[0] };
+  }
+  /**
+   * Helper method for `find`. Will only return the first result instead of an array.
+   */
+  async function findFirst<
     T extends FieldData = FieldData,
     U extends GenericPortalData = GenericPortalData
-  > = UpdateParams<U> & {
-    fieldData: Partial<T>;
-    recordId: number;
-  };
-  type DeleteArgs = DeleteParams & {
-    recordId: number;
-  };
-  type FindArgs<
-    T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
-  > = ListParams<T, U> & {
-    query: Query<T> | Array<Query<T>>;
-    /**
-     * If true, a find that returns no results will retun an empty array instead of throwing an error.
-     * @default false
-     */
-    ignoreEmptyResult?: boolean;
-  };
+  >(
+    args: Opts["layout"] extends string
+      ? FindArgs<T, U> & Partial<WithLayout>
+      : FindArgs<T, U> & WithLayout
+  ): Promise<GetResponseOne<T, U>> {
+    const res = await find<T, U>(args);
+    return { ...res, data: res.data[0] };
+  }
 
   return {
-    baseUrl,
+    baseUrl, // returned only for testing purposes
     list,
     create,
     get,
@@ -372,6 +402,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
     metadata,
     disconnect,
     find,
+    findOne,
+    findFirst,
   };
 }
 
