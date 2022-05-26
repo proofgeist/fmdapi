@@ -86,21 +86,22 @@ describe("find methods", () => {
     expect(scope.isDone()).toBe(true);
     expect(Array.isArray(resp.data)).toBe(false);
   });
-  test("findOne with 2 results should fail", async () => {
-    const client = DataApi({
-      auth: { apiKey: "KEY_anything" },
-      db: "db",
-      server: "https://example.com",
-    });
-    const scope = nock("https://example.com:3030")
-      .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
-      .reply(200, goodFindResp2);
+});
 
-    client
-      .findOne({
-        layout: "layout",
-        query: { anything: "anything" },
-      })
-      .then(() => expect(true).toBe(false));
+test("findOne with 2 results should fail", async () => {
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
   });
+  const scope = nock("https://example.com:3030")
+    .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
+    .reply(200, goodFindResp2);
+
+  client
+    .findOne({
+      layout: "layout",
+      query: { anything: "anything" },
+    })
+    .then(() => expect(true).toBe(false));
 });
