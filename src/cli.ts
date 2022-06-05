@@ -8,7 +8,7 @@ import { GenerateSchemaOptions } from "./utils/codegen";
 
 const configLocation = path.resolve(`./fmschema.config.js`);
 
-function init() {
+function init(configLocation: string) {
   console.log();
   if (fs.existsSync(configLocation)) {
     console.log(
@@ -24,7 +24,7 @@ function init() {
   }
 }
 
-async function runCodegen() {
+async function runCodegen(configLocation: string) {
   if (!fs.existsSync(configLocation)) {
     console.error(
       chalk.red(
@@ -56,11 +56,18 @@ async function runCodegen() {
 
 program
   .option("--init", "Add the configuration file to your project")
+  .option("--config <filename>", "optional config file name")
   .action(async (options) => {
-    if (options.init) return init();
 
+    let configLocation = path.resolve(`./fmschema.config.js`);
+    if (options.config) {
+      configLocation = path.resolve(options.config);
+    }
+
+
+    if (options.init) return init(configLocation);
     // default command
-    await runCodegen();
+    await runCodegen(options.config);
   });
 
 program.parse();
