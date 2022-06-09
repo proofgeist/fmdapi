@@ -103,5 +103,8 @@ test("findOne with 2 results should fail", async () => {
       layout: "layout",
       query: { anything: "anything" },
     })
-    .then(() => expect(true).toBe(false));
+    .then(() => expect(true).toBe(false))
+    .catch(() => {
+      expect(true).toBe(true);
+    });
 });
