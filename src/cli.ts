@@ -6,13 +6,11 @@ import { generateSchemas } from "./utils";
 import path from "path";
 import { GenerateSchemaOptions } from "./utils/codegen";
 
-const configLocation = path.resolve(`./fmschema.config.js`);
-
 type ConfigArgs = {
-  configLocation?: string
-}
+  configLocation?: string;
+};
 
-function init({ configLocation }: ConfigArgs) {
+function init({ configLocation = "./fmschema.config.js" }: ConfigArgs) {
   console.log();
   if (fs.existsSync(configLocation)) {
     console.log(
@@ -28,7 +26,9 @@ function init({ configLocation }: ConfigArgs) {
   }
 }
 
-async function runCodegen({ configLocation }: ConfigArgs) {
+async function runCodegen({
+  configLocation = "./fmschema.config.js",
+}: ConfigArgs) {
   if (!fs.existsSync(configLocation)) {
     console.error(
       chalk.red(
@@ -62,7 +62,6 @@ program
   .option("--init", "Add the configuration file to your project")
   .option("--config <filename>", "optional config file name")
   .action(async (options) => {
-
     let configLocation = path.resolve(`./fmschema.config.js`);
     if (options.config) {
       configLocation = path.resolve(options.config);
