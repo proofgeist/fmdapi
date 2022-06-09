@@ -8,7 +8,11 @@ import { GenerateSchemaOptions } from "./utils/codegen";
 
 const configLocation = path.resolve(`./fmschema.config.js`);
 
-function init(configLocation: string) {
+type ConfigArgs = {
+  configLocation?: string
+}
+
+function init({ configLocation }: ConfigArgs) {
   console.log();
   if (fs.existsSync(configLocation)) {
     console.log(
@@ -24,7 +28,7 @@ function init(configLocation: string) {
   }
 }
 
-async function runCodegen(configLocation: string) {
+async function runCodegen({ configLocation }: ConfigArgs) {
   if (!fs.existsSync(configLocation)) {
     console.error(
       chalk.red(
@@ -64,10 +68,9 @@ program
       configLocation = path.resolve(options.config);
     }
 
-
-    if (options.init) return init(configLocation);
+    if (options.init) return init({ configLocation });
     // default command
-    await runCodegen(options.config);
+    await runCodegen({ configLocation: options.config });
   });
 
 program.parse();
