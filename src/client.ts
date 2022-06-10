@@ -100,9 +100,9 @@ class FileMakerError extends Error {
 }
 
 function DataApi<
-  Opts extends ClientObjectProps,
   Td extends FieldData = FieldData,
-  Ud extends GenericPortalData = GenericPortalData
+  Ud extends GenericPortalData = GenericPortalData,
+  Opts extends ClientObjectProps = ClientObjectProps
 >(input: Opts) {
   const options = ZodOptions.strict().parse(input); // validate options
   const baseUrl = new URL(

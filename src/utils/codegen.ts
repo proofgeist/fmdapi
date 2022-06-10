@@ -49,12 +49,41 @@ const importStatement = factory.createImportDeclaration(
   factory.createStringLiteral("@proofgeist/fmdapi"),
   undefined
 );
+const undefinedTypeGuardStatement = (name: string) =>
+  factory.createIfStatement(
+    factory.createPrefixUnaryExpression(
+      ts.SyntaxKind.ExclamationToken,
+      factory.createPropertyAccessExpression(
+        factory.createPropertyAccessExpression(
+          factory.createIdentifier("process"),
+          factory.createIdentifier("env")
+        ),
+        factory.createIdentifier(name)
+      )
+    ),
+    factory.createThrowStatement(
+      factory.createNewExpression(
+        factory.createIdentifier("Error"),
+        undefined,
+        [factory.createStringLiteral(`Missing env var: ${name}`)]
+      )
+    ),
+    undefined
+  );
 const exportClientStatement = (args: {
   fieldTypeName: string;
   portalTypeName?: string;
   layout: string;
   envNames: Omit<ClientObjectProps, "layout">;
-}) =>
+}) => [
+  undefinedTypeGuardStatement(args.envNames.db),
+  undefinedTypeGuardStatement(args.envNames.server),
+  ...(isOttoAuth(args.envNames.auth)
+    ? [undefinedTypeGuardStatement(args.envNames.auth.apiKey)]
+    : [
+        undefinedTypeGuardStatement(args.envNames.auth.username),
+        undefinedTypeGuardStatement(args.envNames.auth.password),
+      ]),
   factory.createVariableStatement(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     factory.createVariableDeclarationList(
@@ -163,7 +192,8 @@ const exportClientStatement = (args: {
       ],
       ts.NodeFlags.Const
     )
-  );
+  ),
+];
 
 const stringProperty = (name: string) =>
   factory.createPropertySignature(
@@ -512,7 +542,7 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       ...vls,
 
       // export layout-specific client
-      exportClientStatement({
+      ...exportClientStatement({
         envNames,
         layout: args.layoutName,
         fieldTypeName: `T${varname(schemaName)}`,
@@ -566,7 +596,7 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       ...(portalSchema.length > 0 ? [portalStatement] : []),
       ...vls,
       // export layout-specific client
-      exportClientStatement({
+      ...exportClientStatement({
         envNames,
         layout: args.layoutName,
         fieldTypeName: `T${varname(schemaName)}`,
