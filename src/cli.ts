@@ -10,7 +10,9 @@ type ConfigArgs = {
   configLocation?: string;
 };
 
-function init({ configLocation = "./fmschema.config.js" }: ConfigArgs) {
+const defaultConfig = "./fmschema.config.js";
+
+function init({ configLocation = defaultConfig }: ConfigArgs) {
   console.log();
   if (fs.existsSync(configLocation)) {
     console.log(
@@ -26,9 +28,7 @@ function init({ configLocation = "./fmschema.config.js" }: ConfigArgs) {
   }
 }
 
-async function runCodegen({
-  configLocation = "./fmschema.config.js",
-}: ConfigArgs) {
+async function runCodegen({ configLocation = defaultConfig }: ConfigArgs) {
   if (!fs.existsSync(configLocation)) {
     console.error(
       chalk.red(
@@ -62,14 +62,11 @@ program
   .option("--init", "Add the configuration file to your project")
   .option("--config <filename>", "optional config file name")
   .action(async (options) => {
-    let configLocation = path.resolve(`./fmschema.config.js`);
-    if (options.config) {
-      configLocation = path.resolve(options.config);
-    }
+    const configLocation = path.resolve(options.config ?? defaultConfig);
 
     if (options.init) return init({ configLocation });
     // default command
-    await runCodegen({ configLocation: options.config });
+    await runCodegen({ configLocation });
   });
 
 program.parse();

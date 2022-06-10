@@ -11,7 +11,8 @@ import { FieldMetaData } from "../client-types";
 import { F } from "ts-toolbelt";
 import dayjs from "dayjs";
 import chalk from "chalk";
-import { ClientObjectProps } from "../client";
+import { ClientObjectProps, isOttoAuth } from "../client";
+import { env } from "process";
 
 type TSchema = {
   name: string;
@@ -30,6 +31,139 @@ const commentHeader = `/**
 */
 
 `;
+
+const importStatement = factory.createImportDeclaration(
+  undefined,
+  undefined,
+  factory.createImportClause(
+    false,
+    undefined,
+    factory.createNamedImports([
+      factory.createImportSpecifier(
+        false,
+        undefined,
+        factory.createIdentifier("DataApi")
+      ),
+    ])
+  ),
+  factory.createStringLiteral("@proofgeist/fmdapi"),
+  undefined
+);
+const exportClientStatement = (args: {
+  fieldTypeName: string;
+  portalTypeName?: string;
+  layout: string;
+  envNames: Omit<ClientObjectProps, "layout">;
+}) =>
+  factory.createVariableStatement(
+    [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    factory.createVariableDeclarationList(
+      [
+        factory.createVariableDeclaration(
+          factory.createIdentifier("client"),
+          undefined,
+          undefined,
+          factory.createCallExpression(
+            factory.createIdentifier("DataApi"),
+            [
+              factory.createTypeReferenceNode(
+                factory.createIdentifier(args.fieldTypeName),
+                undefined
+              ),
+              // only add portal type if a portal type was passed
+              ...(args.portalTypeName
+                ? [
+                    factory.createTypeReferenceNode(
+                      factory.createIdentifier(args.portalTypeName),
+                      undefined
+                    ),
+                  ]
+                : []),
+            ],
+            [
+              factory.createObjectLiteralExpression(
+                [
+                  factory.createPropertyAssignment(
+                    factory.createIdentifier("auth"),
+                    factory.createObjectLiteralExpression(
+                      isOttoAuth(args.envNames.auth)
+                        ? [
+                            factory.createPropertyAssignment(
+                              factory.createIdentifier("apiKey"),
+                              factory.createPropertyAccessExpression(
+                                factory.createPropertyAccessExpression(
+                                  factory.createIdentifier("process"),
+                                  factory.createIdentifier("env")
+                                ),
+                                factory.createIdentifier(
+                                  args.envNames.auth.apiKey
+                                )
+                              )
+                            ),
+                          ]
+                        : [
+                            factory.createPropertyAssignment(
+                              factory.createIdentifier("username"),
+                              factory.createPropertyAccessExpression(
+                                factory.createPropertyAccessExpression(
+                                  factory.createIdentifier("process"),
+                                  factory.createIdentifier("env")
+                                ),
+                                factory.createIdentifier(
+                                  args.envNames.auth.username
+                                )
+                              )
+                            ),
+                            factory.createPropertyAssignment(
+                              factory.createIdentifier("password"),
+                              factory.createPropertyAccessExpression(
+                                factory.createPropertyAccessExpression(
+                                  factory.createIdentifier("process"),
+                                  factory.createIdentifier("env")
+                                ),
+                                factory.createIdentifier(
+                                  args.envNames.auth.password
+                                )
+                              )
+                            ),
+                          ],
+                      false
+                    )
+                  ),
+                  factory.createPropertyAssignment(
+                    factory.createIdentifier("db"),
+                    factory.createPropertyAccessExpression(
+                      factory.createPropertyAccessExpression(
+                        factory.createIdentifier("process"),
+                        factory.createIdentifier("env")
+                      ),
+                      factory.createIdentifier(args.envNames.db)
+                    )
+                  ),
+                  factory.createPropertyAssignment(
+                    factory.createIdentifier("server"),
+                    factory.createPropertyAccessExpression(
+                      factory.createPropertyAccessExpression(
+                        factory.createIdentifier("process"),
+                        factory.createIdentifier("env")
+                      ),
+                      factory.createIdentifier(args.envNames.server)
+                    )
+                  ),
+                  factory.createPropertyAssignment(
+                    factory.createIdentifier("layout"),
+                    factory.createStringLiteral(args.layout)
+                  ),
+                ],
+                true
+              ),
+            ]
+          )
+        ),
+      ],
+      ts.NodeFlags.Const
+    )
+  );
 
 const stringProperty = (name: string) =>
   factory.createPropertySignature(
@@ -260,9 +394,10 @@ type BuildSchemaArgs = {
   type: "zod" | "ts";
   portalSchema?: { schemaName: string; schema: Array<TSchema> }[];
   valueLists?: { name: string; values: string[] }[];
+  envNames: Omit<ClientObjectProps, "layout">;
+  layoutName: string;
 };
-export const buildSchema = (args: BuildSchemaArgs) => {
-  const { schemaName, type, portalSchema = [], valueLists = [] } = args;
+export const buildSchema = ({ type, ...args }: BuildSchemaArgs) => {
   // make sure schema has unique keys, in case a field is on the layout mulitple times
   const schema = args.schema.reduce(
     (acc: TSchema[], el) =>
@@ -273,15 +408,18 @@ export const buildSchema = (args: BuildSchemaArgs) => {
   );
   // TODO same uniqueness validation for portals
   const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
-  const file =
-    type === "ts"
-      ? buildTSSchema({ schemaName, schema, portalSchema, valueLists })
-      : buildZodSchema({ schemaName, schema, portalSchema, valueLists });
+  const file = type === "ts" ? buildTSSchema(args) : buildZodSchema(args);
   return commentHeader + printer.printFile(file);
 };
 
 const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
-  const { schema, schemaName, portalSchema = [], valueLists = [] } = args;
+  const {
+    schema,
+    schemaName,
+    portalSchema = [],
+    valueLists = [],
+    envNames,
+  } = args;
   const portals = portalSchema
     .map((p) => buildTypeZod(p.schemaName, p.schema))
     .flat();
@@ -295,7 +433,7 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       factory.createVariableDeclarationList(
         [
           factory.createVariableDeclaration(
-            factory.createIdentifier(`Z${schemaName}Portals`),
+            factory.createIdentifier(`Z${varname(schemaName)}Portals`),
             undefined,
             undefined,
             factory.createCallExpression(
@@ -324,14 +462,18 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
     factory.createTypeAliasDeclaration(
       undefined,
       [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-      factory.createIdentifier(`T${schemaName}Portals`),
+      factory.createIdentifier(`T${varname(schemaName)}Portals`),
       undefined,
       factory.createTypeReferenceNode(
         factory.createQualifiedName(
           factory.createIdentifier("z"),
           factory.createIdentifier("infer")
         ),
-        [factory.createTypeQueryNode(factory.createIdentifier(`Z${schemaName}Portals`))]
+        [
+          factory.createTypeQueryNode(
+            factory.createIdentifier(`Z${varname(schemaName)}Portals`)
+          ),
+        ]
       )
     ),
   ];
@@ -355,6 +497,7 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
         ),
         factory.createStringLiteral("zod")
       ),
+      importStatement,
 
       // for each table, create a ZodSchema variable and inferred type
       ...buildTypeZod(schemaName, schema),
@@ -367,18 +510,34 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
 
       // now add types for any values lists
       ...vls,
+
+      // export layout-specific client
+      exportClientStatement({
+        envNames,
+        layout: args.layoutName,
+        fieldTypeName: `T${varname(schemaName)}`,
+        ...(portalSchema.length > 0
+          ? { portalTypeName: `T${varname(schemaName)}Portals` }
+          : {}),
+      }),
     ]
   );
 };
 
 const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
-  const { schema, schemaName, portalSchema = [], valueLists = [] } = args;
+  const {
+    schema,
+    schemaName,
+    portalSchema = [],
+    valueLists = [],
+    envNames,
+  } = args;
   const portals = portalSchema.map((p) => buildTypeTS(p.schemaName, p.schema));
   const vls = valueLists.map((vl) => buildValueListTS(vl.name, vl.values));
   const portalStatement = factory.createTypeAliasDeclaration(
     undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    factory.createIdentifier(`T${schemaName}Portals`),
+    factory.createIdentifier(`T${varname(schemaName)}Portals`),
     undefined,
     factory.createTypeLiteralNode(
       portalSchema.map((portal) =>
@@ -400,11 +559,21 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
   return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
+      importStatement,
       buildTypeTS(schemaName, schema),
       ...portals,
       // if there are portals, export single portal type for the layout
       ...(portalSchema.length > 0 ? [portalStatement] : []),
       ...vls,
+      // export layout-specific client
+      exportClientStatement({
+        envNames,
+        layout: args.layoutName,
+        fieldTypeName: `T${varname(schemaName)}`,
+        ...(portalSchema.length > 0
+          ? { portalTypeName: `T${varname(schemaName)}Portals` }
+          : {}),
+      }),
     ]
   );
 };
@@ -466,7 +635,8 @@ export const getSchema = async (args: {
 
 export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
 export type GenerateSchemaOptions = {
-  clientConfig: ClientObjectProps;
+  clientConfig?: ClientObjectProps;
+  env?: { auth: ClientObjectProps["auth"]; server: string; db: string };
   schemas: Array<{
     layout: string;
     schemaName: string;
@@ -476,8 +646,73 @@ export type GenerateSchemaOptions = {
   useZod?: boolean;
 };
 export const generateSchemas = async (options: GenerateSchemaOptions) => {
-  const { clientConfig, schemas, path = "schema", useZod = true } = options;
-  const client = DataApi(clientConfig);
+  const {
+    clientConfig,
+    env,
+    schemas,
+    path = "schema",
+    useZod = true,
+  } = options;
+
+  const defaultEnvNames = {
+    apiKey: "OTTO_API_KEY",
+    ottoPort: "OTTO_PORT",
+    username: "FM_USERNAME",
+    password: "FM_PASSWORD",
+    server: "FM_SERVER",
+    db: "FM_DATABASE",
+  };
+
+  const server =
+    clientConfig?.server ?? process.env[env?.server ?? defaultEnvNames.server];
+  const db = clientConfig?.db ?? process.env[env?.db ?? defaultEnvNames.db];
+  const apiKey =
+    (clientConfig && isOttoAuth(clientConfig.auth)
+      ? clientConfig.auth.apiKey
+      : env && isOttoAuth(env.auth)
+      ? process.env[env.auth.apiKey ?? defaultEnvNames.apiKey]
+      : undefined) ?? process.env[defaultEnvNames.apiKey];
+  const ottoPort =
+    (clientConfig && isOttoAuth(clientConfig.auth)
+      ? clientConfig.auth.ottoPort
+      : env && isOttoAuth(env.auth)
+      ? process.env[env.auth.ottoPort ?? defaultEnvNames.ottoPort]
+      : undefined) ?? "3030";
+  const username =
+    (clientConfig && !isOttoAuth(clientConfig.auth)
+      ? clientConfig.auth.username
+      : env && !isOttoAuth(env.auth)
+      ? process.env[env.auth.username ?? defaultEnvNames.username]
+      : undefined) ?? process.env[defaultEnvNames.username];
+  const password =
+    (clientConfig && !isOttoAuth(clientConfig.auth)
+      ? clientConfig.auth.password
+      : env && !isOttoAuth(env.auth)
+      ? process.env[env.auth.password ?? defaultEnvNames.password]
+      : undefined) ?? process.env[defaultEnvNames.password];
+
+  const auth: ClientObjectProps["auth"] = apiKey
+    ? { apiKey }
+    : { username: username ?? "", password: password ?? "" };
+
+  if (!server || !db || (!apiKey && !username)) {
+    console.log(chalk.red("ERROR: Could not get all required config values"));
+    console.log("Ensure the following environment variables are set:");
+    if (!server) console.log(`${env?.server ?? defaultEnvNames.server}`);
+    if (!db) console.log(`${env?.db ?? defaultEnvNames.db}`);
+    if (!apiKey)
+      console.log(
+        `${
+          (env && isOttoAuth(env.auth) && env.auth.apiKey) ??
+          defaultEnvNames.apiKey
+        }`
+      );
+
+    console.log();
+    return;
+  }
+
+  const client = DataApi(clientConfig ?? { auth, server, db });
   await fs.ensureDir(path);
   schemas.forEach(async (item) => {
     const result = await getSchema({
@@ -490,9 +725,31 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
       const code = buildSchema({
         schemaName: item.schemaName,
         schema,
+        layoutName: item.layout,
         portalSchema,
         valueLists,
         type: useZod ? "zod" : "ts",
+        envNames: {
+          auth: isOttoAuth(auth)
+            ? {
+                apiKey:
+                  env && "apiKey" in env.auth
+                    ? env.auth.apiKey
+                    : defaultEnvNames.apiKey,
+              }
+            : {
+                username:
+                  env && "username" in env.auth
+                    ? env.auth.username
+                    : defaultEnvNames.username,
+                password:
+                  env && "password" in env.auth
+                    ? env.auth.password
+                    : defaultEnvNames.password,
+              },
+          db: env?.db ?? defaultEnvNames.db,
+          server: env?.server ?? defaultEnvNames.server,
+        },
       });
       fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
     }
