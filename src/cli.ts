@@ -5,14 +5,13 @@ import fs from "fs-extra";
 import { generateSchemas } from "./utils";
 import path from "path";
 import { GenerateSchemaOptions } from "./utils/codegen";
+import { config } from "dotenv";
 
 type ConfigArgs = {
-  configLocation?: string;
+  configLocation: string;
 };
 
-const defaultConfig = "./fmschema.config.js";
-
-function init({ configLocation = defaultConfig }: ConfigArgs) {
+function init({ configLocation }: ConfigArgs) {
   console.log();
   if (fs.existsSync(configLocation)) {
     console.log(
@@ -28,7 +27,7 @@ function init({ configLocation = defaultConfig }: ConfigArgs) {
   }
 }
 
-async function runCodegen({ configLocation = defaultConfig }: ConfigArgs) {
+async function runCodegen({ configLocation }: ConfigArgs) {
   if (!fs.existsSync(configLocation)) {
     console.error(
       chalk.red(
@@ -56,13 +55,28 @@ async function runCodegen({ configLocation = defaultConfig }: ConfigArgs) {
   await generateSchemas(config).catch((err) => {
     console.error(err);
   });
+  console.log(`✅ Generated schemas\n`);
 }
 
 program
   .option("--init", "Add the configuration file to your project")
-  .option("--config <filename>", "optional config file name")
+  .option(
+    "--config <filename>",
+    "optional config file name",
+    "./fmschema.config.js" // default
+  )
+  .option("--env-path <path>", "optional path to your .env file", ".env.local")
   .action(async (options) => {
-    const configLocation = path.resolve(options.config ?? defaultConfig);
+    // console.log(options);
+    const envRes = config({ path: options.envPath });
+    if (envRes.error)
+      return console.log(
+        chalk.red(
+          `Could not resolve your environment variables.\n${envRes.error.message}\n`
+        )
+      );
+
+    const configLocation = path.resolve(options.config);
 
     if (options.init) return init({ configLocation });
     // default command

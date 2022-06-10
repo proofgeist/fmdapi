@@ -636,7 +636,7 @@ export const getSchema = async (args: {
 export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
 export type GenerateSchemaOptions = {
   clientConfig?: ClientObjectProps;
-  env?: { auth: ClientObjectProps["auth"]; server: string; db: string };
+  envNames?: Omit<ClientObjectProps, "layout">;
   schemas: Array<{
     layout: string;
     schemaName: string;
@@ -648,7 +648,7 @@ export type GenerateSchemaOptions = {
 export const generateSchemas = async (options: GenerateSchemaOptions) => {
   const {
     clientConfig,
-    env,
+    envNames,
     schemas,
     path = "schema",
     useZod = true,
@@ -664,31 +664,33 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
   };
 
   const server =
-    clientConfig?.server ?? process.env[env?.server ?? defaultEnvNames.server];
-  const db = clientConfig?.db ?? process.env[env?.db ?? defaultEnvNames.db];
+    clientConfig?.server ??
+    process.env[envNames?.server ?? defaultEnvNames.server];
+  const db =
+    clientConfig?.db ?? process.env[envNames?.db ?? defaultEnvNames.db];
   const apiKey =
     (clientConfig && isOttoAuth(clientConfig.auth)
       ? clientConfig.auth.apiKey
-      : env && isOttoAuth(env.auth)
-      ? process.env[env.auth.apiKey ?? defaultEnvNames.apiKey]
+      : envNames && isOttoAuth(envNames.auth)
+      ? process.env[envNames.auth.apiKey ?? defaultEnvNames.apiKey]
       : undefined) ?? process.env[defaultEnvNames.apiKey];
   const ottoPort =
     (clientConfig && isOttoAuth(clientConfig.auth)
       ? clientConfig.auth.ottoPort
-      : env && isOttoAuth(env.auth)
-      ? process.env[env.auth.ottoPort ?? defaultEnvNames.ottoPort]
+      : envNames && isOttoAuth(envNames.auth)
+      ? process.env[envNames.auth.ottoPort ?? defaultEnvNames.ottoPort]
       : undefined) ?? "3030";
   const username =
     (clientConfig && !isOttoAuth(clientConfig.auth)
       ? clientConfig.auth.username
-      : env && !isOttoAuth(env.auth)
-      ? process.env[env.auth.username ?? defaultEnvNames.username]
+      : envNames && !isOttoAuth(envNames.auth)
+      ? process.env[envNames.auth.username ?? defaultEnvNames.username]
       : undefined) ?? process.env[defaultEnvNames.username];
   const password =
     (clientConfig && !isOttoAuth(clientConfig.auth)
       ? clientConfig.auth.password
-      : env && !isOttoAuth(env.auth)
-      ? process.env[env.auth.password ?? defaultEnvNames.password]
+      : envNames && !isOttoAuth(envNames.auth)
+      ? process.env[envNames.auth.password ?? defaultEnvNames.password]
       : undefined) ?? process.env[defaultEnvNames.password];
 
   const auth: ClientObjectProps["auth"] = apiKey
@@ -698,14 +700,20 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
   if (!server || !db || (!apiKey && !username)) {
     console.log(chalk.red("ERROR: Could not get all required config values"));
     console.log("Ensure the following environment variables are set:");
-    if (!server) console.log(`${env?.server ?? defaultEnvNames.server}`);
-    if (!db) console.log(`${env?.db ?? defaultEnvNames.db}`);
+    if (!server) console.log(`${envNames?.server ?? defaultEnvNames.server}`);
+    if (!db) console.log(`${envNames?.db ?? defaultEnvNames.db}`);
     if (!apiKey)
       console.log(
         `${
-          (env && isOttoAuth(env.auth) && env.auth.apiKey) ??
+          (envNames && isOttoAuth(envNames.auth) && envNames.auth.apiKey) ??
           defaultEnvNames.apiKey
-        }`
+        } (or ${
+          (envNames && !isOttoAuth(envNames.auth) && envNames.auth.username) ??
+          defaultEnvNames.username
+        } and ${
+          (envNames && !isOttoAuth(envNames.auth) && envNames.auth.password) ??
+          defaultEnvNames.password
+        })`
       );
 
     console.log();
@@ -733,18 +741,18 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
           auth: isOttoAuth(auth)
             ? {
                 apiKey:
-                  env && "apiKey" in env.auth
-                    ? env.auth.apiKey
+                  envNames && "apiKey" in envNames.auth
+                    ? envNames.auth.apiKey
                     : defaultEnvNames.apiKey,
               }
             : {
                 username:
-                  env && "username" in env.auth
-                    ? env.auth.username
+                  envNames && "username" in envNames.auth
+                    ? envNames.auth.username
                     : defaultEnvNames.username,
                 password:
-                  env && "password" in env.auth
-                    ? env.auth.password
+                  envNames && "password" in envNames.auth
+                    ? envNames.auth.password
                     : defaultEnvNames.password,
               },
           db: env?.db ?? defaultEnvNames.db,
