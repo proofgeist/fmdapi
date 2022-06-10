@@ -22,12 +22,17 @@ yarn add @proofgeist/fmdapi
 ```
 
 ## Usage
-Add the following envnironment variables to your project's `.env` file:
+Add the following envnironment variables to your project's `.env.local` file:
 
 ```sh
-OTTO_API_KEY=KEY_123456...789
 FM_DATABASE=filename.fmp12
 FM_SERVER=https://filemaker.example.com
+
+# if you want to use the Otto Data APi Proxy
+OTTO_API_KEY=KEY_123456...789
+# otherwise
+FM_USERNAME=admin
+FM_PASSWORD=password
 ```
 
 Initialize the client with your FileMaker Server credentials:
@@ -100,19 +105,33 @@ Assuming you have a layout called `customer_api` containing `name` `phone` and `
 ```typescript
 // schema/Customer.ts
 import { z } from "zod";
+import { DataApi } from "@proofgeist/fmdapi";
 export const ZCustomer = z.object({
     name: z.string(),
     phone: z.string(),
     email: z.string(),
 });
 export type TCustomer = z.infer<typeof ZCustomer>;
+export const client = DataApi<TCustomer>({
+    auth: { apiKey: process.env.OTTO_API_KEY },
+    db: process.env.FM_DATABASE,
+    server: process.env.FM_SERVER,
+    layout: "customer_api"
+});
+```
+Notice how this even generates a typed client instance for you to use. If you import this client directly into the places where you you want to interact with this layout, you can simplfiy your code even further.
+```ts
+import { client } from "schema/Customer";
+...
+const result = await client.list(); // result will be fully typed!
 ```
 
 #### `generateSchemas` options
 
 | Option | Type | Default | Description |
 | ---| --- | --- | --- |
-| clientConfig | `object` | *(required)* | Configuration params passed to the DataApi client (see [Client Setup Options](##client-setup-options)). Used for making the metadata API call to your server |
+| clientConfig | `object` | *undefined* | Configuration params passed to the DataApi client (see [Client Setup Options](##client-setup-options)). Used for making the metadata API call to your server |
+| envNames | `object` | *undefined* | Same purpose as `clientConfig`, but this can be used to override the names of the environment variables used for the client |
 | schemas | `Schema[]` | *(required)* | An array of `Schema` objects to generate types for (see below) |
 | path | `string` | `"./schema"` | Path to folder where generated files should be saved. |
 | useZod | `boolean` | `true` | An array of `Schema` objects to generate types for |

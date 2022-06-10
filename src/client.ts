@@ -22,6 +22,9 @@ type OttoAuth = {
   ottoPort?: number;
 };
 type UserPasswordAuth = { username: string; password: string };
+export function isOttoAuth(auth: ClientObjectProps["auth"]): auth is OttoAuth {
+  return "apiKey" in auth;
+}
 export type ClientObjectProps = {
   server: string;
   db: string;
@@ -96,7 +99,11 @@ class FileMakerError extends Error {
   }
 }
 
-function DataApi<Opts extends ClientObjectProps>(input: Opts) {
+function DataApi<
+  Opts extends ClientObjectProps,
+  Td extends FieldData = FieldData,
+  Ud extends GenericPortalData = GenericPortalData
+>(input: Opts) {
   const options = ZodOptions.strict().parse(input); // validate options
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
@@ -182,8 +189,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
    * List all records from a given layout, no find criteria applied.
    */
   async function list<
-    T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
+    T extends FieldData = Td,
+    U extends GenericPortalData = Ud
   >(
     args: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout>
@@ -212,8 +219,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
    * Create a new record in a given layout
    */
   async function create<
-    T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
+    T extends FieldData = Td,
+    U extends GenericPortalData = Ud
   >(
     args: Opts["layout"] extends string
       ? CreateArgs<T, U> & Partial<WithLayout>
@@ -229,8 +236,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
    * Get a single record by Internal RecordId
    */
   async function get<
-    T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
+    T extends FieldData = Td,
+    U extends GenericPortalData = Ud
   >(
     args: Opts["layout"] extends string
       ? GetArgs<U> & Partial<WithLayout>
@@ -248,8 +255,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
    * Update a single record by internal RecordId
    */
   async function update<
-    T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
+    T extends FieldData = Td,
+    U extends GenericPortalData = Ud
   >(
     args: Opts["layout"] extends string
       ? UpdateArgs<T, U> & Partial<WithLayout>
@@ -266,8 +273,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
    * Delete a single record by internal RecordId
    */
   async function deleteRecord<
-    T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
+    T extends FieldData = Td,
+    U extends GenericPortalData = Ud
   >(
     args: Opts["layout"] extends string
       ? DeleteArgs & Partial<WithLayout>
@@ -338,8 +345,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
    * Find records in a given layout
    */
   async function find<
-    T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
+    T extends FieldData = Td,
+    U extends GenericPortalData = Ud
   >(
     args: Opts["layout"] extends string
       ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout>
@@ -367,8 +374,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
    * Helper method for `find`. Will only return the first result or throw error if there is more than 1 result.
    */
   async function findOne<
-    T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
+    T extends FieldData = Td,
+    U extends GenericPortalData = Ud
   >(
     args: Opts["layout"] extends string
       ? FindArgs<T, U> & Partial<WithLayout>
@@ -383,8 +390,8 @@ function DataApi<Opts extends ClientObjectProps>(input: Opts) {
    * Helper method for `find`. Will only return the first result instead of an array.
    */
   async function findFirst<
-    T extends FieldData = FieldData,
-    U extends GenericPortalData = GenericPortalData
+    T extends FieldData = Td,
+    U extends GenericPortalData = Ud
   >(
     args: Opts["layout"] extends string
       ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout>
