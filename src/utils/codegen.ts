@@ -95,6 +95,7 @@ const exportClientStatement = (args: {
           factory.createCallExpression(
             factory.createIdentifier("DataApi"),
             [
+              factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
               factory.createTypeReferenceNode(
                 factory.createIdentifier(args.fieldTypeName),
                 undefined
