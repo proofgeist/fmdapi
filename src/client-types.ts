@@ -21,10 +21,10 @@ export type PortalsWithIds<U extends GenericPortalData = GenericPortalData> = {
   >;
 };
 
-export const getFMRecordAsZod = ({
-  fieldData = ZFieldData,
+export const getFMRecordAsZod = <T, U>({
+  fieldData,
   portalData,
-}: ZInput) => {
+}: ZInput<T, U>): z.ZodTypeAny => {
   const obj = z.object({
     fieldData: fieldData,
     recordId: z.string(),
@@ -135,7 +135,10 @@ type ZInput<T, U> = {
   fieldData: z.ZodType<FieldData>;
   portalData?: ZodGenericPortalData;
 };
-export const ZGetResponse = <T, U>({ fieldData, portalData }: ZInput<T, U>) =>
+export const ZGetResponse = <T extends FieldData, U extends GenericPortalData>({
+  fieldData,
+  portalData,
+}: ZInput<T, U>): z.ZodType<GetResponse<T, U>, z.ZodTypeDef, any> =>
   ZScriptResponse.extend({
     data: z.array(getFMRecordAsZod({ fieldData, portalData })),
   });

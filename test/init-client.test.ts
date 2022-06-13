@@ -165,13 +165,12 @@ describe("client methods (otto)", () => {
     const scope = nock("https://example.com:3030")
       .get("/fmi/data/vLatest/databases/db/layouts/not_a_layout/records")
       .reply(500, {
-        messages: [
-          {
-            code: "105",
-            message: "Layout is missing",
-          },
-        ],
-        response: {},
+        fieldData: {
+          name: "Fake Name",
+        },
+        portalData: {},
+        recordId: "5",
+        modId: "8",
       });
 
     await client

@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { z, ZodOptional } from "zod";
+import { any, z } from "zod";
 import {
   CreateParams,
   CreateResponse,
@@ -14,7 +14,10 @@ import {
   UpdateResponse,
   DeleteParams,
   MetadataResponse,
+  ZodGenericPortalData,
   GetResponseOne,
+  ZFieldData,
+  ZGetResponse,
 } from "./client-types";
 
 type OttoAuth = {
@@ -33,6 +36,8 @@ export type ClientObjectProps = {
    * The layout to use by default for all requests. Can be overrridden on each request.
    */
   layout?: string;
+  zodFieldData?: z.ZodTypeAny;
+  zodPortalData?: z.ZodTypeAny;
 };
 const ZodOptions = z.object({
   server: z
@@ -103,8 +108,15 @@ function DataApi<
   Opts extends ClientObjectProps,
   Td extends FieldData = FieldData,
   Ud extends GenericPortalData = GenericPortalData
->(input: Opts) {
+>(
+  input: Opts,
+  zodTypes?: {
+    fieldData: z.ZodType<FieldData>;
+    portalData?: ZodGenericPortalData;
+  }
+) {
   const options = ZodOptions.strict().parse(input); // validate options
+
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
   );
@@ -208,12 +220,18 @@ function DataApi<
         _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
       })["sort"];
 
-    return await request({
+    const data = await request({
       url: `/layouts/${layout}/records`,
       method: "GET",
       // @ts-ignore
       query: params,
     });
+
+    if (zodTypes) {
+      return ZGetResponse(zodTypes).parse(data) as GetResponse<T, U>;
+    }
+
+    return data;
   }
   /**
    * Create a new record in a given layout
