@@ -73,7 +73,9 @@ const undefinedTypeGuardStatement = (name: string) =>
 const exportClientStatement = (args: {
   fieldTypeName: string;
   portalTypeName?: string;
+  schemaName: string;
   layout: string;
+  useZod: boolean;
   envNames: Omit<ClientObjectProps, "layout">;
 }) => [
   undefinedTypeGuardStatement(args.envNames.db),
@@ -187,6 +189,32 @@ const exportClientStatement = (args: {
                 ],
                 true
               ),
+              ...(args.useZod
+                ? [
+                    factory.createObjectLiteralExpression(
+                      [
+                        factory.createPropertyAssignment(
+                          factory.createIdentifier("fieldData"),
+                          factory.createIdentifier(
+                            `Z${varname(args.schemaName)}`
+                          )
+                        ),
+                        // only add portal type if a portal type was passed
+                        ...(args.portalTypeName
+                          ? [
+                              factory.createPropertyAssignment(
+                                factory.createIdentifier("portalData"),
+                                factory.createIdentifier(
+                                  `Z${varname(args.schemaName)}Portals`
+                                )
+                              ),
+                            ]
+                          : []),
+                      ],
+                      true
+                    ),
+                  ]
+                : []),
             ]
           )
         ),
@@ -545,6 +573,8 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       // export layout-specific client
       ...exportClientStatement({
         envNames,
+        useZod: true,
+        schemaName: args.schemaName,
         layout: args.layoutName,
         fieldTypeName: `T${varname(schemaName)}`,
         ...(portalSchema.length > 0
@@ -599,6 +629,8 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       // export layout-specific client
       ...exportClientStatement({
         envNames,
+        useZod: false,
+        schemaName: args.schemaName,
         layout: args.layoutName,
         fieldTypeName: `T${varname(schemaName)}`,
         ...(portalSchema.length > 0
