@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
-import { any, z } from "zod";
+import { z } from "zod";
+import { getSharedData, setSharedData } from "./shared";
 import {
   CreateParams,
   CreateResponse,
@@ -16,7 +17,6 @@ import {
   MetadataResponse,
   ZodGenericPortalData,
   GetResponseOne,
-  ZFieldData,
   ZGetResponse,
 } from "./client-types";
 
@@ -116,18 +116,19 @@ function DataApi<
   }
 ) {
   const options = ZodOptions.strict().parse(input); // validate options
+  const sharedDataKey = `${options.server}/${options.db}`; // used for storing and re-using token
 
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
   );
-  let token: string | null = null;
   if ("apiKey" in options.auth) {
     baseUrl.port = (options.auth.ottoPort ?? 3030).toString();
-    token = options.auth.apiKey;
   }
 
   async function getToken(refresh = false): Promise<string> {
     if ("apiKey" in options.auth) return options.auth.apiKey;
+
+    let token = getSharedData(sharedDataKey);
 
     if (refresh) token = null; // clear token so are forced to get a new one
 
@@ -153,6 +154,7 @@ function DataApi<
       if (!token) throw new Error("Could not get token");
     }
 
+    setSharedData(sharedDataKey, token);
     return token;
   }
 
