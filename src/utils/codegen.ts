@@ -672,7 +672,6 @@ export const getSchema = async (args: {
     if (err instanceof FileMakerError && err.code === "105") {
       console.log(
         chalk.bold.red("ERROR:"),
-        // chalk.red("Layout", chalk.underline(layout), "not found"),
         "Skipping schema generation for layout:",
         chalk.bold.underline(layout),
         "(not found)"
@@ -698,7 +697,6 @@ export const getSchema = async (args: {
 
 export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
 export type GenerateSchemaOptions = {
-  clientConfig?: ClientObjectProps;
   envNames?: Omit<ClientObjectProps, "layout">;
   schemas: Array<{
     layout: string;
@@ -709,13 +707,7 @@ export type GenerateSchemaOptions = {
   useZod?: boolean;
 };
 export const generateSchemas = async (options: GenerateSchemaOptions) => {
-  const {
-    clientConfig,
-    envNames,
-    schemas,
-    path = "schema",
-    useZod = true,
-  } = options;
+  const { envNames, schemas, path = "schema", useZod = true } = options;
 
   const defaultEnvNames = {
     apiKey: "OTTO_API_KEY",
@@ -726,33 +718,22 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
     db: "FM_DATABASE",
   };
 
-  const server =
-    clientConfig?.server ??
-    process.env[envNames?.server ?? defaultEnvNames.server];
-  const db =
-    clientConfig?.db ?? process.env[envNames?.db ?? defaultEnvNames.db];
+  const server = process.env[envNames?.server ?? defaultEnvNames.server];
+  const db = process.env[envNames?.db ?? defaultEnvNames.db];
   const apiKey =
-    (clientConfig && isOttoAuth(clientConfig.auth)
-      ? clientConfig.auth.apiKey
-      : envNames && isOttoAuth(envNames.auth)
+    (envNames && isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.apiKey ?? defaultEnvNames.apiKey]
       : undefined) ?? process.env[defaultEnvNames.apiKey];
   const ottoPort =
-    (clientConfig && isOttoAuth(clientConfig.auth)
-      ? clientConfig.auth.ottoPort
-      : envNames && isOttoAuth(envNames.auth)
+    (envNames && isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.ottoPort ?? defaultEnvNames.ottoPort]
       : undefined) ?? "3030";
   const username =
-    (clientConfig && !isOttoAuth(clientConfig.auth)
-      ? clientConfig.auth.username
-      : envNames && !isOttoAuth(envNames.auth)
+    (envNames && !isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.username ?? defaultEnvNames.username]
       : undefined) ?? process.env[defaultEnvNames.username];
   const password =
-    (clientConfig && !isOttoAuth(clientConfig.auth)
-      ? clientConfig.auth.password
-      : envNames && !isOttoAuth(envNames.auth)
+    (envNames && !isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.password ?? defaultEnvNames.password]
       : undefined) ?? process.env[defaultEnvNames.password];
 
@@ -783,7 +764,7 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
     return;
   }
 
-  const client = DataApi(clientConfig ?? { auth, server, db });
+  const client = DataApi({ auth, server, db });
   await fs.ensureDir(path);
   schemas.forEach(async (item) => {
     const result = await getSchema({

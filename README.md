@@ -86,17 +86,17 @@ const result = await client.list<TContact>({ layout: "Contacts" });
 ```
 
 ## Automatic Type Generation
-This package also includes a helper function that will automatically generate types for each of your layouts. Use this tool within a package script to easily keep your types updated with any schema changes in FileMaker during development. 🤯
+This package also includes a helper function that will automatically generate types for each of your layouts. Use this tool regularly during development to easily keep your types updated with any schema changes in FileMaker. 🤯
 
-The generated code uses the [`zod`](https://github.com/colinhacks/zod) library so that you can also implement runtime validation for all calls to the Data API.
+The generated file also produces a layout-specific client instance that will automatically type all of the methods for that layout **and** validates the response using the [`zod`](https://github.com/colinhacks/zod) library. This validaiton happens at runtime so you can protect against dangerous field changes even when you haven't ran the code generator recently, or in your projection deployment!
 
 ### Setup instructions:
 1. Add a schema configuation file to the root of your project
 ```sh
 yarn codegen --init
 ```
-2. Edit the configuration file (`fmschema.config.js`) to include your FileMaker layouts, and read-only credentials to your server.
-3. Run the `codegen` command to generate your types!
+2. Edit the configuration file (`fmschema.config.js`) to include your FileMaker layouts (see more configuration options below).
+4. Run the `codegen` command to generate your types!
 ```sh
 yarn codegen
 ```
@@ -112,29 +112,28 @@ export const ZCustomer = z.object({
     email: z.string(),
 });
 export type TCustomer = z.infer<typeof ZCustomer>;
-export const client = DataApi<TCustomer>({
+export const client = DataApi<any, TCustomer>({
     auth: { apiKey: process.env.OTTO_API_KEY },
     db: process.env.FM_DATABASE,
     server: process.env.FM_SERVER,
     layout: "customer_api"
-});
+}, { fieldData: ZCustomer });
 ```
-Notice how this even generates a typed client instance for you to use. If you import this client directly into the places where you you want to interact with this layout, you can simplfiy your code even further.
+You can use the exported types to type your own client, or simply use the generated client to get typed and validated results, like so:
 ```ts
 import { client } from "schema/Customer";
 ...
-const result = await client.list(); // result will be fully typed!
+const result = await client.list(); // result will be fully typed and validated!
 ```
 
 #### `generateSchemas` options
 
 | Option | Type | Default | Description |
 | ---| --- | --- | --- |
-| clientConfig | `object` | *undefined* | Configuration params passed to the DataApi client (see [Client Setup Options](##client-setup-options)). Used for making the metadata API call to your server |
-| envNames | `object` | *undefined* | Same purpose as `clientConfig`, but this can be used to override the names of the environment variables used for the client |
+| envNames | `object` | *undefined* | This object has the same structure as the client config parameters and is used to overrride the environment variable names used for the generated client. |
 | schemas | `Schema[]` | *(required)* | An array of `Schema` objects to generate types for (see below) |
 | path | `string` | `"./schema"` | Path to folder where generated files should be saved. |
-| useZod | `boolean` | `true` | An array of `Schema` objects to generate types for |
+| useZod | `boolean` | `true` | When enabled, will generate Zod schema in addition to TypeScript types and add validation to the generated client for each layout |
 
 #### `Schema` options
 | Option | Type | Default | Description |
@@ -151,11 +150,11 @@ No catch! Really! But keep in mind this is a v1 release and we hope to imporve i
 ### I don't like the way the code is generated. Can I edit the generated files?
 They are just files added to your project, so you technically can, but we don't recommend it, as it would undermine the main benefit of being able to re-run the script at a later date when the schema changes—all your edits would be overritten. If you need to extend the types, it's better to do extend them into a new type/zod schema in another file. Or, if you have suggesstions for the underlying engine, Pull Requests are welcome!
 
-### Do I have to install `dotenv` or `zod` for this package to work?
-No. Those packages are only required if you want to use the automatic type generation feature. The pure DataAPI client installs all its neccesary dependencies automatically. If you want to generate types directly instead of Zod objects, set the `useZod` flag to `false` in the `generateSchemas` function.
+### Do I have to install `zod` for this package to work?
+No. Zod is included as a depenency with this package and used under the hood when you use the generated layout-specific client to validate the responses from your  server. If you wish to disable the validation, you can pass `useZod: false` to the generated client.
 
 ### Why are number fields typed as a `string | number`?
-FileMaker will return numbers as strings if the field is empty. This ensures you properly account for this in your frontend code.
+FileMaker will return numbers as strings in certain cases. This ensures you properly account for this in your frontend code.
 
 ### How does the code generation handle Value Lists?
 Values lists are exported as their own types within the schema file, but they are not enforced within the schema by default because the actual data in the field may not be fully validated.
@@ -165,7 +164,7 @@ If you want the type to be enforced to a value from the value list, you can enab
 ### What about date/time/timestamp fields?
 For now, these are all typed as strings. You probably want to transform these values anyway, so we keep it simple at the automated level.
 
-### Can I run the `generateSchemas` function in a CI/CD environment?
+### Can I run the `codegen` command in a CI/CD environment?
 Yes, great idea! This could be a great way to catch errors that would arise from any changes to the FileMaker schema. 
 
 ### Why Zod instead of just TypeScript?
