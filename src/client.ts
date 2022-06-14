@@ -227,10 +227,7 @@ function DataApi<
       query: params,
     });
 
-    if (zodTypes) {
-      return ZGetResponse(zodTypes).parse(data) as GetResponse<T, U>;
-    }
-
+    if (zodTypes) ZGetResponse(zodTypes).parse(data);
     return data;
   }
   /**
@@ -262,12 +259,15 @@ function DataApi<
       : GetArgs<U> & WithLayout
   ): Promise<GetResponse<T, U>> {
     const { recordId, layout = options.layout, ...params } = args;
-    return await request({
+    const data = await request({
       url: `/layouts/${layout}/records/${recordId}`,
       method: "GET",
       // @ts-ignore
       query: params,
     });
+    if (zodTypes)
+      return ZGetResponse(zodTypes).parse(data) as GetResponse<T, U>;
+    return data;
   }
   /**
    * Update a single record by internal RecordId
@@ -377,7 +377,7 @@ function DataApi<
       ...params
     } = args;
     const query = !Array.isArray(queryInput) ? [queryInput] : queryInput;
-    return await request({
+    const data = await request({
       url: `/layouts/${layout}/_find`,
       body: { query, ...params },
       method: "POST",
@@ -386,6 +386,8 @@ function DataApi<
         return { data: [] };
       throw e;
     });
+    if (zodTypes) ZGetResponse(zodTypes).parse(data);
+    return data;
   }
 
   /**
@@ -402,6 +404,7 @@ function DataApi<
     const res = await find<T, U>(args);
     if (res.data.length !== 1)
       throw new Error(`${res.data.length} records found; expecting exactly 1`);
+    if (zodTypes) ZGetResponse(zodTypes).parse(res);
     return { ...res, data: res.data[0] };
   }
   /**
@@ -416,6 +419,7 @@ function DataApi<
       : FindArgs<T, U> & IgnoreEmptyResult & WithLayout
   ): Promise<GetResponseOne<T, U>> {
     const res = await find<T, U>(args);
+    if (zodTypes) ZGetResponse(zodTypes).parse(res);
     return { ...res, data: res.data[0] };
   }
 
