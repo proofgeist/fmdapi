@@ -4,11 +4,13 @@ import { z, ZodError } from "zod";
 
 type TCustomer = {
   name: string;
+  phone: string;
 };
-const ZCustomer = z.object({ name: z.string() });
+const ZCustomer = z.object({ name: z.string(), phone: z.string() });
 const record_good = {
   fieldData: {
     name: "Fake Name",
+    phone: "5551231234",
   },
   portalData: {},
   recordId: "5",
@@ -17,6 +19,7 @@ const record_good = {
 const record_bad = {
   fieldData: {
     name_badfield: "Fake Name",
+    phone: "5551231234",
   },
   portalData: {},
   recordId: "5",
@@ -25,6 +28,7 @@ const record_bad = {
 const record_extra = {
   fieldData: {
     name: "Fake Name",
+    phone: "5551231234",
     extraField: "Fake Name",
   },
   portalData: {},
@@ -100,5 +104,24 @@ describe("zod validation", () => {
       .list({})
       .then(() => expect(true).toBe(false))
       .catch((e) => expect(e).toBeInstanceOf(ZodError));
+  });
+  it("find method: should properly infer from root type", async () => {
+    const client = DataApi<any, TCustomer>(
+      {
+        auth: { apiKey: "KEY_anything" },
+        db: "db",
+        server: "https://example.com",
+        layout: "layout",
+      },
+      { fieldData: ZCustomer }
+    );
+    const scope = nock("https://example.com:3030")
+      .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
+      .reply(200, responseSample(record_good));
+
+    // the following should not error if typed properly
+    const resp = await client.find({ query: { name: "test" } });
+    resp.data[0].fieldData.name;
+    resp.data[0].fieldData.phone;
   });
 });

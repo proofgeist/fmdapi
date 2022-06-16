@@ -57,44 +57,6 @@ const ZodOptions = z.object({
   layout: z.string().optional(),
 });
 
-type WithLayout = {
-  /**
-   * The layout to use for the request.
-   */
-  layout: string;
-};
-type CreateArgs<
-  T extends FieldData = FieldData,
-  U extends GenericPortalData = GenericPortalData
-> = CreateParams<U> & {
-  fieldData: Partial<T>;
-};
-type GetArgs<U extends GenericPortalData = GenericPortalData> = GetParams<U> & {
-  recordId: number;
-};
-type UpdateArgs<
-  T extends FieldData = FieldData,
-  U extends GenericPortalData = GenericPortalData
-> = UpdateParams<U> & {
-  fieldData: Partial<T>;
-  recordId: number;
-};
-type DeleteArgs = DeleteParams & {
-  recordId: number;
-};
-type IgnoreEmptyResult = {
-  /**
-   * If true, a find that returns no results will retun an empty array instead of throwing an error.
-   * @default false
-   */
-  ignoreEmptyResult?: boolean;
-};
-type FindArgs<
-  T extends FieldData = FieldData,
-  U extends GenericPortalData = GenericPortalData
-> = ListParams<T, U> & {
-  query: Query<T> | Array<Query<T>>;
-};
 class FileMakerError extends Error {
   public readonly code: string;
 
@@ -199,13 +161,43 @@ function DataApi<
     return respData.response;
   }
 
+  type WithLayout = {
+    /**
+     * The layout to use for the request.
+     */
+    layout: string;
+  };
+  type CreateArgs<T extends Td = Td, U extends Ud = Ud> = CreateParams<U> & {
+    fieldData: Partial<T>;
+  };
+  type GetArgs<U extends Ud = Ud> = GetParams<U> & {
+    recordId: number;
+  };
+  type UpdateArgs<T extends Td = Td, U extends Ud = Ud> = UpdateParams<U> & {
+    fieldData: Partial<T>;
+    recordId: number;
+  };
+  type DeleteArgs = DeleteParams & {
+    recordId: number;
+  };
+  type IgnoreEmptyResult = {
+    /**
+     * If true, a find that returns no results will retun an empty array instead of throwing an error.
+     * @default false
+     */
+    ignoreEmptyResult?: boolean;
+  };
+  type FindArgs<T extends FieldData = Td, U extends Ud = Ud> = ListParams<
+    T,
+    U
+  > & {
+    query: Query<T> | Array<Query<T>>;
+  };
+
   /**
    * List all records from a given layout, no find criteria applied.
    */
-  async function list<
-    T extends FieldData = Td,
-    U extends GenericPortalData = Ud
-  >(
+  async function list<T extends FieldData = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout>
       : ListParams<T, U> & WithLayout
@@ -235,10 +227,7 @@ function DataApi<
   /**
    * Create a new record in a given layout
    */
-  async function create<
-    T extends FieldData = Td,
-    U extends GenericPortalData = Ud
-  >(
+  async function create<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? CreateArgs<T, U> & Partial<WithLayout>
       : CreateArgs<T, U> & WithLayout
@@ -252,10 +241,7 @@ function DataApi<
   /**
    * Get a single record by Internal RecordId
    */
-  async function get<
-    T extends FieldData = Td,
-    U extends GenericPortalData = Ud
-  >(
+  async function get<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? GetArgs<U> & Partial<WithLayout>
       : GetArgs<U> & WithLayout
@@ -274,10 +260,7 @@ function DataApi<
   /**
    * Update a single record by internal RecordId
    */
-  async function update<
-    T extends FieldData = Td,
-    U extends GenericPortalData = Ud
-  >(
+  async function update<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? UpdateArgs<T, U> & Partial<WithLayout>
       : UpdateArgs<T, U> & WithLayout
@@ -292,10 +275,7 @@ function DataApi<
   /**
    * Delete a single record by internal RecordId
    */
-  async function deleteRecord<
-    T extends FieldData = Td,
-    U extends GenericPortalData = Ud
-  >(
+  async function deleteRecord<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? DeleteArgs & Partial<WithLayout>
       : DeleteArgs & WithLayout
@@ -364,10 +344,7 @@ function DataApi<
   /**
    * Find records in a given layout
    */
-  async function find<
-    T extends FieldData = Td,
-    U extends GenericPortalData = Ud
-  >(
+  async function find<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout>
       : FindArgs<T, U> & IgnoreEmptyResult & WithLayout
@@ -395,10 +372,7 @@ function DataApi<
   /**
    * Helper method for `find`. Will only return the first result or throw error if there is more than 1 result.
    */
-  async function findOne<
-    T extends FieldData = Td,
-    U extends GenericPortalData = Ud
-  >(
+  async function findOne<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? FindArgs<T, U> & Partial<WithLayout>
       : FindArgs<T, U> & WithLayout
@@ -412,10 +386,7 @@ function DataApi<
   /**
    * Helper method for `find`. Will only return the first result instead of an array.
    */
-  async function findFirst<
-    T extends FieldData = Td,
-    U extends GenericPortalData = Ud
-  >(
+  async function findFirst<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout>
       : FindArgs<T, U> & IgnoreEmptyResult & WithLayout
