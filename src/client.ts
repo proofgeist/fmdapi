@@ -36,8 +36,6 @@ export type ClientObjectProps = {
    * The layout to use by default for all requests. Can be overrridden on each request.
    */
   layout?: string;
-  zodFieldData?: z.ZodTypeAny;
-  zodPortalData?: z.ZodTypeAny;
 };
 const ZodOptions = z.object({
   server: z
@@ -73,8 +71,8 @@ function DataApi<
 >(
   input: Opts,
   zodTypes?: {
-    fieldData: z.ZodType<FieldData>;
-    portalData?: ZodGenericPortalData;
+    fieldData: z.AnyZodObject;
+    portalData?: z.AnyZodObject;
   }
 ) {
   const options = ZodOptions.strict().parse(input); // validate options
@@ -220,8 +218,11 @@ function DataApi<
       // @ts-ignore
       query: params,
     });
-
-    if (zodTypes) ZGetResponse(zodTypes).parse(data);
+    // console.log(data.data[0].portalData);
+    if (zodTypes) {
+      const res = ZGetResponse(zodTypes).parse(data);
+      console.log(res.data[0]);
+    }
     return data;
   }
   /**

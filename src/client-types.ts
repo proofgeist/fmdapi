@@ -21,7 +21,10 @@ export type PortalsWithIds<U extends GenericPortalData = GenericPortalData> = {
   >;
 };
 
-export const getFMRecordAsZod = <T, U>({
+export const getFMRecordAsZod = <
+  T extends z.AnyZodObject,
+  U extends z.AnyZodObject
+>({
   fieldData,
   portalData,
 }: ZInput<T, U>): z.ZodTypeAny => {
@@ -31,7 +34,11 @@ export const getFMRecordAsZod = <T, U>({
     modId: z.string(),
   });
   if (portalData) {
-    obj.extend({ portalData });
+    const portalObj = z.object({});
+    Object.keys(portalData).forEach((key) => {
+      portalObj.extend({ [key]: portalData.shape[key] });
+    });
+    obj.extend({ portalData: portalObj }).strict();
   }
   return obj;
 };
@@ -132,13 +139,20 @@ export type GetResponseOne<
 };
 
 type ZInput<T, U> = {
-  fieldData: z.ZodType<FieldData>;
-  portalData?: ZodGenericPortalData;
+  fieldData: T;
+  portalData?: U;
 };
-export const ZGetResponse = <T extends FieldData, U extends GenericPortalData>({
+export const ZGetResponse = <
+  T extends z.AnyZodObject,
+  U extends z.AnyZodObject
+>({
   fieldData,
   portalData,
-}: ZInput<T, U>): z.ZodType<GetResponse<T, U>, z.ZodTypeDef, any> =>
+}: ZInput<T, U>): z.ZodType<
+  GetResponse<z.infer<T>, z.infer<U>>
+  // z.ZodTypeDef,
+  // any
+> =>
   ZScriptResponse.extend({
     data: z.array(getFMRecordAsZod({ fieldData, portalData })),
   });
