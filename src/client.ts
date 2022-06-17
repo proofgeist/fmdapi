@@ -218,10 +218,9 @@ function DataApi<
       // @ts-ignore
       query: params,
     });
-    // console.log(data.data[0].portalData);
+
     if (zodTypes) {
-      const res = ZGetResponse(zodTypes).parse(data);
-      console.log(res.data[0]);
+      ZGetResponse(zodTypes).parse(data);
     }
     return data;
   }
