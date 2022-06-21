@@ -9,7 +9,6 @@
 
 This package is designed to make working with the FileMaker Data API much easier. Here's just a few key features:
 - [Otto](https://ottofms.com/) Data API proxy support
-- A lightweight code bundle
 - TypeScript support for easy auto-completion of your fields
 - Automated type generation based on layout metadata
 

@@ -1,6 +1,6 @@
 {
   "name": "@proofgeist/fmdapi",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "FileMaker Data API client",
   "main": "dist/index.js",
   "repository": "git@github.com:proofgeist/fm-dapi.git",
@@ -22,6 +22,7 @@
     "fs-extra": "^10.1.0",
     "node-fetch": "2.6.7",
     "dotenv": "^16.0.1",
+    "zod": "^3.16.0",
     "ts-toolbelt": "^9.6.0"
   },
   "devDependencies": {
@@ -33,8 +34,7 @@
     "nock": "^13.2.4",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.7.0",
-    "typescript": "^4.6.4",
-    "zod": "^3.16.0"
+    "typescript": "^4.6.4"
   },
   "files": [
     "dist",
