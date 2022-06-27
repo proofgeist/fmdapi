@@ -116,9 +116,7 @@ it("should allow list method without layout param", async () => {
   const scope = nock("https://example.com:3030")
     .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
     .reply(200, goodFindResp);
-  await client.list().catch((e) => {
-    expect(true).toBe(false);
-  });
+  expect(client.list()).rejects.toThrow();
 });
 it("should require list method to have layout param", async () => {
   // if not passed into the top-level client

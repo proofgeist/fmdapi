@@ -149,10 +149,7 @@ describe("zod validation", () => {
       .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
       .reply(200, responseSample(record_bad));
     // expect this to error
-    await client
-      .list({})
-      .then(() => expect(true).toBe(false))
-      .catch((e) => expect(e).toBeInstanceOf(ZodError));
+    expect(client.list({})).rejects.toBeInstanceOf(ZodError);
   });
   it("find method: should properly infer from root type", async () => {
     const client = DataApi<any, TCustomer>(

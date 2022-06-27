@@ -174,16 +174,12 @@ describe("client methods (otto)", () => {
         response: {},
       });
 
-    await client
+    const prom = await client
       .list({ layout: "not_a_layout" })
-      .then(
-        () => expect(true).toBe(false) // if we reach this code, the test should fail
-      )
       .catch((err) => {
         expect(err).toBeInstanceOf(FileMakerError);
         expect(err.code).toBe("105"); // missing layout error
-      });
-
-    expect(scope.isDone()).toBe(true);
+      })
+      .finally(() => expect(scope.isDone()).toBe(true));
   });
 });
