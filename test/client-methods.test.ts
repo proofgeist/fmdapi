@@ -88,7 +88,35 @@ describe("find methods", () => {
   });
 });
 
-test("findOne with 2 results should fail", async () => {
+it("should allow list method without layout param", async () => {
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+    layout: "layout",
+  });
+  const scope = nock("https://example.com:3030")
+    .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
+    .reply(200, goodFindResp);
+  await client.list();
+  expect(scope.isDone()).toBe(true);
+});
+it("should require list method to have layout param", async () => {
+  // if not passed into the top-level client
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+  });
+  const scope = nock("https://example.com:3030")
+    .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
+    .reply(200, goodFindResp);
+
+  expect(client.list()).rejects.toThrow();
+  expect(scope.isDone()).toBe(false);
+});
+
+it("findOne with 2 results should fail", async () => {
   const client = DataApi({
     auth: { apiKey: "KEY_anything" },
     db: "db",
@@ -104,31 +132,4 @@ test("findOne with 2 results should fail", async () => {
       query: { anything: "anything" },
     })
   ).rejects.toThrow();
-});
-
-it("should allow list method without layout param", async () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
-    layout: "layout",
-  });
-  const scope = nock("https://example.com:3030")
-    .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
-    .reply(200, goodFindResp);
-  expect(client.list()).rejects.toThrow();
-});
-it("should require list method to have layout param", async () => {
-  // if not passed into the top-level client
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
-  });
-  const scope = nock("https://example.com:3030")
-    .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
-    .reply(200, goodFindResp);
-
-  expect(client.list()).rejects.toThrow();
-  expect(scope.isDone()).toBe(false);
 });
