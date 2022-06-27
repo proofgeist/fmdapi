@@ -201,7 +201,8 @@ function DataApi<
       ? ListParams<T, U> & Partial<WithLayout>
       : ListParams<T, U> & WithLayout
   ): Promise<GetResponse<T, U>> {
-    const { layout = options.layout, ...params } = (args = {} as any);
+    const { layout = options.layout, ...params } = args ?? ({} as any);
+    if (layout === undefined) throw new Error("Must specify layout");
 
     // rename and refactor limit, offset, and sort keys for this request
     if (!!params.limit)

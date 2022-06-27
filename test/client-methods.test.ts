@@ -98,15 +98,12 @@ test("findOne with 2 results should fail", async () => {
     .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
     .reply(200, goodFindResp2);
 
-  client
-    .findOne({
+  expect(
+    client.findOne({
       layout: "layout",
       query: { anything: "anything" },
     })
-    .then(() => expect(true).toBe(false))
-    .catch(() => {
-      expect(true).toBe(true);
-    });
+  ).rejects.toThrow();
 });
 
 it("should allow list method without layout param", async () => {
@@ -120,7 +117,20 @@ it("should allow list method without layout param", async () => {
     .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
     .reply(200, goodFindResp);
   await client.list().catch((e) => {
-    console.log(e);
     expect(true).toBe(false);
   });
+});
+it("should require list method to have layout param", async () => {
+  // if not passed into the top-level client
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+  });
+  const scope = nock("https://example.com:3030")
+    .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
+    .reply(200, goodFindResp);
+
+  expect(client.list()).rejects.toThrow();
+  expect(scope.isDone()).toBe(false);
 });
