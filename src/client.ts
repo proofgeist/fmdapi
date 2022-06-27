@@ -195,12 +195,13 @@ function DataApi<
   /**
    * List all records from a given layout, no find criteria applied.
    */
+  async function list(args?: any): Promise<GetResponse<Td, Ud>>;
   async function list<T extends FieldData = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout>
       : ListParams<T, U> & WithLayout
   ): Promise<GetResponse<T, U>> {
-    const { layout = options.layout, ...params } = args;
+    const { layout = options.layout, ...params } = (args = {} as any);
 
     // rename and refactor limit, offset, and sort keys for this request
     if (!!params.limit)

@@ -108,3 +108,19 @@ test("findOne with 2 results should fail", async () => {
       expect(true).toBe(true);
     });
 });
+
+it("should allow list method without layout param", async () => {
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+    layout: "layout",
+  });
+  const scope = nock("https://example.com:3030")
+    .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
+    .reply(200, goodFindResp);
+  await client.list().catch((e) => {
+    console.log(e);
+    expect(true).toBe(false);
+  });
+});
