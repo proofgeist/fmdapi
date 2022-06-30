@@ -1,9 +1,23 @@
 import { ensureFileSync, readFileSync, writeFileSync } from "fs-extra";
 
-let data: Record<string, string> = {};
 const devFileName = "shared.json";
 
+function getDataFromFile(): Record<string, string> {
+  let data: Record<string, string> = {};
+  if (process.env.NODE_ENV === "development") {
+    const fileString = readFileSync(devFileName, "utf8");
+    try {
+      return JSON.parse(fileString);
+    } catch {
+      return data;
+    }
+  } else {
+    return data;
+  }
+}
+
 const setSharedData = (key: string, value: string) => {
+  const data = getDataFromFile();
   data[key] = value;
   if (process.env.NODE_ENV === "development") {
     ensureFileSync(devFileName);
@@ -11,10 +25,7 @@ const setSharedData = (key: string, value: string) => {
   }
 };
 const getSharedData = (key: string): string | null => {
-  if (process.env.NODE_ENV === "development") {
-    ensureFileSync(devFileName);
-    data = JSON.parse(readFileSync(devFileName, "utf8"));
-  }
+  const data = getDataFromFile();
   return data[key];
 };
 export { setSharedData, getSharedData };
