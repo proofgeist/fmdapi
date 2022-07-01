@@ -20,6 +20,9 @@ import {
   ZGetResponse,
 } from "./client-types";
 
+function asNumber(input: string | number): number {
+  return typeof input === "string" ? parseInt(input) : input;
+}
 type OttoAuth = {
   apiKey: string;
   ottoPort?: number;
@@ -169,14 +172,14 @@ function DataApi<
     fieldData: Partial<T>;
   };
   type GetArgs<U extends Ud = Ud> = GetParams<U> & {
-    recordId: number;
+    recordId: number | string;
   };
   type UpdateArgs<T extends Td = Td, U extends Ud = Ud> = UpdateParams<U> & {
     fieldData: Partial<T>;
-    recordId: number;
+    recordId: number | string;
   };
   type DeleteArgs = DeleteParams & {
-    recordId: number;
+    recordId: number | string;
   };
   type IgnoreEmptyResult = {
     /**
@@ -248,7 +251,9 @@ function DataApi<
       ? GetArgs<U> & Partial<WithLayout>
       : GetArgs<U> & WithLayout
   ): Promise<GetResponse<T, U>> {
+    args.recordId = asNumber(args.recordId);
     const { recordId, layout = options.layout, ...params } = args;
+
     const data = await request({
       url: `/layouts/${layout}/records/${recordId}`,
       method: "GET",
@@ -267,6 +272,7 @@ function DataApi<
       ? UpdateArgs<T, U> & Partial<WithLayout>
       : UpdateArgs<T, U> & WithLayout
   ): Promise<UpdateResponse> {
+    args.recordId = asNumber(args.recordId);
     const { recordId, fieldData, layout = options.layout, ...params } = args;
     return await request({
       url: `/layouts/${layout}/records/${recordId}`,
@@ -282,6 +288,7 @@ function DataApi<
       ? DeleteArgs & Partial<WithLayout>
       : DeleteArgs & WithLayout
   ): Promise<DeleteResponse> {
+    args.recordId = asNumber(args.recordId);
     const { recordId, layout = options.layout, ...params } = args;
     return await request({
       url: `/layouts/${layout}/records/${recordId}`,
