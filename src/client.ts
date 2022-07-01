@@ -205,11 +205,11 @@ function DataApi<
     if (layout === undefined) throw new Error("Must specify layout");
 
     // rename and refactor limit, offset, and sort keys for this request
-    if (!!params.limit)
+    if (params.limit !== undefined)
       delete Object.assign(params, { _limit: params.limit })["limit"];
-    if (!!params.offset)
+    if (params.offset !== undefined)
       delete Object.assign(params, { _offset: params.offset })["offset"];
-    if (!!params.sort)
+    if (params.sort !== undefined)
       delete Object.assign(params, {
         _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
       })["sort"];

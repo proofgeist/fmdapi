@@ -133,3 +133,20 @@ it("findOne with 2 results should fail", async () => {
     })
   ).rejects.toThrow();
 });
+
+it("should rename offset param", async () => {
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+  });
+  const scope = nock("https://example.com:3030")
+    .get("/fmi/data/vLatest/databases/db/layouts/layout/records?_offset=0")
+    .reply(200, goodFindResp);
+
+  await client.list({
+    layout: "layout",
+    offset: 0,
+  });
+  expect(scope.isDone()).toBe(true);
+});
