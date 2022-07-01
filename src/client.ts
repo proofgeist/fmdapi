@@ -126,12 +126,13 @@ function DataApi<
     body?: object;
     query?: Record<string, string>;
     method?: string;
-  }) {
-    const { query, body, method = "POST" } = params;
+    retry?: boolean;
+  }): Promise<any> {
+    const { query, body, method = "POST", retry = false } = params;
     const url = new URL(`${baseUrl}${params.url}`);
 
     if (query) url.search = new URLSearchParams(query).toString();
-    const token = await getToken();
+    const token = await getToken(retry);
     const res = await fetch(url.toString(), {
       method,
       body: body ? JSON.stringify(body) : undefined,
@@ -149,14 +150,19 @@ function DataApi<
     }
 
     if (!res.ok) {
-      throw new FileMakerError(
-        respData?.messages?.[0].code ?? "500",
-        `Filemaker Data API failed with (${res.status}): ${JSON.stringify(
-          respData,
-          null,
-          2
-        )}`
-      );
+      if (respData?.messages?.[0].code === "952" && !retry) {
+        // token expired, get new token and retry once
+        return request({ ...params, retry: true });
+      } else {
+        throw new FileMakerError(
+          respData?.messages?.[0].code ?? "500",
+          `Filemaker Data API failed with (${res.status}): ${JSON.stringify(
+            respData,
+            null,
+            2
+          )}`
+        );
+      }
     }
 
     return respData.response;
@@ -369,7 +375,7 @@ function DataApi<
       url: `/layouts/${layout}/_find`,
       body: { query, ...params },
       method: "POST",
-    }).catch((e) => {
+    }).catch((e: any) => {
       if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
         return { data: [] };
       throw e;
