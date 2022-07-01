@@ -697,7 +697,7 @@ export const getSchema = async (args: {
 
 export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
 export type GenerateSchemaOptions = {
-  envNames?: Omit<ClientObjectProps, "layout">;
+  envNames?: Partial<Omit<ClientObjectProps, "layout">>;
   schemas: Array<{
     layout: string;
     schemaName: string;
@@ -721,19 +721,19 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
   const server = process.env[envNames?.server ?? defaultEnvNames.server];
   const db = process.env[envNames?.db ?? defaultEnvNames.db];
   const apiKey =
-    (envNames && isOttoAuth(envNames.auth)
+    (envNames?.auth && isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.apiKey ?? defaultEnvNames.apiKey]
       : undefined) ?? process.env[defaultEnvNames.apiKey];
   const ottoPort =
-    (envNames && isOttoAuth(envNames.auth)
+    (envNames?.auth && isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.ottoPort ?? defaultEnvNames.ottoPort]
       : undefined) ?? "3030";
   const username =
-    (envNames && !isOttoAuth(envNames.auth)
+    (envNames?.auth && !isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.username ?? defaultEnvNames.username]
       : undefined) ?? process.env[defaultEnvNames.username];
   const password =
-    (envNames && !isOttoAuth(envNames.auth)
+    (envNames?.auth && !isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.password ?? defaultEnvNames.password]
       : undefined) ?? process.env[defaultEnvNames.password];
 
@@ -749,13 +749,19 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
     if (!apiKey)
       console.log(
         `${
-          (envNames && isOttoAuth(envNames.auth) && envNames.auth.apiKey) ??
+          (envNames?.auth &&
+            isOttoAuth(envNames.auth) &&
+            envNames.auth.apiKey) ??
           defaultEnvNames.apiKey
         } (or ${
-          (envNames && !isOttoAuth(envNames.auth) && envNames.auth.username) ??
+          (envNames?.auth &&
+            !isOttoAuth(envNames.auth) &&
+            envNames.auth.username) ??
           defaultEnvNames.username
         } and ${
-          (envNames && !isOttoAuth(envNames.auth) && envNames.auth.password) ??
+          (envNames?.auth &&
+            !isOttoAuth(envNames.auth) &&
+            envNames.auth.password) ??
           defaultEnvNames.password
         })`
       );
@@ -785,22 +791,22 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
           auth: isOttoAuth(auth)
             ? {
                 apiKey:
-                  envNames && "apiKey" in envNames.auth
+                  envNames?.auth && "apiKey" in envNames.auth
                     ? envNames.auth.apiKey
                     : defaultEnvNames.apiKey,
               }
             : {
                 username:
-                  envNames && "username" in envNames.auth
+                  envNames?.auth && "username" in envNames.auth
                     ? envNames.auth.username
                     : defaultEnvNames.username,
                 password:
-                  envNames && "password" in envNames.auth
+                  envNames?.auth && "password" in envNames.auth
                     ? envNames.auth.password
                     : defaultEnvNames.password,
               },
-          db: env?.db ?? defaultEnvNames.db,
-          server: env?.server ?? defaultEnvNames.server,
+          db: envNames?.db ?? defaultEnvNames.db,
+          server: envNames?.server ?? defaultEnvNames.server,
         },
       });
       fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
