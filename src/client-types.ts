@@ -199,3 +199,45 @@ type ValueList = {
   type: "customList" | "byField";
   values: Array<{ value: string; displayValue: string }>;
 };
+
+/** 
+ * Represents the data returned by a call to the Data API `layouts` endpoint.
+ */
+export type LayoutsResponse = {
+  /**
+   * A list of `Layout` or `LayoutsFolder` objects.
+    */
+  layouts: LayoutOrFolder[];
+}
+
+/**
+ * Represents a FileMaker layout.
+ */
+export type Layout = {
+  /**
+   * The name of the layout
+   */
+  name: string;
+  /**
+    * If the node is a layout, `table` may contain the name of the table
+    * the layout is associated with. 
+    */
+  table: string;
+}
+
+/**
+ * Represents a folder of `Layout` or `LayoutsFolder` objects.
+ */
+export type LayoutsFolder = {
+  /**
+   * The name of the folder
+   */
+  name: string;
+  isFolder: boolean;
+  /**
+   * A list of the Layout or LayoutsFolder objects in the folder.
+   */
+  folderLayoutNames?: LayoutOrFolder[];
+}
+
+export type LayoutOrFolder = Layout | LayoutsFolder;

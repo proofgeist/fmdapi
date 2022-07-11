@@ -1,4 +1,5 @@
 import { DataApi, FileMakerError } from "../src";
+import { LayoutsResponse, LayoutOrFolder, Layout, LayoutsFolder } from "../src/client-types";
 import nock from "nock";
 
 const record = {
@@ -33,6 +34,26 @@ const goodFindResp = {
 const goodFindResp2 = {
   response: { ...goodFindResp.response, data: [record, record] },
 };
+const goodLayoutsResp = {
+  response: {
+    layouts: [
+      {
+        "name": "layout1",
+        "table": ""
+      },
+      {
+        "name": "Group",
+        "isFolder": true,
+        "folderLayoutNames": [
+          {
+            "name": "layout2",
+            "table": ""
+          }
+        ]
+      }
+    ]
+  }
+}
 
 describe("find methods", () => {
   test("successful find", async () => {
@@ -149,4 +170,25 @@ it("should rename offset param", async () => {
     offset: 0,
   });
   expect(scope.isDone()).toBe(true);
+});
+
+it("should retrieve a list of folders and layouts", async () => {
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+  });
+
+  const scope = nock("https://example.com:3030")
+    .post("/fmi/data/vLatest/databases/db/layouts")
+    .reply(200, goodLayoutsResp);
+
+  const resp = await client.layouts() as LayoutsResponse;
+
+  expect(scope.isDone()).toBe(true);
+  expect(resp.hasOwnProperty("layouts")).toBe(true);
+  expect(resp.layouts.length).toBe(2);
+  expect(resp.layouts[0] as Layout).toHaveProperty("name");
+  expect(resp.layouts[1] as LayoutsFolder).toHaveProperty("isFolder");
+  expect(resp.layouts[1] as LayoutsFolder).toHaveProperty("folderLayoutNames");
 });
