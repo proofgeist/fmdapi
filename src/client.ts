@@ -18,6 +18,7 @@ import {
   ZodGenericPortalData,
   GetResponseOne,
   ZGetResponse,
+  LayoutsResponse,
 } from "./client-types";
 
 function asNumber(input: string | number): number {
@@ -411,6 +412,18 @@ function DataApi<
     return { ...res, data: res.data[0] };
   }
 
+  /**
+   * Returns a list of available layout nodes on the database. Nodes
+   * may represent 
+   * @returns 
+   */
+  async function layouts(): Promise<LayoutsResponse> {
+    return await request({
+      url: `/layouts`,
+      method: "POST",      
+    });    
+  }
+
   return {
     baseUrl, // returned only for testing purposes
     list,
@@ -423,6 +436,7 @@ function DataApi<
     find,
     findOne,
     findFirst,
+    layouts,
   };
 }
 
