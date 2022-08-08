@@ -73,6 +73,16 @@ const ZScriptResponse = z.object({
 });
 export type ScriptResponse = z.infer<typeof ZScriptResponse>;
 
+export const ZDataInfo = z.object({
+  database: z.string(),
+  layout: z.string(),
+  table: z.string(),
+  totalRecordCount: z.number(),
+  foundCount: z.number(),
+  returnedCount: z.number(),
+});
+export type DataInfo = z.infer<typeof ZDataInfo>;
+
 export type CreateParams<U> = ScriptParams & { portalData?: U };
 
 export type CreateResponse = ScriptResponse & {
@@ -130,12 +140,14 @@ export type GetResponse<
   U extends GenericPortalData = GenericPortalData
 > = ScriptResponse & {
   data: Array<FMRecord<T, U>>;
+  dataInfo: DataInfo;
 };
 export type GetResponseOne<
   T extends FieldData = FieldData,
   U extends GenericPortalData = GenericPortalData
 > = ScriptResponse & {
   data: FMRecord<T, U>;
+  dataInfo: DataInfo;
 };
 
 type ZInput<T, U> = {
@@ -155,6 +167,7 @@ export const ZGetResponse = <
 > =>
   ZScriptResponse.extend({
     data: z.array(getFMRecordAsZod({ fieldData, portalData })),
+    dataInfo: ZDataInfo,
   });
 type ZGetResponseReturnType<T, U> = z.infer<ReturnType<typeof ZGetResponse>>;
 export type Query<T extends FieldData = FieldData> = Partial<{
@@ -200,15 +213,15 @@ type ValueList = {
   values: Array<{ value: string; displayValue: string }>;
 };
 
-/** 
+/**
  * Represents the data returned by a call to the Data API `layouts` endpoint.
  */
 export type LayoutsResponse = {
   /**
    * A list of `Layout` or `LayoutsFolder` objects.
-    */
+   */
   layouts: LayoutOrFolder[];
-}
+};
 
 /**
  * Represents a FileMaker layout.
@@ -219,11 +232,11 @@ export type Layout = {
    */
   name: string;
   /**
-    * If the node is a layout, `table` may contain the name of the table
-    * the layout is associated with. 
-    */
+   * If the node is a layout, `table` may contain the name of the table
+   * the layout is associated with.
+   */
   table: string;
-}
+};
 
 /**
  * Represents a folder of `Layout` or `LayoutsFolder` objects.
@@ -238,6 +251,6 @@ export type LayoutsFolder = {
    * A list of the Layout or LayoutsFolder objects in the folder.
    */
   folderLayoutNames?: LayoutOrFolder[];
-}
+};
 
 export type LayoutOrFolder = Layout | LayoutsFolder;

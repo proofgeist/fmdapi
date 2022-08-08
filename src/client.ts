@@ -236,6 +236,30 @@ function DataApi<
     }
     return data;
   }
+
+  /**
+   * Paginate through all records from a given layout, no find criteria applied.
+   * ⚠️ WARNING: Use this method with caution, as it can be slow depending on the amount of records.
+   */
+  async function listAll<T extends FieldData = Td, U extends Ud = Ud>(
+    args: Opts["layout"] extends string
+      ? ListParams<T, U> & Partial<WithLayout>
+      : ListParams<T, U> & WithLayout
+  ) {
+    let runningData: GetResponse<T, U>["data"] = [];
+    const limit = args?.limit ?? 100;
+    let offset = args?.offset ?? 0;
+
+    const myArgs: ListParams<T, U> = args ?? {};
+
+    while (true) {
+      const data = (await list(args)) as unknown as GetResponse<T, U>;
+      runningData = [...runningData, ...data.data];
+      if (runningData.length >= data.dataInfo.foundCount) break;
+      myArgs.offset = offset + limit;
+    }
+    return runningData;
+  }
   /**
    * Create a new record in a given layout
    */
@@ -414,19 +438,20 @@ function DataApi<
 
   /**
    * Returns a list of available layout nodes on the database. Nodes
-   * may represent 
-   * @returns 
+   * may represent
+   * @returns
    */
   async function layouts(): Promise<LayoutsResponse> {
     return await request({
       url: `/layouts`,
-      method: "POST",      
-    });    
+      method: "POST",
+    });
   }
 
   return {
     baseUrl, // returned only for testing purposes
     list,
+    listAll,
     create,
     get,
     update,
