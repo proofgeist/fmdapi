@@ -220,3 +220,23 @@ it("should paginate through all records", async () => {
   expect(page1.isDone()).toBe(true);
   expect(page2.isDone()).toBe(true);
 });
+
+it("should paginate using findAll method", async () => {
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+    layout: "layout",
+  });
+
+  const page1 = nock("https://example.com:3030")
+    .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
+    .reply(200, goodFindResp);
+  const page2 = nock("https://example.com:3030")
+    .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
+    .reply(200, goodFindResp);
+  const data = await client.findAll({ query: {}, limit: 1 });
+  expect(data.length).toBe(2);
+  expect(page1.isDone()).toBe(true);
+  expect(page2.isDone()).toBe(true);
+});

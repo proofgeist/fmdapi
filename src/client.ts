@@ -19,6 +19,7 @@ import {
   GetResponseOne,
   ZGetResponse,
   LayoutsResponse,
+  FMRecord,
 } from "./client-types";
 
 function asNumber(input: string | number): number {
@@ -249,11 +250,10 @@ function DataApi<
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args?.limit ?? 100;
     let offset = args?.offset ?? 0;
-
     const myArgs: ListParams<T, U> = args ?? {};
 
     while (true) {
-      const data = (await list(args)) as unknown as GetResponse<T, U>;
+      const data = (await list(myArgs)) as unknown as GetResponse<T, U>;
       runningData = [...runningData, ...data.data];
       if (runningData.length >= data.dataInfo.foundCount) break;
       myArgs.offset = offset + limit;
@@ -423,6 +423,7 @@ function DataApi<
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
     return { ...res, data: res.data[0] };
   }
+
   /**
    * Helper method for `find`. Will only return the first result instead of an array.
    */
@@ -434,6 +435,27 @@ function DataApi<
     const res = await find<T, U>(args);
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
     return { ...res, data: res.data[0] };
+  }
+
+  /**
+   * Helper method for `find` to page through all found results.
+   * ⚠️ WARNING: Use with caution as this can be a slow operation
+   */
+  async function findAll<T extends Td = Td, U extends Ud = Ud>(
+    args: Opts["layout"] extends string
+      ? FindArgs<T, U> & Partial<WithLayout>
+      : FindArgs<T, U> & WithLayout
+  ): Promise<FMRecord<T, U>[]> {
+    let runningData: GetResponse<T, U>["data"] = [];
+    const limit = args.limit ?? 100;
+    let offset = args.offset ?? 0;
+    while (true) {
+      const data = await find<T, U>(args);
+      runningData = [...runningData, ...data.data];
+      if (runningData.length >= data.dataInfo.foundCount) break;
+      args.offset = offset + limit;
+    }
+    return runningData;
   }
 
   /**
@@ -461,6 +483,7 @@ function DataApi<
     find,
     findOne,
     findFirst,
+    findAll,
     layouts,
   };
 }
