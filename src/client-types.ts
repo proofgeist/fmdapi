@@ -1,4 +1,3 @@
-import { T } from "ts-toolbelt";
 import { z } from "zod";
 
 export const ZFieldValue = z.union([z.string(), z.number()]);
@@ -42,7 +41,6 @@ export const getFMRecordAsZod = <
   }
   return obj;
 };
-export type FMRecord2 = z.infer<ReturnType<typeof getFMRecordAsZod>>;
 
 export type FMRecord<
   T extends FieldData = FieldData,

@@ -132,6 +132,7 @@ const result = await client.list(); // result will be fully typed and validated!
 | envNames | `object` | *undefined* | This object has the same structure as the client config parameters and is used to overrride the environment variable names used for the generated client. |
 | schemas | `Schema[]` | *(required)* | An array of `Schema` objects to generate types for (see below) |
 | path | `string` | `"./schema"` | Path to folder where generated files should be saved. |
+| generateClient | `boolean` | `true` | Will generate a layout-specific typed client for you. Set to `false` if you only want to generate the types. |
 | useZod | `boolean` | `true` | When enabled, will generate Zod schema in addition to TypeScript types and add validation to the generated client for each layout |
 
 #### `Schema` options
@@ -140,6 +141,7 @@ const result = await client.list(); // result will be fully typed and validated!
 | layout | `string` | *(required)* | The FileMaker source layout name |
 | schemaName | `string` | *(required)* | The label for your schema (will also be the name of the generated file) |
 | valueLists | `strict` `allowEmpty` `ignore` | `ignore` | If `strict`, will add enum types based on the value list defined for the field. If `allowEmpty`, will append `""` to the value list. Otherwise, fields are typed as normal. |
+| generateClient | `boolean` | none | If present, override the `generateClient` option for this schema only. |
 
 ## FAQ
 
