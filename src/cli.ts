@@ -67,7 +67,9 @@ program
   )
   .option("--env-path <path>", "optional path to your .env file", ".env.local")
   .action(async (options) => {
-    // console.log(options);
+    const configLocation = path.resolve(options.config);
+    if (options.init) return init({ configLocation });
+
     const envRes = config({ path: options.envPath });
     if (envRes.error)
       return console.log(
@@ -76,9 +78,6 @@ program
         )
       );
 
-    const configLocation = path.resolve(options.config);
-
-    if (options.init) return init({ configLocation });
     // default command
     await runCodegen({ configLocation });
   });
