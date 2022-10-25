@@ -1,4 +1,4 @@
-import fs from "fs-extra";
+import fs, { ensureDirSync } from "fs-extra";
 import { join } from "path";
 import ts, {
   factory,
@@ -842,6 +842,7 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
       fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
 
       if (item.generateClient ?? generateClient) {
+        ensureDirSync(join(path, "client"));
         const clientCode = buildClientFile(args);
         fs.writeFile(
           join(path, "client", `${item.schemaName}.ts`),
