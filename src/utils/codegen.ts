@@ -1,4 +1,4 @@
-import fs, { ensureDirSync } from "fs-extra";
+import fs, { ensureDir } from "fs-extra";
 import { join } from "path";
 import ts, {
   factory,
@@ -56,6 +56,22 @@ const importTypeStatement = (schemaName: string, zod: boolean) =>
       ])
     ),
     factory.createStringLiteral(`../${schemaName}`),
+    undefined
+  );
+
+const exportIndexClientStatement = (schemaName: string) =>
+  factory.createExportDeclaration(
+    undefined,
+    undefined,
+    false,
+    factory.createNamedExports([
+      factory.createExportSpecifier(
+        false,
+        factory.createIdentifier(`client`),
+        factory.createIdentifier(`${schemaName}Client`)
+      ),
+    ]),
+    factory.createStringLiteral(`./${schemaName}`),
     undefined
   );
 
@@ -119,7 +135,7 @@ const exportClientStatement = (args: {
     factory.createVariableDeclarationList(
       [
         factory.createVariableDeclaration(
-          factory.createIdentifier(`${args.schemaName}Client`),
+          factory.createIdentifier(`client`),
           undefined,
           undefined,
           factory.createCallExpression(
@@ -801,6 +817,7 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
 
   const client = DataApi({ auth, server, db });
   await fs.ensureDir(path);
+  const clientExports: ts.ExportDeclaration[] = [];
   schemas.forEach(async (item) => {
     const result = await getSchema({
       client,
@@ -842,8 +859,9 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
       fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
 
       if (item.generateClient ?? generateClient) {
-        ensureDirSync(join(path, "client"));
+        await ensureDir(join(path, "client"));
         const clientCode = buildClientFile(args);
+        clientExports.push(exportIndexClientStatement(item.schemaName));
         fs.writeFile(
           join(path, "client", `${item.schemaName}.ts`),
           clientCode,
@@ -852,4 +870,14 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
       }
     }
   });
+  if (clientExports.length !== 0) {
+    // add an index file with all clients exported
+    const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
+    const file = factory.updateSourceFile(
+      createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
+      clientExports
+    );
+    const indexCode = printer.printFile(file);
+    fs.writeFile(join(path, "client", `index.ts`), indexCode, () => {});
+  }
 };
