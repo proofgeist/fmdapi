@@ -31,6 +31,34 @@ const commentHeader = `/**
 
 `;
 
+const importTypeStatement = (schemaName: string, zod: boolean) =>
+  factory.createImportDeclaration(
+    undefined,
+    undefined,
+    factory.createImportClause(
+      false,
+      undefined,
+      factory.createNamedImports([
+        factory.createImportSpecifier(
+          false,
+          undefined,
+          factory.createIdentifier(`T${schemaName}`)
+        ),
+        ...(zod
+          ? [
+              factory.createImportSpecifier(
+                false,
+                undefined,
+                factory.createIdentifier(`Z${schemaName}`)
+              ),
+            ]
+          : []),
+      ])
+    ),
+    factory.createStringLiteral(`../${schemaName}`),
+    undefined
+  );
+
 const importStatement = factory.createImportDeclaration(
   undefined,
   undefined,
@@ -453,11 +481,6 @@ type BuildSchemaArgs = {
   type: "zod" | "ts";
   portalSchema?: { schemaName: string; schema: Array<TSchema> }[];
   valueLists?: { name: string; values: string[] }[];
-  /**
-   * If `true`, the generated files will include a layout-specific client. Set this to `false` if you only want to use the types
-   * @default true
-   */
-  // generateClient?: boolean;
   envNames: Omit<ClientObjectProps, "layout">;
   layoutName: string;
 };
@@ -485,6 +508,7 @@ const buildClient = (args: BuildSchemaArgs) => {
   return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
+      importTypeStatement(schemaName, type === "zod"),
       ...exportClientStatement({
         envNames,
         useZod: type === "zod",
