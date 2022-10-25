@@ -3,3 +3,4 @@ dist
 schema
 .env.local
 fmschema.config.js
+test/codegen/*

@@ -818,58 +818,62 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
   const client = DataApi({ auth, server, db });
   await fs.ensureDir(path);
   const clientExports: ts.ExportDeclaration[] = [];
-  schemas.forEach(async (item) => {
-    const result = await getSchema({
-      client,
-      layout: item.layout,
-      valueLists: item.valueLists,
-    });
-    if (result) {
-      const { schema, portalSchema, valueLists } = result;
-      const args: BuildSchemaArgs = {
-        schemaName: item.schemaName,
-        schema,
-        layoutName: item.layout,
-        portalSchema,
-        valueLists,
-        type: useZod ? "zod" : "ts",
-        envNames: {
-          auth: isOttoAuth(auth)
-            ? {
-                apiKey:
-                  envNames?.auth && "apiKey" in envNames.auth
-                    ? envNames.auth.apiKey
-                    : defaultEnvNames.apiKey,
-              }
-            : {
-                username:
-                  envNames?.auth && "username" in envNames.auth
-                    ? envNames.auth.username
-                    : defaultEnvNames.username,
-                password:
-                  envNames?.auth && "password" in envNames.auth
-                    ? envNames.auth.password
-                    : defaultEnvNames.password,
-              },
-          db: envNames?.db ?? defaultEnvNames.db,
-          server: envNames?.server ?? defaultEnvNames.server,
-        },
-      };
-      const code = buildSchema(args);
-      fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
 
-      if (item.generateClient ?? generateClient) {
-        await ensureDir(join(path, "client"));
-        const clientCode = buildClientFile(args);
-        clientExports.push(exportIndexClientStatement(item.schemaName));
-        fs.writeFile(
-          join(path, "client", `${item.schemaName}.ts`),
-          clientCode,
-          () => {}
-        );
+  await Promise.all(
+    schemas.map(async (item) => {
+      const result = await getSchema({
+        client,
+        layout: item.layout,
+        valueLists: item.valueLists,
+      });
+      if (result) {
+        const { schema, portalSchema, valueLists } = result;
+        const args: BuildSchemaArgs = {
+          schemaName: item.schemaName,
+          schema,
+          layoutName: item.layout,
+          portalSchema,
+          valueLists,
+          type: useZod ? "zod" : "ts",
+          envNames: {
+            auth: isOttoAuth(auth)
+              ? {
+                  apiKey:
+                    envNames?.auth && "apiKey" in envNames.auth
+                      ? envNames.auth.apiKey
+                      : defaultEnvNames.apiKey,
+                }
+              : {
+                  username:
+                    envNames?.auth && "username" in envNames.auth
+                      ? envNames.auth.username
+                      : defaultEnvNames.username,
+                  password:
+                    envNames?.auth && "password" in envNames.auth
+                      ? envNames.auth.password
+                      : defaultEnvNames.password,
+                },
+            db: envNames?.db ?? defaultEnvNames.db,
+            server: envNames?.server ?? defaultEnvNames.server,
+          },
+        };
+        const code = buildSchema(args);
+        fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
+
+        if (item.generateClient ?? generateClient) {
+          await ensureDir(join(path, "client"));
+          const clientCode = buildClientFile(args);
+          clientExports.push(exportIndexClientStatement(item.schemaName));
+          fs.writeFile(
+            join(path, "client", `${item.schemaName}.ts`),
+            clientCode,
+            () => {}
+          );
+        }
       }
-    }
-  });
+    })
+  );
+
   if (clientExports.length !== 0) {
     // add an index file with all clients exported
     const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
