@@ -37,7 +37,7 @@ async function runCodegen({ configLocation }: ConfigArgs) {
       )
     );
     console.log();
-    console.log("run `codegen init` to create a new config file");
+    console.log("run `codegen --init` to create a new config file");
     return process.exit(1);
   }
   await fs.access(configLocation, fs.constants.R_OK).catch(() => {
