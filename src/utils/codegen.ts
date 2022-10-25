@@ -91,7 +91,7 @@ const exportClientStatement = (args: {
     factory.createVariableDeclarationList(
       [
         factory.createVariableDeclaration(
-          factory.createIdentifier("client"),
+          factory.createIdentifier(`${args.schemaName}Client`),
           undefined,
           undefined,
           factory.createCallExpression(
@@ -457,9 +457,14 @@ type BuildSchemaArgs = {
    * If `true`, the generated files will include a layout-specific client. Set this to `false` if you only want to use the types
    * @default true
    */
-  generateClient?: boolean;
+  // generateClient?: boolean;
   envNames: Omit<ClientObjectProps, "layout">;
   layoutName: string;
+};
+const buildClientFile = (args: BuildSchemaArgs) => {
+  const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
+  const file = buildClient(args);
+  return commentHeader + printer.printFile(file);
 };
 export const buildSchema = ({ type, ...args }: BuildSchemaArgs) => {
   // make sure schema has unique keys, in case a field is on the layout mulitple times
@@ -475,16 +480,26 @@ export const buildSchema = ({ type, ...args }: BuildSchemaArgs) => {
   const file = type === "ts" ? buildTSSchema(args) : buildZodSchema(args);
   return commentHeader + printer.printFile(file);
 };
-
+const buildClient = (args: BuildSchemaArgs) => {
+  const { schemaName, portalSchema = [], envNames, type } = args;
+  return factory.updateSourceFile(
+    createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
+    [
+      ...exportClientStatement({
+        envNames,
+        useZod: type === "zod",
+        schemaName: args.schemaName,
+        layout: args.layoutName,
+        fieldTypeName: `T${varname(schemaName)}`,
+        ...(portalSchema.length > 0
+          ? { portalTypeName: `T${varname(schemaName)}Portals` }
+          : {}),
+      }),
+    ]
+  );
+};
 const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
-  const {
-    schema,
-    schemaName,
-    portalSchema = [],
-    valueLists = [],
-    envNames,
-    generateClient = true,
-  } = args;
+  const { schema, schemaName, portalSchema = [], valueLists = [] } = args;
   const portals = portalSchema
     .map((p) => buildTypeZod(p.schemaName, p.schema))
     .flat();
@@ -573,33 +588,12 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
 
       // now add types for any values lists
       ...vls,
-
-      ...(generateClient
-        ? // export layout-specific client
-          exportClientStatement({
-            envNames,
-            useZod: true,
-            schemaName: args.schemaName,
-            layout: args.layoutName,
-            fieldTypeName: `T${varname(schemaName)}`,
-            ...(portalSchema.length > 0
-              ? { portalTypeName: `T${varname(schemaName)}Portals` }
-              : {}),
-          })
-        : []),
     ]
   );
 };
 
 const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
-  const {
-    schema,
-    schemaName,
-    portalSchema = [],
-    valueLists = [],
-    envNames,
-    generateClient = true,
-  } = args;
+  const { schema, schemaName, portalSchema = [], valueLists = [] } = args;
   const portals = portalSchema.map((p) => buildTypeTS(p.schemaName, p.schema));
   const vls = valueLists.map((vl) => buildValueListTS(vl.name, vl.values));
   const portalStatement = factory.createTypeAliasDeclaration(
@@ -632,19 +626,6 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       // if there are portals, export single portal type for the layout
       ...(portalSchema.length > 0 ? [portalStatement] : []),
       ...vls,
-      // export layout-specific client
-      ...(generateClient
-        ? exportClientStatement({
-            envNames,
-            useZod: false,
-            schemaName: args.schemaName,
-            layout: args.layoutName,
-            fieldTypeName: `T${varname(schemaName)}`,
-            ...(portalSchema.length > 0
-              ? { portalTypeName: `T${varname(schemaName)}Portals` }
-              : {}),
-          })
-        : []),
     ]
   );
 };
@@ -804,9 +785,8 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
     });
     if (result) {
       const { schema, portalSchema, valueLists } = result;
-      const code = buildSchema({
+      const args: BuildSchemaArgs = {
         schemaName: item.schemaName,
-        generateClient: item.generateClient ?? generateClient,
         schema,
         layoutName: item.layout,
         portalSchema,
@@ -833,8 +813,18 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
           db: envNames?.db ?? defaultEnvNames.db,
           server: envNames?.server ?? defaultEnvNames.server,
         },
-      });
+      };
+      const code = buildSchema(args);
       fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
+
+      if (item.generateClient ?? generateClient) {
+        const clientCode = buildClientFile(args);
+        fs.writeFile(
+          join(path, "client", `${item.schemaName}.ts`),
+          clientCode,
+          () => {}
+        );
+      }
     }
   });
 };
