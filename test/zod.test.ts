@@ -201,3 +201,20 @@ describe("zod validation", () => {
     ).toThrowError(ZodError);
   });
 });
+
+it("should properly type limit/offset in portals", async () => {
+  const client = DataApi<any, TCustomer, TCustomerPortals>(
+    {
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
+      layout: "layout",
+    },
+    { fieldData: ZCustomer, portalData: ZCustomerPortals }
+  );
+
+  client.find({
+    query: { name: "test" },
+    portalRanges: { PortalTable: { limit: 500, offset: 5 } },
+  });
+});

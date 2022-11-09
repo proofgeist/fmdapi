@@ -15,11 +15,11 @@ import {
   UpdateResponse,
   DeleteParams,
   MetadataResponse,
-  ZodGenericPortalData,
   GetResponseOne,
   ZGetResponse,
   LayoutsResponse,
   FMRecord,
+  PortalRanges,
 } from "./client-types";
 
 function asNumber(input: string | number): number {
@@ -133,7 +133,26 @@ function DataApi<
     const { query, body, method = "POST", retry = false } = params;
     const url = new URL(`${baseUrl}${params.url}`);
 
-    if (query) url.search = new URLSearchParams(query).toString();
+    if (query) {
+      const searchParams = new URLSearchParams(query);
+      if (query.portalRanges) {
+        for (const [portalName, value] of Object.entries(
+          (params as any).portalRanges as PortalRanges
+        )) {
+          if (value) {
+            value.offset &&
+              searchParams.set(
+                `${portalName}._offset`,
+                value.offset.toString()
+              );
+            value.limit &&
+              searchParams.set(`${portalName}._limit`, value.limit.toString());
+          }
+        }
+      }
+      url.search = searchParams.toString();
+    }
+
     const token = await getToken(retry);
     const res = await fetch(url.toString(), {
       method,
