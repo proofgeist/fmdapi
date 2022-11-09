@@ -1,4 +1,4 @@
-import { DataApi, FileMakerError } from "../src";
+import { DataApi } from "../src";
 import nock from "nock";
 import { z, ZodError } from "zod";
 import { ZGetResponse } from "../src/client-types";
@@ -212,6 +212,10 @@ it("should properly type limit/offset in portals", async () => {
     },
     { fieldData: ZCustomer, portalData: ZCustomerPortals }
   );
+
+  const scope = nock("https://example.com:3030")
+    .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
+    .reply(200, responseSample(record_good));
 
   client.find({
     query: { name: "test" },
