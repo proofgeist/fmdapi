@@ -817,7 +817,7 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
 
   const client = DataApi({ auth, server, db });
   await fs.ensureDir(path);
-  const clientExports: ts.ExportDeclaration[] = [];
+  const clientExportsMap: { [key: string]: ts.ExportDeclaration } = {};
 
   await Promise.all(
     schemas.map(async (item) => {
@@ -863,7 +863,8 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
         if (item.generateClient ?? generateClient) {
           await ensureDir(join(path, "client"));
           const clientCode = buildClientFile(args);
-          clientExports.push(exportIndexClientStatement(item.schemaName));
+          let clientExport = exportIndexClientStatement(item.schemaName);
+          clientExportsMap[item.schemaName] = clientExport;
           fs.writeFile(
             join(path, "client", `${item.schemaName}.ts`),
             clientCode,
@@ -874,8 +875,14 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
     })
   );
 
-  if (clientExports.length !== 0) {
-    // add an index file with all clients exported
+  if (Object.keys(clientExportsMap).length !== 0) {
+    // add an index file with all clients exported, sorted by name
+    const exportNames = Object.keys(clientExportsMap).sort();
+    const clientExports: ts.ExportDeclaration[] = [];
+    for (let i = 0; i < exportNames.length; i++) {
+      clientExports.push(clientExportsMap[exportNames[i]]);
+    }
+
     const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
     const file = factory.updateSourceFile(
       createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
