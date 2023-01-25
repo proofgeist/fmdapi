@@ -31,7 +31,11 @@ const commentHeader = `/* eslint-disable @typescript-eslint/no-explicit-any */
 
 `;
 
-const importTypeStatement = (schemaName: string, zod: boolean) =>
+const importTypeStatement = (
+  schemaName: string,
+  portalSchema: BuildSchemaArgs["portalSchema"],
+  zod: boolean
+) =>
   factory.createImportDeclaration(
     undefined,
     undefined,
@@ -44,6 +48,13 @@ const importTypeStatement = (schemaName: string, zod: boolean) =>
           undefined,
           factory.createIdentifier(`T${schemaName}`)
         ),
+        ...(portalSchema?.map((portal) =>
+          factory.createImportSpecifier(
+            false,
+            undefined,
+            factory.createIdentifier(`T${portal.schemaName}Portals`)
+          )
+        ) ?? []),
         ...(zod
           ? [
               factory.createImportSpecifier(
@@ -51,6 +62,13 @@ const importTypeStatement = (schemaName: string, zod: boolean) =>
                 undefined,
                 factory.createIdentifier(`Z${schemaName}`)
               ),
+              ...(portalSchema?.map((portal) =>
+                factory.createImportSpecifier(
+                  false,
+                  undefined,
+                  factory.createIdentifier(`Z${portal.schemaName}Portals`)
+                )
+              ) ?? []),
             ]
           : []),
       ])
@@ -524,7 +542,7 @@ const buildClient = (args: BuildSchemaArgs) => {
   return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
-      importTypeStatement(schemaName, type === "zod"),
+      importTypeStatement(schemaName, portalSchema, type === "zod"),
       ...exportClientStatement({
         envNames,
         useZod: type === "zod",
