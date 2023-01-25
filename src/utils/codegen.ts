@@ -33,7 +33,7 @@ const commentHeader = `/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const importTypeStatement = (
   schemaName: string,
-  portalSchema: BuildSchemaArgs["portalSchema"],
+  hasPortals: boolean,
   zod: boolean
 ) =>
   factory.createImportDeclaration(
@@ -48,13 +48,15 @@ const importTypeStatement = (
           undefined,
           factory.createIdentifier(`T${schemaName}`)
         ),
-        ...(portalSchema?.map((portal) =>
-          factory.createImportSpecifier(
-            false,
-            undefined,
-            factory.createIdentifier(`T${portal.schemaName}Portals`)
-          )
-        ) ?? []),
+        ...(hasPortals
+          ? [
+              factory.createImportSpecifier(
+                false,
+                undefined,
+                factory.createIdentifier(`T${schemaName}Portals`)
+              ),
+            ]
+          : []),
         ...(zod
           ? [
               factory.createImportSpecifier(
@@ -62,13 +64,15 @@ const importTypeStatement = (
                 undefined,
                 factory.createIdentifier(`Z${schemaName}`)
               ),
-              ...(portalSchema?.map((portal) =>
-                factory.createImportSpecifier(
-                  false,
-                  undefined,
-                  factory.createIdentifier(`Z${portal.schemaName}Portals`)
-                )
-              ) ?? []),
+              ...(hasPortals
+                ? [
+                    factory.createImportSpecifier(
+                      false,
+                      undefined,
+                      factory.createIdentifier(`Z${schemaName}Portals`)
+                    ),
+                  ]
+                : []),
             ]
           : []),
       ])
@@ -542,7 +546,7 @@ const buildClient = (args: BuildSchemaArgs) => {
   return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
-      importTypeStatement(schemaName, portalSchema, type === "zod"),
+      importTypeStatement(schemaName, portalSchema.length > 0, type === "zod"),
       ...exportClientStatement({
         envNames,
         useZod: type === "zod",
