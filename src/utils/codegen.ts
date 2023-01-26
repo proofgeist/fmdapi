@@ -38,7 +38,6 @@ const importTypeStatement = (
 ) =>
   factory.createImportDeclaration(
     undefined,
-    undefined,
     factory.createImportClause(
       false,
       undefined,
@@ -84,7 +83,6 @@ const importTypeStatement = (
 const exportIndexClientStatement = (schemaName: string) =>
   factory.createExportDeclaration(
     undefined,
-    undefined,
     false,
     factory.createNamedExports([
       factory.createExportSpecifier(
@@ -98,7 +96,6 @@ const exportIndexClientStatement = (schemaName: string) =>
   );
 
 const importStatement = factory.createImportDeclaration(
-  undefined,
   undefined,
   factory.createImportClause(
     false,
@@ -420,7 +417,6 @@ const buildTypeZod = (
     )
   ),
   factory.createTypeAliasDeclaration(
-    undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     factory.createIdentifier(`T${varname(schemaName)}`),
     undefined,
@@ -465,7 +461,6 @@ const buildValueListZod = (name: string, values: string[]): Statement[] => [
     )
   ),
   factory.createTypeAliasDeclaration(
-    undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     factory.createIdentifier(`TVL${varname(name)}`),
     undefined,
@@ -485,7 +480,6 @@ const buildValueListZod = (name: string, values: string[]): Statement[] => [
 const buildValueListTS = (name: string, values: string[]): Statement =>
   factory.createTypeAliasDeclaration(
     undefined,
-    undefined,
     factory.createIdentifier(`TVL${varname(name)}`),
     undefined,
     factory.createUnionTypeNode(
@@ -497,7 +491,6 @@ const buildValueListTS = (name: string, values: string[]): Statement =>
 
 const buildTypeTS = (schemaName: string, schema: Array<TSchema>): Statement =>
   factory.createTypeAliasDeclaration(
-    undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     factory.createIdentifier(`T${varname(schemaName)}`),
     undefined,
@@ -602,7 +595,6 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       )
     ),
     factory.createTypeAliasDeclaration(
-      undefined,
       [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
       factory.createIdentifier(`T${varname(schemaName)}Portals`),
       undefined,
@@ -624,7 +616,6 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
       factory.createImportDeclaration(
-        undefined,
         undefined,
         factory.createImportClause(
           false,
@@ -659,7 +650,6 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
   const portals = portalSchema.map((p) => buildTypeTS(p.schemaName, p.schema));
   const vls = valueLists.map((vl) => buildValueListTS(vl.name, vl.values));
   const portalStatement = factory.createTypeAliasDeclaration(
-    undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     factory.createIdentifier(`T${varname(schemaName)}Portals`),
     undefined,
