@@ -47,15 +47,15 @@ const ZodOptions = z.object({
   server: z
     .string()
     .refine((val) => val.startsWith("http"), { message: "must include http" }),
-  db: z.string().nonempty(),
+  db: z.string().min(1),
   auth: z.union([
     z.object({
-      apiKey: z.string().nonempty(),
+      apiKey: z.string().min(1),
       ottoPort: z.number().optional(),
     }),
     z.object({
-      username: z.string().nonempty(),
-      password: z.string().nonempty(),
+      username: z.string().min(1),
+      password: z.string().min(1),
     }),
   ]),
   layout: z.string().optional(),
