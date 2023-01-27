@@ -252,3 +252,19 @@ export type LayoutsFolder = {
 };
 
 export type LayoutOrFolder = Layout | LayoutsFolder;
+
+/**
+ * Represents the data returned by a call to the Data API `scripts` endpoint.
+ */
+export type ScriptsMetadataResponse = {
+  /**
+   * A list of `Layout` or `LayoutsFolder` objects.
+   */
+  scripts: ScriptOrFolder[];
+};
+export type ScriptOrFolder = {
+  name: string;
+  isFolder: boolean;
+  folderScriptNames?: ScriptOrFolder[];
+};
+// export type ScriptOrFolder = Script | LayoutsFolder;

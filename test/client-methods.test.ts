@@ -4,6 +4,9 @@ import {
   LayoutOrFolder,
   Layout,
   LayoutsFolder,
+  ScriptResponse,
+  ScriptsMetadataResponse,
+  ScriptOrFolder,
 } from "../src/client-types";
 import nock from "nock";
 
@@ -53,6 +56,26 @@ const goodLayoutsResp = {
           {
             name: "layout2",
             table: "",
+          },
+        ],
+      },
+    ],
+  },
+};
+const goodScriptsResp = {
+  response: {
+    scripts: [
+      {
+        name: "script1",
+        isFolder: false,
+      },
+      {
+        name: "Group",
+        isFolder: true,
+        folderScriptNames: [
+          {
+            name: "script2",
+            isFolder: false,
           },
         ],
       },
@@ -185,7 +208,7 @@ it("should retrieve a list of folders and layouts", async () => {
   });
 
   const scope = nock("https://example.com:3030")
-    .post("/fmi/data/vLatest/databases/db/layouts")
+    .get("/fmi/data/vLatest/databases/db/layouts")
     .reply(200, goodLayoutsResp);
 
   const resp = (await client.layouts()) as LayoutsResponse;
@@ -196,6 +219,25 @@ it("should retrieve a list of folders and layouts", async () => {
   expect(resp.layouts[0] as Layout).toHaveProperty("name");
   expect(resp.layouts[1] as LayoutsFolder).toHaveProperty("isFolder");
   expect(resp.layouts[1] as LayoutsFolder).toHaveProperty("folderLayoutNames");
+});
+it("should retrieve a list of folders and scripts", async () => {
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+  });
+
+  const scope = nock("https://example.com:3030")
+    .get("/fmi/data/vLatest/databases/db/scripts")
+    .reply(200, goodScriptsResp);
+
+  const resp = (await client.scripts()) as ScriptsMetadataResponse;
+
+  expect(scope.isDone()).toBe(true);
+  expect(resp.hasOwnProperty("scripts")).toBe(true);
+  expect(resp.scripts.length).toBe(2);
+  expect(resp.scripts[0] as ScriptOrFolder).toHaveProperty("name");
+  expect(resp.scripts[1] as ScriptOrFolder).toHaveProperty("isFolder");
 });
 
 it("should paginate through all records", async () => {

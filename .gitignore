@@ -4,3 +4,4 @@ schema
 .env.local
 fmschema.config.js
 test/codegen/*
+test/local.test.ts

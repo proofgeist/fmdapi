@@ -20,6 +20,7 @@ import {
   LayoutsResponse,
   FMRecord,
   PortalRanges,
+  ScriptsMetadataResponse,
 } from "./client-types";
 
 function asNumber(input: string | number): number {
@@ -478,14 +479,22 @@ function DataApi<
   }
 
   /**
-   * Returns a list of available layout nodes on the database. Nodes
-   * may represent
-   * @returns
+   * Returns a list of available layouts on the database.
    */
   async function layouts(): Promise<LayoutsResponse> {
     return await request({
       url: `/layouts`,
-      method: "POST",
+      method: "GET",
+    });
+  }
+  /**
+   * Returns a list of available scripts on the database.
+   * @returns
+   */
+  async function scripts(): Promise<ScriptsMetadataResponse> {
+    return await request({
+      url: `/scripts`,
+      method: "GET",
     });
   }
 
@@ -504,6 +513,7 @@ function DataApi<
     findFirst,
     findAll,
     layouts,
+    scripts,
   };
 }
 
