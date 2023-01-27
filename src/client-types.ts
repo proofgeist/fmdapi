@@ -262,9 +262,13 @@ export type ScriptsMetadataResponse = {
    */
   scripts: ScriptOrFolder[];
 };
-export type ScriptOrFolder = {
+type Script = {
   name: string;
-  isFolder: boolean;
-  folderScriptNames?: ScriptOrFolder[];
+  isFolder: false;
 };
-// export type ScriptOrFolder = Script | LayoutsFolder;
+type ScriptFolder = {
+  name: string;
+  isFolder: true;
+  folderScriptNames: ScriptOrFolder[];
+};
+export type ScriptOrFolder = Script | ScriptFolder;
