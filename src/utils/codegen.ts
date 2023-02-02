@@ -689,7 +689,7 @@ export const getSchema = async (args: {
 }) => {
   const schemaReducer: F.Function<[FieldMetaData[]], TSchema[]> = (schema) =>
     schema.reduce((acc, field) => {
-      if (!!acc.find((o) => o.name === field.name)) return acc; // skip duplicates
+      if (acc.find((o) => o.name === field.name)) return acc; // skip duplicates
       if (
         meta &&
         field.valueList &&
@@ -741,7 +741,13 @@ export const getSchema = async (args: {
       name: vl.name,
       values: vl.values.map((o) => o.value),
     })) ?? [];
-  return { schema, portalSchema, valueLists: valueListValues };
+  // remove duplicates from valueListValues
+  const valueListValuesUnique = valueListValues.reduce((acc, vl) => {
+    if (acc.find((o) => o.name === vl.name)) return acc;
+    return [...acc, vl];
+  }, [] as typeof valueListValues);
+
+  return { schema, portalSchema, valueLists: valueListValuesUnique };
 };
 
 export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
