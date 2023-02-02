@@ -687,8 +687,9 @@ export const getSchema = async (args: {
   layout: string;
   valueLists?: ValueListsOptions;
 }) => {
-  const schemaMap: F.Function<[FieldMetaData[]], TSchema[]> = (schema) =>
-    schema.map((field) => {
+  const schemaReducer: F.Function<[FieldMetaData[]], TSchema[]> = (schema) =>
+    schema.reduce((acc, field) => {
+      if (!!acc.find((o) => o.name === field.name)) return acc; // skip duplicates
       if (
         meta &&
         field.valueList &&
@@ -697,17 +698,24 @@ export const getSchema = async (args: {
       ) {
         const list = meta.valueLists.find((o) => o.name === field.valueList);
         const values = list?.values.map((o) => o.value) ?? [];
-        return {
-          name: field.name,
-          type: "valueList",
-          values: valueLists === "allowEmpty" ? [...values, ""] : values,
-        };
+        return [
+          ...acc,
+          {
+            name: field.name,
+            type: "valueList",
+            values: valueLists === "allowEmpty" ? [...values, ""] : values,
+          },
+        ];
       }
-      return {
-        name: field.name,
-        type: field.result === "number" ? "fmnumber" : "string",
-      };
-    });
+      return [
+        ...acc,
+        {
+          name: field.name,
+          type: field.result === "number" ? "fmnumber" : "string",
+        },
+      ];
+    }, [] as TSchema[]);
+
   const { client, layout, valueLists = "ignore" } = args;
   const meta = await client.metadata({ layout }).catch((err) => {
     if (err instanceof FileMakerError && err.code === "105") {
@@ -723,9 +731,9 @@ export const getSchema = async (args: {
   });
   if (!meta) return;
   // console.log(meta);
-  const schema = schemaMap(meta.fieldMetaData);
+  const schema = schemaReducer(meta.fieldMetaData);
   const portalSchema = Object.keys(meta.portalMetaData).map((schemaName) => {
-    const schema = schemaMap(meta.portalMetaData[schemaName]);
+    const schema = schemaReducer(meta.portalMetaData[schemaName]);
     return { schemaName, schema };
   });
   const valueListValues =
