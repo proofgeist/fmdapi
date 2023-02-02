@@ -425,7 +425,10 @@ function DataApi<
         return { data: [] };
       throw e;
     });
-    if (zodTypes) ZGetResponse(zodTypes).parse(data);
+    if (zodTypes && ignoreEmptyResult && data.data.length !== 0) {
+      // only parse this if we have data. Ignoring empty result won't match this anyway
+      ZGetResponse(zodTypes).parse(data);
+    }
     return data;
   }
 
