@@ -21,6 +21,7 @@ import {
   FMRecord,
   PortalRanges,
   ScriptsMetadataResponse,
+  RawFMResponse,
 } from "./client-types";
 
 function asNumber(input: string | number): number {
@@ -110,7 +111,7 @@ function DataApi<
       });
 
       if (!res.ok) {
-        const data = (await res.json()) as any;
+        const data = await res.json();
         throw new FileMakerError(
           data.messages[0].code,
           data.messages[0].message
@@ -130,7 +131,8 @@ function DataApi<
     query?: Record<string, string>;
     method?: string;
     retry?: boolean;
-  }): Promise<any> {
+    portalRanges?: PortalRanges;
+  }): Promise<unknown> {
     const { query, body, method = "POST", retry = false } = params;
     const url = new URL(`${baseUrl}${params.url}`);
 
@@ -138,7 +140,7 @@ function DataApi<
       const searchParams = new URLSearchParams(query);
       if (query.portalRanges) {
         for (const [portalName, value] of Object.entries(
-          (params as any).portalRanges as PortalRanges
+          params.portalRanges as PortalRanges
         )) {
           if (value) {
             value.offset &&
@@ -164,7 +166,7 @@ function DataApi<
       },
     });
 
-    let respData: any;
+    let respData: RawFMResponse;
     try {
       respData = await res.json();
     } catch {
@@ -226,13 +228,14 @@ function DataApi<
   /**
    * List all records from a given layout, no find criteria applied.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function list(args?: any): Promise<GetResponse<Td, Ud>>;
   async function list<T extends FieldData = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout>
       : ListParams<T, U> & WithLayout
   ): Promise<GetResponse<T, U>> {
-    const { layout = options.layout, ...params } = args ?? ({} as any);
+    const { layout = options.layout, ...params } = args ?? {};
     if (layout === undefined) throw new Error("Must specify layout");
 
     // rename and refactor limit, offset, and sort keys for this request
@@ -248,14 +251,13 @@ function DataApi<
     const data = await request({
       url: `/layouts/${layout}/records`,
       method: "GET",
-      // @ts-ignore
-      query: params,
+      query: params as Record<string, string>,
     });
 
     if (zodTypes) {
       ZGetResponse(zodTypes).parse(data);
     }
-    return data;
+    return data as GetResponse<T, U>;
   }
 
   /**
@@ -269,9 +271,10 @@ function DataApi<
   ) {
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args?.limit ?? 100;
-    let offset = args?.offset ?? 0;
+    const offset = args?.offset ?? 0;
     const myArgs: ListParams<T, U> = args ?? {};
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const data = (await list(myArgs)) as unknown as GetResponse<T, U>;
       runningData = [...runningData, ...data.data];
@@ -289,10 +292,10 @@ function DataApi<
       : CreateArgs<T, U> & WithLayout
   ): Promise<CreateResponse> {
     const { fieldData, layout = options.layout, ...params } = args;
-    return await request({
+    return (await request({
       url: `/layouts/${layout}/records`,
       body: { fieldData, ...(params ?? {}) },
-    });
+    })) as CreateResponse;
   }
   /**
    * Get a single record by Internal RecordId
@@ -308,12 +311,11 @@ function DataApi<
     const data = await request({
       url: `/layouts/${layout}/records/${recordId}`,
       method: "GET",
-      // @ts-ignore
-      query: params,
+      query: params as Record<string, string>,
     });
     if (zodTypes)
       return ZGetResponse(zodTypes).parse(data) as GetResponse<T, U>;
-    return data;
+    return data as GetResponse<T, U>;
   }
   /**
    * Update a single record by internal RecordId
@@ -325,28 +327,27 @@ function DataApi<
   ): Promise<UpdateResponse> {
     args.recordId = asNumber(args.recordId);
     const { recordId, fieldData, layout = options.layout, ...params } = args;
-    return await request({
+    return (await request({
       url: `/layouts/${layout}/records/${recordId}`,
       body: { fieldData, ...(params ?? {}) },
       method: "PATCH",
-    });
+    })) as UpdateResponse;
   }
   /**
    * Delete a single record by internal RecordId
    */
-  async function deleteRecord<T extends Td = Td, U extends Ud = Ud>(
+  async function deleteRecord(
     args: Opts["layout"] extends string
       ? DeleteArgs & Partial<WithLayout>
       : DeleteArgs & WithLayout
   ): Promise<DeleteResponse> {
     args.recordId = asNumber(args.recordId);
     const { recordId, layout = options.layout, ...params } = args;
-    return await request({
+    return (await request({
       url: `/layouts/${layout}/records/${recordId}`,
-      // @ts-ignore
-      query: params,
+      query: params as Record<string, string>,
       method: "DELETE",
-    });
+    })) as DeleteResponse;
   }
 
   /**
@@ -356,7 +357,10 @@ function DataApi<
     args: Opts["layout"] extends string ? Partial<WithLayout> : WithLayout
   ): Promise<MetadataResponse> {
     const { layout = options.layout } = args;
-    return await request({ method: "GET", url: `/layouts/${layout}` });
+    return (await request({
+      method: "GET",
+      url: `/layouts/${layout}`,
+    })) as MetadataResponse;
   }
   /**
    * Forcibly logout of the Data API session
@@ -377,7 +381,7 @@ function DataApi<
         },
       });
 
-      let respData: any;
+      let respData: RawFMResponse;
       try {
         respData = await res.json();
       } catch {
@@ -397,8 +401,7 @@ function DataApi<
 
       return respData.response;
     };
-    // @ts-ignore
-    return func();
+    return func() as Opts["auth"] extends OttoAuth ? never : Promise<void>;
   }
 
   /**
@@ -416,15 +419,15 @@ function DataApi<
       ...params
     } = args;
     const query = !Array.isArray(queryInput) ? [queryInput] : queryInput;
-    const data = await request({
+    const data = (await request({
       url: `/layouts/${layout}/_find`,
       body: { query, ...params },
       method: "POST",
-    }).catch((e: any) => {
+    }).catch((e: unknown) => {
       if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
         return { data: [] };
       throw e;
-    });
+    })) as GetResponse<T, U>;
     if (zodTypes && ignoreEmptyResult && data.data.length !== 0) {
       // only parse this if we have data. Ignoring empty result won't match this anyway
       ZGetResponse(zodTypes).parse(data);
@@ -471,7 +474,8 @@ function DataApi<
   ): Promise<FMRecord<T, U>[]> {
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args.limit ?? 100;
-    let offset = args.offset ?? 0;
+    const offset = args.offset ?? 0;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const data = await find<T, U>(args);
       runningData = [...runningData, ...data.data];
@@ -485,20 +489,20 @@ function DataApi<
    * Returns a list of available layouts on the database.
    */
   async function layouts(): Promise<LayoutsResponse> {
-    return await request({
+    return (await request({
       url: `/layouts`,
       method: "GET",
-    });
+    })) as LayoutsResponse;
   }
   /**
    * Returns a list of available scripts on the database.
    * @returns
    */
   async function scripts(): Promise<ScriptsMetadataResponse> {
-    return await request({
+    return (await request({
       url: `/scripts`,
       method: "GET",
-    });
+    })) as ScriptsMetadataResponse;
   }
 
   return {

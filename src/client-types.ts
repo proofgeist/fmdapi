@@ -272,3 +272,8 @@ type ScriptFolder = {
   folderScriptNames: ScriptOrFolder[];
 };
 export type ScriptOrFolder = Script | ScriptFolder;
+
+export type RawFMResponse<T = unknown> = {
+  response?: T;
+  messages?: [{ code: string }];
+};
