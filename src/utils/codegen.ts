@@ -11,7 +11,6 @@ import { FieldMetaData } from "../client-types";
 import { F } from "ts-toolbelt";
 import chalk from "chalk";
 import { ClientObjectProps, isOttoAuth } from "../client";
-import { env } from "process";
 
 type TSchema = {
   name: string;
@@ -522,7 +521,7 @@ const buildClientFile = (args: BuildSchemaArgs) => {
 };
 export const buildSchema = ({ type, ...args }: BuildSchemaArgs) => {
   // make sure schema has unique keys, in case a field is on the layout mulitple times
-  const schema = args.schema.reduce(
+  args.schema.reduce(
     (acc: TSchema[], el) =>
       acc.find((o) => o.name === el.name)
         ? acc
@@ -884,17 +883,16 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
           },
         };
         const code = buildSchema(args);
-        fs.writeFile(join(path, `${item.schemaName}.ts`), code, () => {});
+        fs.writeFile(join(path, `${item.schemaName}.ts`), code);
 
         if (item.generateClient ?? generateClient) {
           await ensureDir(join(path, "client"));
           const clientCode = buildClientFile(args);
-          let clientExport = exportIndexClientStatement(item.schemaName);
+          const clientExport = exportIndexClientStatement(item.schemaName);
           clientExportsMap[item.schemaName] = clientExport;
           fs.writeFile(
             join(path, "client", `${item.schemaName}.ts`),
-            clientCode,
-            () => {}
+            clientCode
           );
         }
       }
@@ -915,6 +913,6 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
       clientExports
     );
     const indexCode = printer.printFile(file);
-    fs.writeFile(join(path, "client", `index.ts`), indexCode, () => {});
+    fs.writeFile(join(path, "client", `index.ts`), indexCode);
   }
 };
