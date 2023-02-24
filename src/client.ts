@@ -22,6 +22,7 @@ import {
   PortalRanges,
   ScriptsMetadataResponse,
   RawFMResponse,
+  ScriptResponse,
 } from "./client-types";
 
 function asNumber(input: string | number): number {
@@ -485,6 +486,24 @@ function DataApi<
     return runningData;
   }
 
+  type ExecuteScriptArgs = {
+    script: string;
+    scriptParam?: string;
+  };
+
+  async function executeScript(
+    args: Opts["layout"] extends string
+      ? ExecuteScriptArgs & Partial<WithLayout>
+      : ExecuteScriptArgs & WithLayout
+  ) {
+    const { script, scriptParam, layout = options.layout } = args;
+    return (await request({
+      url: `/layouts/${layout}/script/${script}`,
+      query: scriptParam ? { "script.param": scriptParam } : undefined,
+      method: "GET",
+    })) as Pick<ScriptResponse, "scriptResult" | "scriptError">;
+  }
+
   /**
    * Returns a list of available layouts on the database.
    */
@@ -521,6 +540,7 @@ function DataApi<
     findAll,
     layouts,
     scripts,
+    executeScript,
   };
 }
 

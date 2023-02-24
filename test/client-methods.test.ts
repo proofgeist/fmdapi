@@ -1,10 +1,8 @@
-import { DataApi, FileMakerError } from "../src";
+import { DataApi } from "../src";
 import {
   LayoutsResponse,
-  LayoutOrFolder,
   Layout,
   LayoutsFolder,
-  ScriptResponse,
   ScriptsMetadataResponse,
   ScriptOrFolder,
 } from "../src/client-types";
@@ -81,6 +79,18 @@ const goodScriptsResp = {
       },
     ],
   },
+};
+const goodExecuteScriptResp = {
+  response: {
+    scriptResult: "result",
+    scriptError: "0",
+  },
+  messages: [
+    {
+      code: "0",
+      message: "OK",
+    },
+  ],
 };
 
 describe("find methods", () => {
@@ -171,9 +181,6 @@ it("findOne with 2 results should fail", async () => {
     db: "db",
     server: "https://example.com",
   });
-  const scope = nock("https://example.com:3030")
-    .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
-    .reply(200, goodFindResp2);
 
   expect(
     client.findOne({
@@ -214,7 +221,7 @@ it("should retrieve a list of folders and layouts", async () => {
   const resp = (await client.layouts()) as LayoutsResponse;
 
   expect(scope.isDone()).toBe(true);
-  expect(resp.hasOwnProperty("layouts")).toBe(true);
+  expect(Object.prototype.hasOwnProperty.call(resp, "layouts")).toBe(true);
   expect(resp.layouts.length).toBe(2);
   expect(resp.layouts[0] as Layout).toHaveProperty("name");
   expect(resp.layouts[1] as LayoutsFolder).toHaveProperty("isFolder");
@@ -234,7 +241,7 @@ it("should retrieve a list of folders and scripts", async () => {
   const resp = (await client.scripts()) as ScriptsMetadataResponse;
 
   expect(scope.isDone()).toBe(true);
-  expect(resp.hasOwnProperty("scripts")).toBe(true);
+  expect(Object.prototype.hasOwnProperty.call(resp, "scripts")).toBe(true);
   expect(resp.scripts.length).toBe(2);
   expect(resp.scripts[0] as ScriptOrFolder).toHaveProperty("name");
   expect(resp.scripts[1] as ScriptOrFolder).toHaveProperty("isFolder");
@@ -281,4 +288,31 @@ it("should paginate using findAll method", async () => {
   expect(data.length).toBe(2);
   expect(page1.isDone()).toBe(true);
   expect(page2.isDone()).toBe(true);
+});
+
+it("should return from execute script", async () => {
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+    layout: "layout",
+  });
+
+  const param = JSON.stringify({ hello: "world" });
+
+  const scope = nock("https://example.com:3030")
+    .get(
+      `/fmi/data/vLatest/databases/db/layouts/layout/script/script?script.param=${encodeURIComponent(
+        param
+      )}`
+    )
+    .reply(200, goodExecuteScriptResp);
+
+  const resp = await client.executeScript({
+    script: "script",
+    scriptParam: param,
+  });
+
+  expect(scope.isDone()).toBe(true);
+  expect(resp.scriptResult).toBe("result");
 });
