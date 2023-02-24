@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataApi } from "../src";
 import nock from "nock";
 import { z, ZodError } from "zod";
@@ -11,7 +12,7 @@ const ZCustomer = z.object({ name: z.string(), phone: z.string() });
 const ZPortalTable = z.object({
   "Portal_Table::related_field": z.string(),
 });
-type TPortalTable = z.infer<typeof ZPortalTable>;
+
 const ZCustomerPortals = z.object({
   PortalTable: ZPortalTable,
 });
@@ -115,10 +116,10 @@ describe("zod validation", () => {
       },
       { fieldData: ZCustomer }
     );
-    const scope = nock("https://example.com:3030")
+    nock("https://example.com:3030")
       .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
       .reply(200, responseSample(record_good));
-    const res = await client.list({});
+    await client.list({});
   });
   it("should pass validation allow extra fields", async () => {
     const client = DataApi<any, TCustomer>(
@@ -130,10 +131,10 @@ describe("zod validation", () => {
       },
       { fieldData: ZCustomer }
     );
-    const scope = nock("https://example.com:3030")
+    nock("https://example.com:3030")
       .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
       .reply(200, responseSample(record_extra));
-    const res = await client.list({});
+    await client.list({});
   });
   it("list method: should fail validation when field is missing", async () => {
     const client = DataApi<any, TCustomer>(
@@ -145,7 +146,7 @@ describe("zod validation", () => {
       },
       { fieldData: ZCustomer }
     );
-    const scope = nock("https://example.com:3030")
+    nock("https://example.com:3030")
       .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
       .reply(200, responseSample(record_bad));
     // expect this to error
@@ -161,7 +162,7 @@ describe("zod validation", () => {
       },
       { fieldData: ZCustomer }
     );
-    const scope = nock("https://example.com:3030")
+    nock("https://example.com:3030")
       .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
       .reply(200, responseSample(record_good));
 
@@ -180,7 +181,7 @@ describe("zod validation", () => {
       },
       { fieldData: ZCustomer, portalData: ZCustomerPortals }
     );
-    const scope = nock("https://example.com:3030")
+    nock("https://example.com:3030")
       .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
       .reply(200, responseSample(record_portals));
 
@@ -213,7 +214,7 @@ it("should properly type limit/offset in portals", async () => {
     { fieldData: ZCustomer, portalData: ZCustomerPortals }
   );
 
-  const scope = nock("https://example.com:3030")
+  nock("https://example.com:3030")
     .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
     .reply(200, responseSample(record_good));
 

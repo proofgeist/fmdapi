@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import { z } from "zod";
 import { getSharedData, setSharedData } from "./shared";
 import {

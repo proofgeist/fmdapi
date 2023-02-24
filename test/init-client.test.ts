@@ -32,7 +32,7 @@ describe("try to init client", () => {
   test("without auth", () => {
     expect(() =>
       DataApi({
-        // @ts-expect-error
+        // @ts-expect-error the auth object is missing properties
         auth: {},
         db: "anything",
         server: "https://example.com",
@@ -174,7 +174,7 @@ describe("client methods (otto)", () => {
         response: {},
       });
 
-    const prom = await client
+    await client
       .list({ layout: "not_a_layout" })
       .catch((err) => {
         expect(err).toBeInstanceOf(FileMakerError);
