@@ -5,6 +5,7 @@ const config: Config.InitialOptions = {
   testEnvironment: "node",
   verbose: true,
   automock: false,
+  setupFiles: ["./test/setup.js"],
 };
 
 export default config;

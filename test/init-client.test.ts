@@ -1,5 +1,4 @@
 import { DataApi, FileMakerError } from "../src";
-import nock from "nock";
 
 describe("try to init client", () => {
   test("without server", () => {
