@@ -67,17 +67,24 @@ program
     "./fmschema.config.js" // default
   )
   .option("--env-path <path>", "optional path to your .env file", ".env.local")
+  .option(
+    "--skip-env-check",
+    "Ignore loading environment variables from a file.",
+    false
+  )
   .action(async (options) => {
     const configLocation = path.resolve(options.config);
     if (options.init) return init({ configLocation });
 
-    const envRes = config({ path: options.envPath });
-    if (envRes.error)
-      return console.log(
-        chalk.red(
-          `Could not resolve your environment variables.\n${envRes.error.message}\n`
-        )
-      );
+    if (!options.skipEnvCheck) {
+      const envRes = config({ path: options.envPath });
+      if (envRes.error)
+        return console.log(
+          chalk.red(
+            `Could not resolve your environment variables.\n${envRes.error.message}\n`
+          )
+        );
+    }
 
     // default command
     await runCodegen({ configLocation });
