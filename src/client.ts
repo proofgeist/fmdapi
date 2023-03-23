@@ -133,6 +133,7 @@ function DataApi<
     method?: string;
     retry?: boolean;
     portalRanges?: PortalRanges;
+    timeout?: number;
   }): Promise<unknown> {
     const { query, body, method = "POST", retry = false } = params;
     const url = new URL(`${baseUrl}${params.url}`);
@@ -157,6 +158,11 @@ function DataApi<
       url.search = searchParams.toString();
     }
 
+    const controller = new AbortController();
+    let timeout: NodeJS.Timeout | null = null;
+    if (params.timeout)
+      timeout = setTimeout(() => controller.abort(), params.timeout);
+
     const token = await getToken(retry);
     const res = await fetch(url.toString(), {
       method,
@@ -165,7 +171,12 @@ function DataApi<
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      signal: controller.signal,
     });
+
+    if (timeout) clearTimeout(timeout);
 
     let respData: RawFMResponse;
     try {
@@ -224,6 +235,7 @@ function DataApi<
     U
   > & {
     query: Query<T> | Array<Query<T>>;
+    timeout?: number;
   };
 
   /**
@@ -253,6 +265,7 @@ function DataApi<
       url: `/layouts/${layout}/records`,
       method: "GET",
       query: params as Record<string, string>,
+      timeout: args.timeout,
     });
 
     if (zodTypes) {
@@ -296,6 +309,7 @@ function DataApi<
     return (await request({
       url: `/layouts/${layout}/records`,
       body: { fieldData, ...(params ?? {}) },
+      timeout: args.timeout,
     })) as CreateResponse;
   }
   /**
@@ -313,6 +327,7 @@ function DataApi<
       url: `/layouts/${layout}/records/${recordId}`,
       method: "GET",
       query: params as Record<string, string>,
+      timeout: args.timeout,
     });
     if (zodTypes)
       return ZGetResponse(zodTypes).parse(data) as GetResponse<T, U>;
@@ -332,6 +347,7 @@ function DataApi<
       url: `/layouts/${layout}/records/${recordId}`,
       body: { fieldData, ...(params ?? {}) },
       method: "PATCH",
+      timeout: args.timeout,
     })) as UpdateResponse;
   }
   /**
@@ -348,6 +364,7 @@ function DataApi<
       url: `/layouts/${layout}/records/${recordId}`,
       query: params as Record<string, string>,
       method: "DELETE",
+      timeout: args.timeout,
     })) as DeleteResponse;
   }
 
@@ -355,12 +372,15 @@ function DataApi<
    * Get the metadata for a given layout
    */
   async function metadata(
-    args: Opts["layout"] extends string ? Partial<WithLayout> : WithLayout
+    args: Opts["layout"] extends string
+      ? { timeout?: number } & Partial<WithLayout>
+      : { timeout?: number } & WithLayout
   ): Promise<MetadataResponse> {
     const { layout = options.layout } = args;
     return (await request({
       method: "GET",
       url: `/layouts/${layout}`,
+      timeout: args.timeout,
     })) as MetadataResponse;
   }
   /**
@@ -424,6 +444,7 @@ function DataApi<
       url: `/layouts/${layout}/_find`,
       body: { query, ...params },
       method: "POST",
+      timeout: args.timeout,
     }).catch((e: unknown) => {
       if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
         return { data: [] };
@@ -493,6 +514,7 @@ function DataApi<
   type ExecuteScriptArgs = {
     script: string;
     scriptParam?: string;
+    timeout?: number;
   };
 
   async function executeScript(
@@ -505,6 +527,7 @@ function DataApi<
       url: `/layouts/${layout}/script/${script}`,
       query: scriptParam ? { "script.param": scriptParam } : undefined,
       method: "GET",
+      timeout: args.timeout,
     })) as Pick<ScriptResponse, "scriptResult" | "scriptError">;
   }
 

@@ -59,6 +59,7 @@ export type ScriptParams = {
   "script.prerequest.param"?: string;
   "script.presort"?: string;
   "script.presort.param"?: string;
+  timeout?: number;
 };
 
 const ZScriptResponse = z.object({
