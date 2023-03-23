@@ -265,7 +265,7 @@ function DataApi<
       url: `/layouts/${layout}/records`,
       method: "GET",
       query: params as Record<string, string>,
-      timeout: args.timeout,
+      timeout: args?.timeout,
     });
 
     if (zodTypes) {
