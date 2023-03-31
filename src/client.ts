@@ -437,6 +437,7 @@ function DataApi<
       query: queryInput,
       layout = options.layout,
       ignoreEmptyResult = false,
+      timeout,
       ...params
     } = args;
     const query = !Array.isArray(queryInput) ? [queryInput] : queryInput;
@@ -444,7 +445,7 @@ function DataApi<
       url: `/layouts/${layout}/_find`,
       body: { query, ...params },
       method: "POST",
-      timeout: args.timeout,
+      timeout,
     }).catch((e: unknown) => {
       if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
         return { data: [] };
