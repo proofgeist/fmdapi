@@ -3,8 +3,9 @@ import { ensureFileSync, readFileSync, writeFileSync } from "fs-extra";
 const devFileName = "shared.json";
 
 function getDataFromFile(): Record<string, string> {
-  let data: Record<string, string> = {};
+  const data: Record<string, string> = {};
   if (process.env.NODE_ENV === "development") {
+    ensureFileSync(devFileName);
     const fileString = readFileSync(devFileName, "utf8");
     try {
       return JSON.parse(fileString);
