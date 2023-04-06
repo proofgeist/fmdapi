@@ -620,6 +620,7 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
     .map((p) => buildTypeZod(p.schemaName, p.schema, strictNumbers))
     .flat();
   const vls = valueLists
+    .filter((vl) => vl.values.length > 0)
     .map((vl) => buildValueListZod(vl.name, vl.values))
     .flat();
 
@@ -717,7 +718,9 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
   const portals = portalSchema.map((p) =>
     buildTypeTS(p.schemaName, p.schema, strictNumbers)
   );
-  const vls = valueLists.map((vl) => buildValueListTS(vl.name, vl.values));
+  const vls = valueLists
+    .filter((vl) => vl.values.length > 0)
+    .map((vl) => buildValueListTS(vl.name, vl.values));
   const portalStatement = factory.createTypeAliasDeclaration(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     factory.createIdentifier(`T${varname(schemaName)}Portals`),
