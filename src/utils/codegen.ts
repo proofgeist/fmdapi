@@ -349,6 +349,46 @@ const stringOrNumberPropertyZod = (name: string) =>
       ]
     )
   );
+const NumberOrNullProperty = (name: string) =>
+  factory.createPropertySignature(
+    undefined,
+    factory.createStringLiteral(name),
+    undefined,
+    factory.createUnionTypeNode([
+      factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
+      factory.createLiteralTypeNode(factory.createNull()),
+    ])
+  );
+const NumberOrNullPropertyZod = (name: string) =>
+  factory.createPropertyAssignment(
+    factory.createStringLiteral(name),
+    factory.createCallExpression(
+      factory.createPropertyAccessExpression(
+        factory.createCallExpression(
+          factory.createPropertyAccessExpression(
+            factory.createCallExpression(
+              factory.createPropertyAccessExpression(
+                factory.createPropertyAccessExpression(
+                  factory.createIdentifier("z"),
+                  factory.createIdentifier("coerce")
+                ),
+                factory.createIdentifier("number")
+              ),
+              undefined,
+              []
+            ),
+            factory.createIdentifier("nullable")
+          ),
+          undefined,
+          []
+        ),
+        factory.createIdentifier("catch")
+      ),
+      undefined,
+      [factory.createNull()]
+    )
+  );
+
 const valueListProperty = (name: string, vl: string[]) =>
   factory.createPropertySignature(
     undefined,
@@ -380,7 +420,8 @@ const valueListPropertyZod = (name: string, vl: string[]) =>
 
 const buildTypeZod = (
   schemaName: string,
-  schema: Array<TSchema>
+  schema: Array<TSchema>,
+  strictNumbers = false
 ): Statement[] => [
   factory.createVariableStatement(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -401,7 +442,9 @@ const buildTypeZod = (
                 // for each field, create a z property
                 schema.map((item) =>
                   item.type === "fmnumber"
-                    ? stringOrNumberPropertyZod(item.name)
+                    ? strictNumbers
+                      ? NumberOrNullPropertyZod(item.name)
+                      : stringOrNumberPropertyZod(item.name)
                     : item.values
                     ? valueListPropertyZod(item.name, item.values)
                     : stringPropertyZod(item.name)
@@ -488,7 +531,11 @@ const buildValueListTS = (name: string, values: string[]): Statement =>
     )
   );
 
-const buildTypeTS = (schemaName: string, schema: Array<TSchema>): Statement =>
+const buildTypeTS = (
+  schemaName: string,
+  schema: Array<TSchema>,
+  strictNumbers = false
+): Statement =>
   factory.createTypeAliasDeclaration(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     factory.createIdentifier(`T${varname(schemaName)}`),
@@ -497,7 +544,9 @@ const buildTypeTS = (schemaName: string, schema: Array<TSchema>): Statement =>
       // for each field, create a property
       schema.map((item) => {
         return item.type === "fmnumber"
-          ? stringOrNumberProperty(item.name)
+          ? strictNumbers
+            ? NumberOrNullProperty(item.name)
+            : stringOrNumberProperty(item.name)
           : item.values
           ? valueListProperty(item.name, item.values)
           : stringProperty(item.name);
@@ -513,6 +562,7 @@ type BuildSchemaArgs = {
   valueLists?: { name: string; values: string[] }[];
   envNames: Omit<ClientObjectProps, "layout">;
   layoutName: string;
+  strictNumbers?: boolean;
 };
 const buildClientFile = (args: BuildSchemaArgs) => {
   const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
@@ -534,7 +584,13 @@ export const buildSchema = ({ type, ...args }: BuildSchemaArgs) => {
   return commentHeader + printer.printFile(file);
 };
 const buildClient = (args: BuildSchemaArgs) => {
-  const { schemaName, portalSchema = [], envNames, type } = args;
+  const {
+    schemaName,
+    portalSchema = [],
+    strictNumbers = false,
+    envNames,
+    type,
+  } = args;
   return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
@@ -553,9 +609,15 @@ const buildClient = (args: BuildSchemaArgs) => {
   );
 };
 const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
-  const { schema, schemaName, portalSchema = [], valueLists = [] } = args;
+  const {
+    schema,
+    schemaName,
+    portalSchema = [],
+    valueLists = [],
+    strictNumbers = false,
+  } = args;
   const portals = portalSchema
-    .map((p) => buildTypeZod(p.schemaName, p.schema))
+    .map((p) => buildTypeZod(p.schemaName, p.schema, strictNumbers))
     .flat();
   const vls = valueLists
     .map((vl) => buildValueListZod(vl.name, vl.values))
@@ -630,7 +692,7 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
         factory.createStringLiteral("zod")
       ),
       // for each table, create a ZodSchema variable and inferred type
-      ...buildTypeZod(schemaName, schema),
+      ...buildTypeZod(schemaName, schema, strictNumbers),
 
       // now the same for each portal
       ...portals,
@@ -645,8 +707,16 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
 };
 
 const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
-  const { schema, schemaName, portalSchema = [], valueLists = [] } = args;
-  const portals = portalSchema.map((p) => buildTypeTS(p.schemaName, p.schema));
+  const {
+    schema,
+    schemaName,
+    portalSchema = [],
+    valueLists = [],
+    strictNumbers = false,
+  } = args;
+  const portals = portalSchema.map((p) =>
+    buildTypeTS(p.schemaName, p.schema, strictNumbers)
+  );
   const vls = valueLists.map((vl) => buildValueListTS(vl.name, vl.values));
   const portalStatement = factory.createTypeAliasDeclaration(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -672,7 +742,7 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
   return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
-      buildTypeTS(schemaName, schema),
+      buildTypeTS(schemaName, schema, strictNumbers),
       ...portals,
       // if there are portals, export single portal type for the layout
       ...(portalSchema.length > 0 ? [portalStatement] : []),
@@ -729,7 +799,6 @@ export const getSchema = async (args: {
     throw err;
   });
   if (!meta) return;
-  // console.log(meta);
   const schema = schemaReducer(meta.fieldMetaData);
   const portalSchema = Object.keys(meta.portalMetaData).map((schemaName) => {
     const schema = schemaReducer(meta.portalMetaData[schemaName]);
@@ -761,6 +830,10 @@ export type GenerateSchemaOptions = {
      * @default true
      */
     generateClient?: boolean;
+    /** If `true`, number fields will be typed as `number | null` instead of `number | string`. If the data cannot be parsed as a number, it will be set to `null`.
+     * @default false
+     */
+    strictNumbers?: boolean;
   }>;
   /**
    * If `true`, the generated files will include a layout-specific client. Set this to `false` if you only want to use the types
@@ -860,6 +933,7 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
           portalSchema,
           valueLists,
           type: useZod ? "zod" : "ts",
+          strictNumbers: item.strictNumbers,
           envNames: {
             auth: isOttoAuth(auth)
               ? {
