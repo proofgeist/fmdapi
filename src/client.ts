@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { getSharedData, setSharedData } from "./shared";
 import {
   CreateParams,
   CreateResponse,
@@ -23,6 +22,7 @@ import {
   RawFMResponse,
   ScriptResponse,
 } from "./client-types";
+import { TokenStoreDefinitions } from "./tokenStore/types";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
@@ -43,12 +43,7 @@ export type ClientObjectProps = {
    * The layout to use by default for all requests. Can be overrridden on each request.
    */
   layout?: string;
-  tokenStore?: {
-    getKey?: () => string;
-    getToken: (key: string) => string | null;
-    setToken: (key: string, value: string) => void;
-    clearToken: (key: string) => void;
-  };
+  tokenStore?: TokenStoreDefinitions;
 };
 const ZodOptions = z.object({
   server: z
@@ -69,7 +64,12 @@ const ZodOptions = z.object({
   tokenStore: z
     .object({
       getKey: z.function().args().returns(z.string()).optional(),
-      getToken: z.function().args(z.string()).returns(z.string().nullable()),
+      getToken: z
+        .function()
+        .args(z.string())
+        .returns(
+          z.union([z.string().nullable(), z.promise(z.string().nullable())])
+        ),
       setToken: z.function().args(z.string(), z.string()).returns(z.void()),
       clearToken: z.function().args(z.string()).returns(z.void()),
     })
@@ -101,17 +101,9 @@ function DataApi<
   let tokenStore = options.tokenStore;
 
   if (!tokenStore) {
-    const defaultStore: {
-      getSharedData: typeof getSharedData;
-      setSharedData: typeof setSharedData;
-    } = require("./shared.ts");
-
-    tokenStore = {
-      getToken: (key) => defaultStore.getSharedData(key),
-      setToken: (key, value) => defaultStore.setSharedData(key, value),
-      clearToken: () => null,
-    };
+    tokenStore = require("./tokenStore/default").default;
   }
+  if (!tokenStore) throw new Error("No token store provided");
 
   if (!tokenStore.getKey) {
     tokenStore.getKey = () => `${options.server}/${options.db}`;
@@ -132,7 +124,7 @@ function DataApi<
     if (tokenStore === undefined) throw new Error("No token store provided");
     if (!tokenStore.getKey) throw new Error("No token store key provided");
 
-    let token = tokenStore.getToken(tokenStore.getKey());
+    let token = await tokenStore.getToken(tokenStore.getKey());
 
     if (refresh) token = null; // clear token so are forced to get a new one
 

@@ -21,7 +21,7 @@ yarn add @proofgeist/fmdapi
 
 ## Usage
 
-Add the following envnironment variables to your project's `.env.local` file:
+Add the following envnironment variables to your project's `.env` file:
 
 ```sh
 FM_DATABASE=filename.fmp12
@@ -54,6 +54,9 @@ Then, use the client to query your FileMaker database. Availble methods:
 - `create` return a new record
 - `update` modify a single record by recordID
 - `delete` delete a single record by recordID
+- `executeScript` execute a FileMaker script direclty
+- `layouts` return a list of all layouts in the database
+- `scripts` return a list of all scripts in the database
 - `metadata` return metadata for a given layout
 - `disconnect` forcibly logout of your FileMaker session (available when not using Otto Data API proxy)
 
@@ -61,8 +64,8 @@ This package also includes some helper methods to make working with Data API res
 
 - `findOne` return the first record from a find instead of an array. This method will error unless exactly 1 record is found.
 - `findFirst` return the first record from a find instead of an array, but will not error if multiple records are found.
-
-...more helper methods planned
+- `findAll` return all found records from a find, automatically handling pagination
+- `listAll` return all records from a given layout, automatically handling pagination
 
 Basic Example:
 
@@ -72,12 +75,13 @@ const result = await client.list({ layout: "Contacts" });
 
 ### Client Setup Options
 
-| Option   | Type     | Description                                                                                  |
-| -------- | -------- | -------------------------------------------------------------------------------------------- |
-| `auth`   | `object` | Authentication object. Must contain either `apiKey` or `username` and `password`             |
-| `db`     | `string` | FileMaker database name                                                                      |
-| `server` | `string` | FileMaker server URL (must include `https://`)                                               |
-| `layout` | `string` | _(optional)_ If provided, will be the layout used for all methods if not otherwise specified |
+| Option       | Type         | Description                                                                                                                                                                                                  |
+| ------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `auth`       | `object`     | Authentication object. Must contain either `apiKey` or `username` and `password`                                                                                                                             |
+| `db`         | `string`     | FileMaker database name                                                                                                                                                                                      |
+| `server`     | `string`     | FileMaker server URL (must include `https://`)                                                                                                                                                               |
+| `layout`     | `string`     | _(optional)_ If provided, will be the layout used for all methods if not otherwise specified                                                                                                                 |
+| `tokenStore` | `TokenStore` | _(optional)_ If provided, will use the custom set of functions to store and retrieve the short-lived access token. This only used for the username/password authenication method. See below for more details |
 
 ## TypeScript Support
 
@@ -90,6 +94,41 @@ type TContact = {
   phone: string;
 };
 const result = await client.list<TContact>({ layout: "Contacts" });
+```
+
+## Custom Token Store (v3.0+)
+
+If you are using username/password authentication, this library will manage your access token for you. By default, the token is kept in memory or in a local file during development, but you can provide other getter and setter methods to store the token in a database or other location. Included in this package are helper functions for LocalStorage if running in a browser, or Upstash if running in a serverless environment.
+
+```typescript
+import { DataApi } from "@proofgeist/fmdapi";
+
+// using local storage
+import { localStorageStore } from "@proofgeist/fmdapi/tokenStore";
+const client = DataApi({
+  auth: {
+    username: process.env.FM_USERNAME,
+    password: process.env.FM_PASSWORD,
+  },
+  db: process.env.FM_DATABASE,
+  server: process.env.FM_SERVER,
+  tokenStore: localStorageStore(),
+});
+
+// or with Upstash, requires `@upstash/redis` as peer dependency
+import { upstashTokenStore } from "@proofgeist/fmdapi/tokenStore";
+const client = DataApi({
+  auth: {
+    username: process.env.FM_USERNAME,
+    password: process.env.FM_PASSWORD,
+  },
+  db: process.env.FM_DATABASE,
+  server: process.env.FM_SERVER,
+  tokenStore: upstashTokenStore({
+    token: process.env.UPSTASH_TOKEN,
+    url: process.env.UPSTASH_URL,
+  }),
+});
 ```
 
 ## Automatic Type Generation
@@ -174,7 +213,7 @@ This change was made to take advantage of caching if used in a Next 13 app. You 
 client.list({ fetch: { next: { revalidate: 10 } } });
 ```
 
-You can also now pass custom functions to override where the access token is stored when using username/password authentication. This can be used to improve performance if running in a serverless function or even the browser.
+For a more detailed list of changes, see the Changelog.
 
 ## FAQ
 
