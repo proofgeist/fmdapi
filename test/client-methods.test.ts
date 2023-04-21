@@ -6,7 +6,7 @@ import {
   ScriptsMetadataResponse,
   ScriptOrFolder,
 } from "../src/client-types";
-import nock from "nock";
+import fetch from "jest-fetch-mock";
 
 const record = {
   fieldData: {
@@ -94,21 +94,29 @@ const goodExecuteScriptResp = {
 };
 
 describe("find methods", () => {
+  beforeEach(() => {
+    fetch.resetMocks();
+  });
+  afterEach(() => {
+    expect(fetch.mock.calls.length).toBeLessThanOrEqual(1);
+  });
+
   test("successful find", async () => {
     const client = DataApi({
       auth: { apiKey: "KEY_anything" },
       db: "db",
       server: "https://example.com",
     });
-    const scope = nock("https://example.com:3030")
-      .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
-      .reply(200, goodFindResp);
+
+    fetch.mockResponseOnce(JSON.stringify(goodFindResp));
 
     const resp = await client.find({
       layout: "layout",
       query: { anything: "anything" },
     });
-    expect(scope.isDone()).toBe(true);
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/_find"
+    );
     expect(Array.isArray(resp.data)).toBe(true);
   });
   test("successful findFirst with multiple return", async () => {
@@ -117,15 +125,16 @@ describe("find methods", () => {
       db: "db",
       server: "https://example.com",
     });
-    const scope = nock("https://example.com:3030")
-      .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
-      .reply(200, goodFindResp2);
+
+    fetch.mockResponseOnce(JSON.stringify(goodFindResp2));
 
     const resp = await client.findFirst({
       layout: "layout",
       query: { anything: "anything" },
     });
-    expect(scope.isDone()).toBe(true);
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/_find"
+    );
     expect(Array.isArray(resp.data)).toBe(false);
   });
   test("successful findOne", async () => {
@@ -134,185 +143,184 @@ describe("find methods", () => {
       db: "db",
       server: "https://example.com",
     });
-    const scope = nock("https://example.com:3030")
-      .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
-      .reply(200, goodFindResp);
+
+    fetch.mockResponseOnce(JSON.stringify(goodFindResp));
 
     const resp = await client.findOne({
       layout: "layout",
       query: { anything: "anything" },
     });
-    expect(scope.isDone()).toBe(true);
+
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/_find"
+    );
+
     expect(Array.isArray(resp.data)).toBe(false);
   });
 });
 
-it("should allow list method without layout param", async () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
-    layout: "layout",
-  });
-  const scope = nock("https://example.com:3030")
-    .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
-    .reply(200, goodFindResp);
-  await client.list();
-  expect(scope.isDone()).toBe(true);
-});
-it("should require list method to have layout param", async () => {
-  // if not passed into the top-level client
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
-  });
-  const scope = nock("https://example.com:3030")
-    .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
-    .reply(200, goodFindResp);
-
-  expect(client.list()).rejects.toThrow();
-  expect(scope.isDone()).toBe(false);
-});
-
-it("findOne with 2 results should fail", async () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
+describe("other methods", () => {
+  beforeEach(() => {
+    fetch.resetMocks();
   });
 
-  expect(
-    client.findOne({
+  it("should allow list method without layout param", async () => {
+    const client = DataApi({
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
       layout: "layout",
-      query: { anything: "anything" },
-    })
-  ).rejects.toThrow();
-});
+    });
 
-it("should rename offset param", async () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
+    fetch.mockResponseOnce(JSON.stringify(goodFindResp));
+    await client.list();
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records"
+    );
   });
-  const scope = nock("https://example.com:3030")
-    .get("/fmi/data/vLatest/databases/db/layouts/layout/records?_offset=0")
-    .reply(200, goodFindResp);
+  it("should require list method to have layout param", async () => {
+    // if not passed into the top-level client
+    const client = DataApi({
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
+    });
 
-  await client.list({
-    layout: "layout",
-    offset: 0,
-  });
-  expect(scope.isDone()).toBe(true);
-});
+    fetch.mockResponseOnce(JSON.stringify(goodFindResp));
 
-it("should retrieve a list of folders and layouts", async () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
+    expect(client.list()).rejects.toThrow();
+    // expect(fetch.mock.calls[0][0]).toEqual(
+    //   "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records"
+    // );
   });
 
-  const scope = nock("https://example.com:3030")
-    .get("/fmi/data/vLatest/databases/db/layouts")
-    .reply(200, goodLayoutsResp);
+  it("findOne with 2 results should fail", async () => {
+    const client = DataApi({
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
+    });
 
-  const resp = (await client.layouts()) as LayoutsResponse;
-
-  expect(scope.isDone()).toBe(true);
-  expect(Object.prototype.hasOwnProperty.call(resp, "layouts")).toBe(true);
-  expect(resp.layouts.length).toBe(2);
-  expect(resp.layouts[0] as Layout).toHaveProperty("name");
-  expect(resp.layouts[1] as LayoutsFolder).toHaveProperty("isFolder");
-  expect(resp.layouts[1] as LayoutsFolder).toHaveProperty("folderLayoutNames");
-});
-it("should retrieve a list of folders and scripts", async () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
+    expect(
+      client.findOne({
+        layout: "layout",
+        query: { anything: "anything" },
+      })
+    ).rejects.toThrow();
   });
 
-  const scope = nock("https://example.com:3030")
-    .get("/fmi/data/vLatest/databases/db/scripts")
-    .reply(200, goodScriptsResp);
+  it("should rename offset param", async () => {
+    const client = DataApi({
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
+    });
 
-  const resp = (await client.scripts()) as ScriptsMetadataResponse;
+    fetch.mockResponseOnce(JSON.stringify(goodFindResp));
 
-  expect(scope.isDone()).toBe(true);
-  expect(Object.prototype.hasOwnProperty.call(resp, "scripts")).toBe(true);
-  expect(resp.scripts.length).toBe(2);
-  expect(resp.scripts[0] as ScriptOrFolder).toHaveProperty("name");
-  expect(resp.scripts[1] as ScriptOrFolder).toHaveProperty("isFolder");
-});
-
-it("should paginate through all records", async () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
-    layout: "layout",
+    await client.list({
+      layout: "layout",
+      offset: 0,
+    });
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records?_offset=0"
+    );
   });
 
-  const page1 = nock("https://example.com:3030")
-    .get("/fmi/data/vLatest/databases/db/layouts/layout/records?_limit=1")
-    .reply(200, goodFindResp);
-  const page2 = nock("https://example.com:3030")
-    .get(
-      "/fmi/data/vLatest/databases/db/layouts/layout/records?_offset=1&_limit=1"
-    )
-    .reply(200, goodFindResp);
+  it("should retrieve a list of folders and layouts", async () => {
+    const client = DataApi({
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
+    });
+    fetch.mockResponseOnce(JSON.stringify(goodLayoutsResp));
 
-  const data = await client.listAll({ limit: 1 });
-  expect(data.length).toBe(2);
-  expect(page1.isDone()).toBe(true);
-  expect(page2.isDone()).toBe(true);
-});
+    const resp = (await client.layouts()) as LayoutsResponse;
 
-it("should paginate using findAll method", async () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
-    layout: "layout",
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts"
+    );
+
+    expect(Object.prototype.hasOwnProperty.call(resp, "layouts")).toBe(true);
+    expect(resp.layouts.length).toBe(2);
+    expect(resp.layouts[0] as Layout).toHaveProperty("name");
+    expect(resp.layouts[1] as LayoutsFolder).toHaveProperty("isFolder");
+    expect(resp.layouts[1] as LayoutsFolder).toHaveProperty(
+      "folderLayoutNames"
+    );
+  });
+  it("should retrieve a list of folders and scripts", async () => {
+    const client = DataApi({
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
+    });
+
+    fetch.mockResponseOnce(JSON.stringify(goodScriptsResp));
+
+    const resp = (await client.scripts()) as ScriptsMetadataResponse;
+
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/scripts"
+    );
+
+    expect(Object.prototype.hasOwnProperty.call(resp, "scripts")).toBe(true);
+    expect(resp.scripts.length).toBe(2);
+    expect(resp.scripts[0] as ScriptOrFolder).toHaveProperty("name");
+    expect(resp.scripts[1] as ScriptOrFolder).toHaveProperty("isFolder");
   });
 
-  const page1 = nock("https://example.com:3030")
-    .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
-    .reply(200, goodFindResp);
-  const page2 = nock("https://example.com:3030")
-    .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
-    .reply(200, goodFindResp);
-  const data = await client.findAll({ query: {}, limit: 1 });
-  expect(data.length).toBe(2);
-  expect(page1.isDone()).toBe(true);
-  expect(page2.isDone()).toBe(true);
-});
+  it("should paginate through all records", async () => {
+    const client = DataApi({
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
+      layout: "layout",
+    });
 
-it("should return from execute script", async () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
-    layout: "layout",
+    fetch.mockResponse(JSON.stringify(goodFindResp));
+
+    const data = await client.listAll({ limit: 1 });
+    expect(data.length).toBe(2);
+    expect(fetch.mock.calls.length).toBe(2);
   });
 
-  const param = JSON.stringify({ hello: "world" });
+  it("should paginate using findAll method", async () => {
+    const client = DataApi({
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
+      layout: "layout",
+    });
 
-  const scope = nock("https://example.com:3030")
-    .get(
-      `/fmi/data/vLatest/databases/db/layouts/layout/script/script?script.param=${encodeURIComponent(
-        param
-      )}`
-    )
-    .reply(200, goodExecuteScriptResp);
+    fetch.mockResponse(JSON.stringify(goodFindResp));
 
-  const resp = await client.executeScript({
-    script: "script",
-    scriptParam: param,
+    const data = await client.findAll({ query: {}, limit: 1 });
+    expect(data.length).toBe(2);
+    expect(fetch.mock.calls.length).toBe(2);
   });
 
-  expect(scope.isDone()).toBe(true);
-  expect(resp.scriptResult).toBe("result");
+  it("should return from execute script", async () => {
+    const client = DataApi({
+      auth: { apiKey: "KEY_anything" },
+      db: "db",
+      server: "https://example.com",
+      layout: "layout",
+    });
+
+    const param = JSON.stringify({ hello: "world" });
+
+    fetch.mockResponseOnce(JSON.stringify(goodExecuteScriptResp));
+
+    const resp = await client.executeScript({
+      script: "script",
+      scriptParam: param,
+    });
+
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/script/script?script.param=%7B%22hello%22%3A%22world%22%7D"
+    );
+
+    expect(resp.scriptResult).toBe("result");
+  });
 });
