@@ -164,6 +164,16 @@ const result = await client.list(); // result will be fully typed and validated!
 | strictNumbers  | `boolean`                      | `false`      | (v2.2.11+) If true, the zod schema will apply a transformer to force all number fields to be either `number` or `null`. <br>**WARNING:** If you are not using Zod or the auto-generated layout specific client, enabling this option may result in false types! |
 | generateClient | `boolean`                      | none         | If present, override the `generateClient` option for this schema only.                                                                                                                                                                                          |
 
+## What's new in v3
+
+Version 3 uses the native `fetch` module from Node 18 and is no longer dependent on `node-fetch`. Node version 18 or later is now required to install this package.
+
+This change was made to take advantage of caching if used in a Next 13 app. You can pass in additonal options to the `fetch` function for each method. For example:
+
+```ts
+client.list({ fetch: { next: { revalidate: 10 } } });
+```
+
 ## FAQ
 
 ### I don't like the way the code is generated. Can I edit the generated files?
