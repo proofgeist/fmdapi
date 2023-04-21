@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getSharedData, setSharedData } from "./shared";
+import type { getSharedData, setSharedData } from "./shared";
 import {
   CreateParams,
   CreateResponse,
@@ -43,6 +43,12 @@ export type ClientObjectProps = {
    * The layout to use by default for all requests. Can be overrridden on each request.
    */
   layout?: string;
+  tokenStore?: {
+    getKey?: () => string;
+    getToken: (key: string) => string | null;
+    setToken: (key: string, value: string) => void;
+    clearToken: (key: string) => void;
+  };
 };
 const ZodOptions = z.object({
   server: z
@@ -60,6 +66,14 @@ const ZodOptions = z.object({
     }),
   ]),
   layout: z.string().optional(),
+  tokenStore: z
+    .object({
+      getKey: z.function().args().returns(z.string()).optional(),
+      getToken: z.function().args(z.string()).returns(z.string().nullable()),
+      setToken: z.function().args(z.string(), z.string()).returns(z.void()),
+      clearToken: z.function().args(z.string()).returns(z.void()),
+    })
+    .optional(),
 });
 
 class FileMakerError extends Error {
@@ -83,7 +97,25 @@ function DataApi<
   }
 ) {
   const options = ZodOptions.strict().parse(input); // validate options
-  const sharedDataKey = `${options.server}/${options.db}`; // used for storing and re-using token
+
+  let tokenStore = options.tokenStore;
+
+  if (!tokenStore) {
+    const defaultStore: {
+      getSharedData: typeof getSharedData;
+      setSharedData: typeof setSharedData;
+    } = require("./shared.ts");
+
+    tokenStore = {
+      getToken: (key) => defaultStore.getSharedData(key),
+      setToken: (key, value) => defaultStore.setSharedData(key, value),
+      clearToken: () => null,
+    };
+  }
+
+  if (!tokenStore.getKey) {
+    tokenStore.getKey = () => `${options.server}/${options.db}`;
+  }
 
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
@@ -97,8 +129,10 @@ function DataApi<
     fetchOptions?: Omit<RequestInit, "method">
   ): Promise<string> {
     if ("apiKey" in options.auth) return options.auth.apiKey;
+    if (tokenStore === undefined) throw new Error("No token store provided");
+    if (!tokenStore.getKey) throw new Error("No token store key provided");
 
-    let token = getSharedData(sharedDataKey);
+    let token = tokenStore.getToken(tokenStore.getKey());
 
     if (refresh) token = null; // clear token so are forced to get a new one
 
@@ -126,7 +160,7 @@ function DataApi<
       if (!token) throw new Error("Could not get token");
     }
 
-    setSharedData(sharedDataKey, token);
+    tokenStore.setToken(tokenStore.getKey(), token);
     return token;
   }
 

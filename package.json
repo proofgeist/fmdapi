@@ -1,6 +1,6 @@
 {
   "name": "@proofgeist/fmdapi",
-  "version": "3.0.0",
+  "version": "2.2.14",
   "description": "FileMaker Data API client",
   "main": "dist/index.js",
   "repository": "git@github.com:proofgeist/fm-dapi.git",
@@ -13,9 +13,11 @@
   "scripts": {
     "prepublishOnly": "tsc",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "changeset": "changeset"
   },
   "dependencies": {
+    "@changesets/cli": "^2.26.1",
     "chalk": "4.1.2",
     "commander": "^9.2.0",
     "dayjs": "^1.11.2",

@@ -174,6 +174,8 @@ This change was made to take advantage of caching if used in a Next 13 app. You 
 client.list({ fetch: { next: { revalidate: 10 } } });
 ```
 
+You can also now pass custom functions to override where the access token is stored when using username/password authentication. This can be used to improve performance if running in a serverless function or even the browser.
+
 ## FAQ
 
 ### I don't like the way the code is generated. Can I edit the generated files?
