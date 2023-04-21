@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ZFieldValue = z.union([z.string(), z.number()]);
+export const ZFieldValue = z.union([z.string(), z.number(), z.null()]);
 export type FieldValue = z.infer<typeof ZFieldValue>;
 
 export const ZFieldData = z.record(z.string(), ZFieldValue);
