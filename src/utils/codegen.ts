@@ -11,6 +11,7 @@ import { FieldMetaData } from "../client-types";
 import { F } from "ts-toolbelt";
 import chalk from "chalk";
 import { ClientObjectProps, isOttoAuth } from "../client";
+import { memoryStore } from "../tokenStore/memory";
 
 type TSchema = {
   name: string;
@@ -137,7 +138,7 @@ const exportClientStatement = (args: {
   schemaName: string;
   layout: string;
   useZod: boolean;
-  envNames: Omit<ClientObjectProps, "layout">;
+  envNames: Omit<ClientObjectProps, "layout" | "tokenStore">;
 }) => [
   importStatement,
   undefinedTypeGuardStatement(args.envNames.db),
@@ -560,7 +561,7 @@ type BuildSchemaArgs = {
   type: "zod" | "ts";
   portalSchema?: { schemaName: string; schema: Array<TSchema> }[];
   valueLists?: { name: string; values: string[] }[];
-  envNames: Omit<ClientObjectProps, "layout">;
+  envNames: Omit<ClientObjectProps, "layout" | "tokenStore">;
   layoutName: string;
   strictNumbers?: boolean;
 };
@@ -916,7 +917,7 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
     return;
   }
 
-  const client = DataApi({ auth, server, db });
+  const client = DataApi({ auth, server, db, tokenStore: memoryStore() });
   await fs.ensureDir(path);
   const clientExportsMap: { [key: string]: ts.ExportDeclaration } = {};
 

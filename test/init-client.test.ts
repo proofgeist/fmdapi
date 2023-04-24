@@ -1,5 +1,6 @@
 import { DataApi, FileMakerError } from "../src";
 import fetch from "jest-fetch-mock";
+import memoryStore from "../src/tokenStore/memory";
 
 describe("try to init client", () => {
   test("without server", () => {
@@ -8,6 +9,7 @@ describe("try to init client", () => {
         auth: { apiKey: "anything" },
         db: "anything",
         server: "",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -17,6 +19,7 @@ describe("try to init client", () => {
         auth: { apiKey: "anything" },
         db: "anything",
         server: "http://example.com",
+        tokenStore: memoryStore(),
       })
     ).not.toThrow();
   });
@@ -26,6 +29,7 @@ describe("try to init client", () => {
         auth: { apiKey: "anything" },
         db: "",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -36,6 +40,7 @@ describe("try to init client", () => {
         auth: {},
         db: "anything",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -46,6 +51,7 @@ describe("try to init client", () => {
         auth: { username: "anything", password: "" },
         db: "anything",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -55,6 +61,7 @@ describe("try to init client", () => {
         auth: { username: "", password: "anything" },
         db: "anything",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -64,6 +71,7 @@ describe("try to init client", () => {
         auth: { apiKey: "" },
         db: "anything",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -76,6 +84,7 @@ describe("try to init client", () => {
       },
       db: "anything",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
     expect(client.baseUrl.toString()).toContain(":3030");
   });
@@ -117,6 +126,7 @@ describe("client methods (otto)", () => {
     auth: { apiKey: "KEY_anything" },
     db: "db",
     server: "https://example.com",
+    tokenStore: memoryStore(),
   });
   beforeEach(() => {
     fetch.resetMocks();

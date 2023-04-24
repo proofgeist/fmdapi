@@ -3,6 +3,7 @@ import { DataApi } from "../src";
 import { z, ZodError } from "zod";
 import { ZGetResponse } from "../src/client-types";
 import fetch from "jest-fetch-mock";
+import memoryStore from "../src/tokenStore/memory";
 
 type TCustomer = {
   name: string;
@@ -121,6 +122,7 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer }
     );
@@ -140,6 +142,7 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer }
     );
@@ -158,6 +161,7 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer }
     );
@@ -178,6 +182,7 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer }
     );
@@ -200,6 +205,7 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer, portalData: ZCustomerPortals }
     );
@@ -235,6 +241,7 @@ it("should properly type limit/offset in portals", async () => {
       db: "db",
       server: "https://example.com",
       layout: "layout",
+      tokenStore: memoryStore(),
     },
     { fieldData: ZCustomer, portalData: ZCustomerPortals }
   );

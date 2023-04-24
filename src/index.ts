@@ -1,4 +1,3 @@
-import { FileMakerError, DataApi } from "./client";
+import { DataApi, FileMakerError } from "./client";
 
-export default DataApi;
-export { DataApi, FileMakerError };
+export { FileMakerError, DataApi };

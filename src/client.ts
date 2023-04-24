@@ -22,7 +22,7 @@ import {
   RawFMResponse,
   ScriptResponse,
 } from "./client-types";
-import { TokenStoreDefinitions } from "./tokenStore/types";
+import type { TokenStoreDefinitions } from "./tokenStore/types";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
@@ -43,7 +43,7 @@ export type ClientObjectProps = {
    * The layout to use by default for all requests. Can be overrridden on each request.
    */
   layout?: string;
-  tokenStore?: TokenStoreDefinitions;
+  tokenStore: TokenStoreDefinitions;
 };
 const ZodOptions = z.object({
   server: z
@@ -61,19 +61,17 @@ const ZodOptions = z.object({
     }),
   ]),
   layout: z.string().optional(),
-  tokenStore: z
-    .object({
-      getKey: z.function().args().returns(z.string()).optional(),
-      getToken: z
-        .function()
-        .args(z.string())
-        .returns(
-          z.union([z.string().nullable(), z.promise(z.string().nullable())])
-        ),
-      setToken: z.function().args(z.string(), z.string()).returns(z.void()),
-      clearToken: z.function().args(z.string()).returns(z.void()),
-    })
-    .optional(),
+  tokenStore: z.object({
+    getKey: z.function().args().returns(z.string()).optional(),
+    getToken: z
+      .function()
+      .args(z.string())
+      .returns(
+        z.union([z.string().nullable(), z.promise(z.string().nullable())])
+      ),
+    setToken: z.function().args(z.string(), z.string()).returns(z.void()),
+    clearToken: z.function().args(z.string()).returns(z.void()),
+  }),
 });
 
 class FileMakerError extends Error {
@@ -98,11 +96,8 @@ function DataApi<
 ) {
   const options = ZodOptions.strict().parse(input); // validate options
 
-  let tokenStore = options.tokenStore;
+  const tokenStore = options.tokenStore;
 
-  if (!tokenStore) {
-    tokenStore = require("./tokenStore/default").default;
-  }
   if (!tokenStore) throw new Error("No token store provided");
 
   if (!tokenStore.getKey) {

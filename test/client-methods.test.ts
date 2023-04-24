@@ -7,6 +7,7 @@ import {
   ScriptOrFolder,
 } from "../src/client-types";
 import fetch from "jest-fetch-mock";
+import memoryStore from "../src/tokenStore/memory";
 
 const record = {
   fieldData: {
@@ -106,6 +107,7 @@ describe("find methods", () => {
       auth: { apiKey: "KEY_anything" },
       db: "db",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
 
     fetch.mockResponseOnce(JSON.stringify(goodFindResp));
@@ -124,6 +126,7 @@ describe("find methods", () => {
       auth: { apiKey: "KEY_anything" },
       db: "db",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
 
     fetch.mockResponseOnce(JSON.stringify(goodFindResp2));
@@ -142,6 +145,7 @@ describe("find methods", () => {
       auth: { apiKey: "KEY_anything" },
       db: "db",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
 
     fetch.mockResponseOnce(JSON.stringify(goodFindResp));
@@ -170,6 +174,7 @@ describe("other methods", () => {
       db: "db",
       server: "https://example.com",
       layout: "layout",
+      tokenStore: memoryStore(),
     });
 
     fetch.mockResponseOnce(JSON.stringify(goodFindResp));
@@ -184,6 +189,7 @@ describe("other methods", () => {
       auth: { apiKey: "KEY_anything" },
       db: "db",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
 
     fetch.mockResponseOnce(JSON.stringify(goodFindResp));
@@ -199,6 +205,7 @@ describe("other methods", () => {
       auth: { apiKey: "KEY_anything" },
       db: "db",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
 
     expect(
@@ -214,6 +221,7 @@ describe("other methods", () => {
       auth: { apiKey: "KEY_anything" },
       db: "db",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
 
     fetch.mockResponseOnce(JSON.stringify(goodFindResp));
@@ -232,6 +240,7 @@ describe("other methods", () => {
       auth: { apiKey: "KEY_anything" },
       db: "db",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
     fetch.mockResponseOnce(JSON.stringify(goodLayoutsResp));
 
@@ -254,6 +263,7 @@ describe("other methods", () => {
       auth: { apiKey: "KEY_anything" },
       db: "db",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
 
     fetch.mockResponseOnce(JSON.stringify(goodScriptsResp));
@@ -276,6 +286,7 @@ describe("other methods", () => {
       db: "db",
       server: "https://example.com",
       layout: "layout",
+      tokenStore: memoryStore(),
     });
 
     fetch.mockResponse(JSON.stringify(goodFindResp));
@@ -291,6 +302,7 @@ describe("other methods", () => {
       db: "db",
       server: "https://example.com",
       layout: "layout",
+      tokenStore: memoryStore(),
     });
 
     fetch.mockResponse(JSON.stringify(goodFindResp));
@@ -306,6 +318,7 @@ describe("other methods", () => {
       db: "db",
       server: "https://example.com",
       layout: "layout",
+      tokenStore: memoryStore(),
     });
 
     const param = JSON.stringify({ hello: "world" });

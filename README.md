@@ -104,7 +104,7 @@ If you are using username/password authentication, this library will manage your
 import { DataApi } from "@proofgeist/fmdapi";
 
 // using local storage
-import { localStorageStore } from "@proofgeist/fmdapi/tokenStore";
+import { localStorageStore } from "@proofgeist/fmdapi";
 const client = DataApi({
   auth: {
     username: process.env.FM_USERNAME,
@@ -116,7 +116,7 @@ const client = DataApi({
 });
 
 // or with Upstash, requires `@upstash/redis` as peer dependency
-import { upstashTokenStore } from "@proofgeist/fmdapi/tokenStore";
+import { upstashTokenStore } from "@proofgeist/fmdapi";
 const client = DataApi({
   auth: {
     username: process.env.FM_USERNAME,

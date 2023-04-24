@@ -3,16 +3,21 @@
   "version": "3.0.0",
   "description": "FileMaker Data API client",
   "main": "dist/index.js",
+  "browser": "dist-browser/browser.js",
   "repository": "git@github.com:proofgeist/fm-dapi.git",
   "author": "Eric <37158449+eluce2@users.noreply.github.com>",
   "license": "MIT",
   "private": false,
+  "exports": {
+    ".": "./dist/index.js",
+    "./tokenStore": "./dist/tokenStore"
+  },
   "bin": {
     "codegen": "dist/cli.js"
   },
   "scripts": {
     "prepublishOnly": "tsc",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.browser.json",
     "test": "jest",
     "changeset": "changeset"
   },
@@ -51,6 +56,8 @@
   "files": [
     "src",
     "dist",
+    "dist-browser",
+    "tokenStore",
     "utils",
     "stubs"
   ],
