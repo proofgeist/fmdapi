@@ -32,7 +32,7 @@ Add the following envnironment variables to your project's `.env` file:
 FM_DATABASE=filename.fmp12
 FM_SERVER=https://filemaker.example.com
 
-# if you want to use the Otto Data APi Proxy
+# if you want to use the Otto Data API Proxy
 OTTO_API_KEY=KEY_123456...789
 # otherwise
 FM_USERNAME=admin
