@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.0.6
+
+### Patch Changes
+
+- fix: memory token store would throw error during zod validation
+
 ## 3.0.5
 
 ### Patch Changes

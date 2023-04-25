@@ -217,7 +217,8 @@ In order to support whatever token store you may import, all import statements f
 
 ```ts
 // codegen-ignore
-import something from "whatever";
+import something from "whatever"; // <-- won't be included in the generated client
+import { fileTokenStore } from "@proofgeist/fmdapi/dist/tokenStore/file.js"; // <-- will be included
 ```
 
 #### `Schema` options

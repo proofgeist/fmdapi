@@ -70,7 +70,7 @@ const ZodOptions = z.object({
         .returns(
           z.union([z.string().nullable(), z.promise(z.string().nullable())])
         ),
-      setToken: z.function().args(z.string(), z.string()).returns(z.void()),
+      setToken: z.function().args(z.string(), z.string()).returns(z.any()),
       clearToken: z.function().args(z.string()).returns(z.void()),
     })
     .optional(),
