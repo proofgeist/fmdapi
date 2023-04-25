@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.0.9
+
+### Patch Changes
+
+- fix: remove fetch param from passing through to FM
+
 ## 3.0.8
 
 - fix: file return types to conform to zod validator

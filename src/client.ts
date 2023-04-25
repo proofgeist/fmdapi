@@ -299,7 +299,7 @@ function DataApi<
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
-    const { layout = options.layout, ...params } = args ?? {};
+    const { layout = options.layout, fetch, ...params } = args ?? {};
     if (layout === undefined) throw new Error("Must specify layout");
 
     // rename and refactor limit, offset, and sort keys for this request
@@ -317,7 +317,7 @@ function DataApi<
       method: "GET",
       query: params as Record<string, string>,
       timeout: args?.timeout,
-      fetchOptions: args?.fetch,
+      fetchOptions: fetch,
     });
 
     if (zodTypes) {
@@ -374,14 +374,14 @@ function DataApi<
       : GetArgs<U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
     args.recordId = asNumber(args.recordId);
-    const { recordId, layout = options.layout, ...params } = args;
+    const { recordId, layout = options.layout, fetch, ...params } = args;
 
     const data = await request({
       url: `/layouts/${layout}/records/${recordId}`,
       method: "GET",
       query: params as Record<string, string>,
       timeout: args.timeout,
-      fetchOptions: args.fetch,
+      fetchOptions: fetch,
     });
     if (zodTypes)
       return ZGetResponse(zodTypes).parse(data) as GetResponse<T, U>;
@@ -414,13 +414,13 @@ function DataApi<
       : DeleteArgs & WithLayout & FetchOptions
   ): Promise<DeleteResponse> {
     args.recordId = asNumber(args.recordId);
-    const { recordId, layout = options.layout, ...params } = args;
+    const { recordId, layout = options.layout, fetch, ...params } = args;
     return (await request({
       url: `/layouts/${layout}/records/${recordId}`,
       query: params as Record<string, string>,
       method: "DELETE",
       timeout: args.timeout,
-      fetchOptions: args.fetch,
+      fetchOptions: fetch,
     })) as DeleteResponse;
   }
 
@@ -495,6 +495,7 @@ function DataApi<
       layout = options.layout,
       ignoreEmptyResult = false,
       timeout,
+      fetch,
       ...params
     } = args;
     const query = !Array.isArray(queryInput) ? [queryInput] : queryInput;
@@ -503,7 +504,7 @@ function DataApi<
       body: { query, ...params },
       method: "POST",
       timeout,
-      fetchOptions: args.fetch,
+      fetchOptions: fetch,
     }).catch((e: unknown) => {
       if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
         return { data: [] };
