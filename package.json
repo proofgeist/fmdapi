@@ -7,10 +7,6 @@
   "author": "Eric <37158449+eluce2@users.noreply.github.com>",
   "license": "MIT",
   "private": false,
-  "exports": {
-    ".": "./dist/index.js",
-    "./tokenStore": "./dist/tokenStore"
-  },
   "bin": {
     "codegen": "dist/cli.js"
   },
