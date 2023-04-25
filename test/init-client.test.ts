@@ -1,5 +1,6 @@
 import { DataApi, FileMakerError } from "../src";
-import nock from "nock";
+import fetch from "jest-fetch-mock";
+import memoryStore from "../src/tokenStore/memory";
 
 describe("try to init client", () => {
   test("without server", () => {
@@ -8,6 +9,7 @@ describe("try to init client", () => {
         auth: { apiKey: "anything" },
         db: "anything",
         server: "",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -17,6 +19,7 @@ describe("try to init client", () => {
         auth: { apiKey: "anything" },
         db: "anything",
         server: "http://example.com",
+        tokenStore: memoryStore(),
       })
     ).not.toThrow();
   });
@@ -26,16 +29,18 @@ describe("try to init client", () => {
         auth: { apiKey: "anything" },
         db: "",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
   test("without auth", () => {
     expect(() =>
       DataApi({
-        // @ts-expect-error
+        // @ts-expect-error the auth object is missing properties
         auth: {},
         db: "anything",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -46,6 +51,7 @@ describe("try to init client", () => {
         auth: { username: "anything", password: "" },
         db: "anything",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -55,6 +61,7 @@ describe("try to init client", () => {
         auth: { username: "", password: "anything" },
         db: "anything",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -64,6 +71,7 @@ describe("try to init client", () => {
         auth: { apiKey: "" },
         db: "anything",
         server: "https://example.com",
+        tokenStore: memoryStore(),
       })
     ).toThrow();
   });
@@ -76,110 +84,85 @@ describe("try to init client", () => {
       },
       db: "anything",
       server: "https://example.com",
+      tokenStore: memoryStore(),
     });
     expect(client.baseUrl.toString()).toContain(":3030");
   });
 });
+
+const goodResp = {
+  response: {
+    dataInfo: {
+      database: "db",
+      layout: "layout",
+      table: "fake_table",
+      totalRecordCount: 7442,
+      foundCount: 7442,
+      returnedCount: 1,
+    },
+    data: [
+      {
+        fieldData: {
+          emailAll: "test@example.com",
+          name: "Fake Name",
+          emailPrimary: "cgesell@mrschilling.com",
+        },
+        portalData: {},
+        recordId: "5",
+        modId: "8",
+      },
+    ],
+  },
+  messages: [
+    {
+      code: "0",
+      message: "OK",
+    },
+  ],
+};
 
 describe("client methods (otto)", () => {
   const client = DataApi({
     auth: { apiKey: "KEY_anything" },
     db: "db",
     server: "https://example.com",
+    tokenStore: memoryStore(),
   });
+  beforeEach(() => {
+    fetch.resetMocks();
+  });
+  afterEach(() => {
+    expect(fetch.mock.calls.length).toEqual(1);
+  });
+
   test("list", async () => {
-    const scope = nock("https://example.com:3030")
-      .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
-      .reply(200, {
-        response: {
-          dataInfo: {
-            database: "db",
-            layout: "layout",
-            table: "fake_table",
-            totalRecordCount: 7442,
-            foundCount: 7442,
-            returnedCount: 1,
-          },
-          data: [
-            {
-              fieldData: {
-                emailAll: "test@example.com",
-                name: "Fake Name",
-                emailPrimary: "cgesell@mrschilling.com",
-              },
-              portalData: {},
-              recordId: "5",
-              modId: "8",
-            },
-          ],
-        },
-        messages: [
-          {
-            code: "0",
-            message: "OK",
-          },
-        ],
-      });
+    fetch.mockResponseOnce(JSON.stringify(goodResp));
 
     await client.list({ layout: "layout" });
-    expect(scope.isDone()).toBe(true);
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records"
+    );
   });
   test("list with limit param", async () => {
-    const scope = nock("https://example.com:3030")
-      .get("/fmi/data/vLatest/databases/db/layouts/layout/records?_limit=1")
-      .reply(200, {
-        response: {
-          dataInfo: {
-            database: "db",
-            layout: "layout",
-            table: "fake_table",
-            totalRecordCount: 7442,
-            foundCount: 7442,
-            returnedCount: 1,
-          },
-          data: [
-            {
-              fieldData: {
-                emailAll: "test@example.com",
-                name: "Fake Name",
-                emailPrimary: "cgesell@mrschilling.com",
-              },
-              portalData: {},
-              recordId: "5",
-              modId: "8",
-            },
-          ],
-        },
-        messages: [
-          {
-            code: "0",
-            message: "OK",
-          },
-        ],
-      });
-
+    fetch.mockResponseOnce(JSON.stringify(goodResp));
     await client.list({ layout: "layout", limit: 1 });
-    expect(scope.isDone()).toBe(true);
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records?_limit=1"
+    );
   });
   test("missing layout should error", async () => {
-    const scope = nock("https://example.com:3030")
-      .get("/fmi/data/vLatest/databases/db/layouts/not_a_layout/records")
-      .reply(500, {
-        messages: [
-          {
-            code: "105",
-            message: "Layout is missing",
-          },
-        ],
-        response: {},
-      });
+    fetch.mockResponseOnce(JSON.stringify(goodResp));
 
-    const prom = await client
+    await client
       .list({ layout: "not_a_layout" })
       .catch((err) => {
         expect(err).toBeInstanceOf(FileMakerError);
         expect(err.code).toBe("105"); // missing layout error
       })
-      .finally(() => expect(scope.isDone()).toBe(true));
+      .finally(() => {
+        expect(fetch.mock.calls[0][0]).toEqual(
+          "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/not_a_layout/records"
+        );
+      });
   });
 });
