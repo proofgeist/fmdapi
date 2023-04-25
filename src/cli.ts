@@ -51,7 +51,7 @@ async function runCodegen({ configLocation }: ConfigArgs) {
     return process.exit(1);
   });
 
-  const config: GenerateSchemaOptions<unknown> = await import(configLocation);
+  const config: GenerateSchemaOptions = await import(configLocation);
   await generateSchemas(config, configLocation).catch((err) => {
     console.error(err);
   });
