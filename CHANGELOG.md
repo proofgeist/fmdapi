@@ -1,22 +1,10 @@
 # @proofgeist/fmdapi
 
-## 3.0.7
-
-### Patch Changes
+## 3.0.8
 
 - fix: file return types to conform to zod validator
 - fix: if no token store is provided, default memory store was not being imported correctly
-
-## 3.0.6
-
-### Patch Changes
-
 - fix: memory token store would throw error during zod validation
-
-## 3.0.5
-
-### Patch Changes
-
 - add back default export
 - support commonJS and module imports in codegen cli
 - improve cli, supports .mjs config file by default

@@ -116,8 +116,9 @@ function DataApi<
     if (!tokenStore) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      tokenStore = (await import("./tokenStore/memory.js")).default;
+      tokenStore = (await import("./tokenStore/memory.js")).default();
     }
+
     if (!tokenStore) throw new Error("No token store provided");
 
     if (!tokenStore.getKey) {
