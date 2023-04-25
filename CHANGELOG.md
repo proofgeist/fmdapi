@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.0.1
+
+### Patch Changes
+
+- 129f9a6: fix codegen import
+
 ## 3.0.0
 
 ### Major Changes
