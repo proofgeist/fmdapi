@@ -21,11 +21,13 @@ const getSharedData = (key: string, devFileName: string): string | null => {
   const data = getDataFromFile(devFileName);
   return data[key];
 };
-const defaultTokenStore = (fileName = "shared.json"): TokenStoreDefinitions => {
+export const fileTokenStore = (
+  fileName = "shared.json"
+): TokenStoreDefinitions => {
   return {
     setToken: (key, value) => setSharedData(key, value, fileName),
     getToken: (key) => getSharedData(key, fileName),
     clearToken: () => fs.removeSync(fileName),
   };
 };
-export default defaultTokenStore;
+export default fileTokenStore;

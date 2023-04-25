@@ -1,7 +1,7 @@
 // codegen-ignore-import
 import { GenerateSchemaOptions, generateSchemas } from "../src/utils/codegen";
 
-import upstashTokenStore from "../src/tokenStore/upstash";
+import fileStorage from "../src/tokenStore/file";
 
 /* codegen-ignore */
 import dotenv from "dotenv";

@@ -10,13 +10,18 @@ This package is designed to make working with the FileMaker Data API much easier
 - [Otto](https://ottofms.com/) Data API proxy support
 - TypeScript support for easy auto-completion of your fields
 - Automated type generation based on layout metadata
+- Supports both node and edge runtimes (v3.0+)
 
 ## Installation
 
+This library requires zod as a peer depenency and Node 18 or later
+
 ```sh
-npm install @proofgeist/fmdapi
-# or
-yarn add @proofgeist/fmdapi
+npm install @proofgeist/fmdapi zod
+```
+
+```sh
+yarn add @proofgeist/fmdapi zod
 ```
 
 ## Usage
@@ -64,8 +69,8 @@ This package also includes some helper methods to make working with Data API res
 
 - `findOne` return the first record from a find instead of an array. This method will error unless exactly 1 record is found.
 - `findFirst` return the first record from a find instead of an array, but will not error if multiple records are found.
-- `findAll` return all found records from a find, automatically handling pagination
-- `listAll` return all records from a given layout, automatically handling pagination
+- `findAll` return all found records from a find, automatically handling pagination. Use caution with large datasets!
+- `listAll` return all records from a given layout, automatically handling pagination. Use caution with large datasets!
 
 Basic Example:
 
@@ -96,15 +101,17 @@ type TContact = {
 const result = await client.list<TContact>({ layout: "Contacts" });
 ```
 
+💡 TIP: For a more ergonomic TypeScript experience, use the [included codegen tool](#automatic-type-generation) to generate these types based on your FileMaker layout metadata.
+
 ## Custom Token Store (v3.0+)
 
-If you are using username/password authentication, this library will manage your access token for you. By default, the token is kept in memory or in a local file during development, but you can provide other getter and setter methods to store the token in a database or other location. Included in this package are helper functions for LocalStorage if running in a browser, or Upstash if running in a serverless environment.
+If you are using username/password authentication, this library will manage your access token for you. By default, the token is kept in memory only, but you can provide other getter and setter methods to store the token in a database or other location. Included in this package are helper functions for file storage if you have access to the filesystem, or Upstash if running in a serverless environment.
 
 ```typescript
 import { DataApi } from "@proofgeist/fmdapi";
 
-// using local storage
-import { localStorageStore } from "@proofgeist/fmdapi";
+// using file storage
+import { fileTokenStore } from "@proofgeist/fmdapi/dist/tokenStore/file";
 const client = DataApi({
   auth: {
     username: process.env.FM_USERNAME,
@@ -112,11 +119,11 @@ const client = DataApi({
   },
   db: process.env.FM_DATABASE,
   server: process.env.FM_SERVER,
-  tokenStore: localStorageStore(),
+  tokenStore: fileTokenStore(),
 });
 
 // or with Upstash, requires `@upstash/redis` as peer dependency
-import { upstashTokenStore } from "@proofgeist/fmdapi";
+import { upstashTokenStore } from "@proofgeist/fmdapi/dist/tokenStore/upstash";
 const client = DataApi({
   auth: {
     username: process.env.FM_USERNAME,
@@ -131,11 +138,21 @@ const client = DataApi({
 });
 ```
 
+## Edge Runtime Support (v3.0+)
+
+Since version 3.0 uses the native `fetch` API, it is compatible with edge runtimes, but there are some additional considerations to avoid overwhelming your FileMaker server with too many connections. If you are developing for the edge, be sure to implement one of the following strategies:
+
+- ✅ Use a custom token store (see above) with a persistent storage method such as Upstash
+- ✅ Use a proxy such as the [Otto Data API Proxy](https://www.ottofms.com/docs/otto/working-with-otto/proxy-api-keys/data-api) which handles management of the access tokens itself.
+  - Providing an API key to the client instead of username/password will automatically use the Otto proxy
+- ⚠️ Call the `disconnect` method on the client after each request to avoid leaving open sessions on your server
+  - this method works, but is not recommended in most scenarios as it reuires a new session to be created for each request
+
 ## Automatic Type Generation
 
 This package also includes a helper function that will automatically generate types for each of your layouts. Use this tool regularly during development to easily keep your types updated with any schema changes in FileMaker. 🤯
 
-The generated file also produces a layout-specific client instance that will automatically type all of the methods for that layout **and** validates the response using the [`zod`](https://github.com/colinhacks/zod) library. This validaiton happens at runtime so you can protect against dangerous field changes even when you haven't ran the code generator recently, or in your projection deployment!
+The generated file also produces a layout-specific client instance that will automatically type all of the methods for that layout **and** validates the response using the [`zod`](https://github.com/colinhacks/zod) library. This validaiton happens at runtime so you can protect against dangerous field changes even when you haven't ran the code generator recently, or in your production deployment!
 
 ### Setup instructions:
 
@@ -152,18 +169,20 @@ yarn codegen --init
 yarn codegen
 ```
 
-Assuming you have a layout called `customer_api` containing `name` `phone` and `email` fields for a customer, the generated code will look like this:
+Assuming you have a layout called `customer_api` containing `name` `phone` and `email` fields for a customer, the generated code will look something like this:
 
 ```typescript
 // schema/Customer.ts
 import { z } from "zod";
-import { DataApi } from "@proofgeist/fmdapi";
 export const ZCustomer = z.object({
   name: z.string(),
   phone: z.string(),
   email: z.string(),
 });
 export type TCustomer = z.infer<typeof ZCustomer>;
+
+// schema/client/Customer.ts
+import { DataApi } from "@proofgeist/fmdapi";
 export const client = DataApi<any, TCustomer>(
   {
     auth: { apiKey: process.env.OTTO_API_KEY },
@@ -178,20 +197,28 @@ export const client = DataApi<any, TCustomer>(
 You can use the exported types to type your own client, or simply use the generated client to get typed and validated results, like so:
 
 ```ts
-import { client } from "schema/Customer";
+import { CustomerClient } from "schema/client";
 ...
-const result = await client.list(); // result will be fully typed and validated!
+const result = await CustomerClient.list(); // result will be fully typed and validated!
 ```
 
 #### `generateSchemas` options
 
-| Option         | Type       | Default      | Description                                                                                                                                               |
-| -------------- | ---------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| envNames       | `object`   | _undefined_  | This object has the same structure as the client config parameters and is used to overrride the environment variable names used for the generated client. |
-| schemas        | `Schema[]` | _(required)_ | An array of `Schema` objects to generate types for (see below)                                                                                            |
-| path           | `string`   | `"./schema"` | Path to folder where generated files should be saved.                                                                                                     |
-| generateClient | `boolean`  | `true`       | Will generate a layout-specific typed client for you. Set to `false` if you only want to generate the types.                                              |
-| useZod         | `boolean`  | `true`       | When enabled, will generate Zod schema in addition to TypeScript types and add validation to the generated client for each layout                         |
+| Option         | Type       | Default       | Description                                                                                                                                               |
+| -------------- | ---------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| envNames       | `object`   | _undefined_   | This object has the same structure as the client config parameters and is used to overrride the environment variable names used for the generated client. |
+| schemas        | `Schema[]` | _(required)_  | An array of `Schema` objects to generate types for (see below)                                                                                            |
+| path           | `string`   | `"./schema"`  | Path to folder where generated files should be saved.                                                                                                     |
+| generateClient | `boolean`  | `true`        | Will generate a layout-specific typed client for you. Set to `false` if you only want to generate the types.                                              |
+| useZod         | `boolean`  | `true`        | When enabled, will generate Zod schema in addition to TypeScript types and add validation to the generated client for each layout                         |
+| tokenStore     | `function` | `memoryStore` | A [custom token store](#custom-token-store-v30) function to be included in the generated client                                                           |
+
+In order to support whatever token store you may import, all import statements from your config file will be copied into the generated client files by default. To exclude certain imports, add a comment containing `codegen-ignore` in the line above the import statement you wish to exclude. e.g.
+
+```ts
+// codegen-ignore
+import something from "whatever";
+```
 
 #### `Schema` options
 
@@ -203,27 +230,11 @@ const result = await client.list(); // result will be fully typed and validated!
 | strictNumbers  | `boolean`                      | `false`      | (v2.2.11+) If true, the zod schema will apply a transformer to force all number fields to be either `number` or `null`. <br>**WARNING:** If you are not using Zod or the auto-generated layout specific client, enabling this option may result in false types! |
 | generateClient | `boolean`                      | none         | If present, override the `generateClient` option for this schema only.                                                                                                                                                                                          |
 
-## What's new in v3
-
-Version 3 uses the native `fetch` module from Node 18 and is no longer dependent on `node-fetch`. Node version 18 or later is now required to install this package.
-
-This change was made to take advantage of caching if used in a Next 13 app. You can pass in additonal options to the `fetch` function for each method. For example:
-
-```ts
-client.list({ fetch: { next: { revalidate: 10 } } });
-```
-
-For a more detailed list of changes, see the Changelog.
-
 ## FAQ
 
 ### I don't like the way the code is generated. Can I edit the generated files?
 
 They are just files added to your project, so you technically can, but we don't recommend it, as it would undermine the main benefit of being able to re-run the script at a later date when the schema changes—all your edits would be overritten. If you need to extend the types, it's better to do extend them into a new type/zod schema in another file. Or, if you have suggesstions for the underlying engine, Pull Requests are welcome!
-
-### Do I have to install `zod` for this package to work?
-
-No, but we reccomend it! Zod is included as a depenency with this package and used under the hood when you use the generated layout-specific client to validate the responses from your server. If you wish to disable the validation, you can pass `useZod: false` to the generated client.
 
 ### Why are number fields typed as a `string | number`?
 
