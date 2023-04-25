@@ -1,48 +1,62 @@
 {
   "name": "@proofgeist/fmdapi",
-  "version": "2.2.14",
+  "version": "3.0.0",
   "description": "FileMaker Data API client",
   "main": "dist/index.js",
   "repository": "git@github.com:proofgeist/fm-dapi.git",
   "author": "Eric <37158449+eluce2@users.noreply.github.com>",
   "license": "MIT",
   "private": false,
+  "exports": {
+    ".": "./dist/index.js",
+    "./tokenStore": "./dist/tokenStore"
+  },
   "bin": {
     "codegen": "dist/cli.js"
   },
   "scripts": {
     "prepublishOnly": "tsc",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "changeset": "changeset"
   },
   "dependencies": {
+    "@changesets/cli": "^2.26.1",
     "chalk": "4.1.2",
     "commander": "^9.2.0",
     "dayjs": "^1.11.2",
     "dotenv": "^16.0.1",
     "fs-extra": "^10.1.0",
     "node-fetch": "2.6.7",
-    "ts-toolbelt": "^9.6.0",
-    "zod": "^3.21.4"
+    "ts-toolbelt": "^9.6.0"
+  },
+  "peerDependencies": {
+    "zod": ">=3.21.4"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^28.1.3",
     "@types/node": "^17.0.21",
-    "@types/node-fetch": "^2.6.1",
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.53.0",
+    "@upstash/redis": "^1.20.4",
     "eslint": "^8.34.0",
     "eslint-plugin-react": "^7.32.2",
     "jest": "^28.1.1",
-    "nock": "^13.2.4",
+    "jest-fetch-mock": "^3.0.3",
     "ts-jest": "^28.0.5",
     "ts-node": "^10.7.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "zod": ">=3.21.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "files": [
     "src",
     "dist",
+    "dist-browser",
+    "tokenStore",
     "utils",
     "stubs"
   ],

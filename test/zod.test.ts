@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataApi } from "../src";
-import nock from "nock";
 import { z, ZodError } from "zod";
 import { ZGetResponse } from "../src/client-types";
+import fetch from "jest-fetch-mock";
+import memoryStore from "../src/tokenStore/memory";
 
 type TCustomer = {
   name: string;
@@ -11,7 +13,7 @@ const ZCustomer = z.object({ name: z.string(), phone: z.string() });
 const ZPortalTable = z.object({
   "Portal_Table::related_field": z.string(),
 });
-type TPortalTable = z.infer<typeof ZPortalTable>;
+
 const ZCustomerPortals = z.object({
   PortalTable: ZPortalTable,
 });
@@ -84,27 +86,35 @@ const record_extra = {
   recordId: "5",
   modId: "8",
 };
-const responseSample = (record: object) => ({
-  response: {
-    dataInfo: {
-      database: "db",
-      layout: "layout",
-      table: "fake_table",
-      totalRecordCount: 7442,
-      foundCount: 7442,
-      returnedCount: 1,
+const responseSample = (record: object) =>
+  JSON.stringify({
+    response: {
+      dataInfo: {
+        database: "db",
+        layout: "layout",
+        table: "fake_table",
+        totalRecordCount: 7442,
+        foundCount: 7442,
+        returnedCount: 1,
+      },
+      data: [record],
     },
-    data: [record],
-  },
-  messages: [
-    {
-      code: "0",
-      message: "OK",
-    },
-  ],
-});
+    messages: [
+      {
+        code: "0",
+        message: "OK",
+      },
+    ],
+  });
 
 describe("zod validation", () => {
+  beforeEach(() => {
+    fetch.resetMocks();
+  });
+  afterEach(() => {
+    expect(fetch.mock.calls.length).toBeLessThanOrEqual(1);
+  });
+
   it("should pass validation", async () => {
     const client = DataApi<any, TCustomer>(
       {
@@ -112,13 +122,18 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer }
     );
-    const scope = nock("https://example.com:3030")
-      .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
-      .reply(200, responseSample(record_good));
-    const res = await client.list({});
+
+    fetch.mockResponseOnce(responseSample(record_good));
+
+    await client.list({});
+
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records"
+    );
   });
   it("should pass validation allow extra fields", async () => {
     const client = DataApi<any, TCustomer>(
@@ -127,13 +142,17 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer }
     );
-    const scope = nock("https://example.com:3030")
-      .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
-      .reply(200, responseSample(record_extra));
-    const res = await client.list({});
+
+    fetch.mockResponseOnce(responseSample(record_extra));
+    await client.list({});
+
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records"
+    );
   });
   it("list method: should fail validation when field is missing", async () => {
     const client = DataApi<any, TCustomer>(
@@ -142,14 +161,19 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer }
     );
-    const scope = nock("https://example.com:3030")
-      .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
-      .reply(200, responseSample(record_bad));
+
+    fetch.mockResponseOnce(responseSample(record_bad));
+
+    await expect(client.list({})).rejects.toBeInstanceOf(ZodError);
+
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records"
+    );
     // expect this to error
-    expect(client.list({})).rejects.toBeInstanceOf(ZodError);
   });
   it("find method: should properly infer from root type", async () => {
     const client = DataApi<any, TCustomer>(
@@ -158,17 +182,21 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer }
     );
-    const scope = nock("https://example.com:3030")
-      .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
-      .reply(200, responseSample(record_good));
+
+    fetch.mockResponseOnce(responseSample(record_good));
 
     // the following should not error if typed properly
     const resp = await client.find({ query: { name: "test" } });
     resp.data[0].fieldData.name;
     resp.data[0].fieldData.phone;
+
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/_find"
+    );
   });
   it("client with portal data passed as zod type", async () => {
     const client = DataApi<any, TCustomer, TCustomerPortals>(
@@ -177,20 +205,24 @@ describe("zod validation", () => {
         db: "db",
         server: "https://example.com",
         layout: "layout",
+        tokenStore: memoryStore(),
       },
       { fieldData: ZCustomer, portalData: ZCustomerPortals }
     );
-    const scope = nock("https://example.com:3030")
-      .get("/fmi/data/vLatest/databases/db/layouts/layout/records")
-      .reply(200, responseSample(record_portals));
 
-    client
+    fetch.mockResponseOnce(responseSample(record_portals));
+
+    await client
       .list({})
       .then(
         (data) =>
           data.data[0].portalData.PortalTable[0]["Portal_Table::related_field"]
       )
       .catch();
+
+    expect(fetch.mock.calls[0][0]).toEqual(
+      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records"
+    );
   });
   it("client with portal data fails validation", async () => {
     expect(() =>
@@ -209,16 +241,19 @@ it("should properly type limit/offset in portals", async () => {
       db: "db",
       server: "https://example.com",
       layout: "layout",
+      tokenStore: memoryStore(),
     },
     { fieldData: ZCustomer, portalData: ZCustomerPortals }
   );
 
-  const scope = nock("https://example.com:3030")
-    .post("/fmi/data/vLatest/databases/db/layouts/layout/_find")
-    .reply(200, responseSample(record_good));
+  fetch.mockResponseOnce(responseSample(record_good));
 
-  client.find({
+  await client.find({
     query: { name: "test" },
     portalRanges: { PortalTable: { limit: 500, offset: 5 } },
   });
+
+  expect(fetch.mock.calls[0][0]).toEqual(
+    "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/_find"
+  );
 });

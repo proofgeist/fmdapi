@@ -1,6 +1,4 @@
-import fetch from "node-fetch";
 import { z } from "zod";
-import { getSharedData, setSharedData } from "./shared";
 import {
   CreateParams,
   CreateResponse,
@@ -24,6 +22,7 @@ import {
   RawFMResponse,
   ScriptResponse,
 } from "./client-types";
+import type { TokenStoreDefinitions } from "./tokenStore/types";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
@@ -44,6 +43,7 @@ export type ClientObjectProps = {
    * The layout to use by default for all requests. Can be overrridden on each request.
    */
   layout?: string;
+  tokenStore?: TokenStoreDefinitions;
 };
 const ZodOptions = z.object({
   server: z
@@ -61,6 +61,19 @@ const ZodOptions = z.object({
     }),
   ]),
   layout: z.string().optional(),
+  tokenStore: z
+    .object({
+      getKey: z.function().args().returns(z.string()).optional(),
+      getToken: z
+        .function()
+        .args(z.string())
+        .returns(
+          z.union([z.string().nullable(), z.promise(z.string().nullable())])
+        ),
+      setToken: z.function().args(z.string(), z.string()).returns(z.void()),
+      clearToken: z.function().args(z.string()).returns(z.void()),
+    })
+    .optional(),
 });
 
 class FileMakerError extends Error {
@@ -84,7 +97,8 @@ function DataApi<
   }
 ) {
   const options = ZodOptions.strict().parse(input); // validate options
-  const sharedDataKey = `${options.server}/${options.db}`; // used for storing and re-using token
+
+  let tokenStore = options.tokenStore;
 
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
@@ -93,17 +107,36 @@ function DataApi<
     baseUrl.port = (options.auth.ottoPort ?? 3030).toString();
   }
 
-  async function getToken(refresh = false): Promise<string> {
+  async function getToken(
+    refresh = false,
+    fetchOptions?: Omit<RequestInit, "method">
+  ): Promise<string> {
     if ("apiKey" in options.auth) return options.auth.apiKey;
 
-    let token = getSharedData(sharedDataKey);
+    if (!tokenStore) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      tokenStore = await import("./tokenStore/memory.js");
+    }
+    if (!tokenStore) throw new Error("No token store provided");
+
+    if (!tokenStore.getKey) {
+      tokenStore.getKey = () => `${options.server}/${options.db}`;
+    }
+
+    if (tokenStore === undefined) throw new Error("No token store provided");
+    if (!tokenStore.getKey) throw new Error("No token store key provided");
+
+    let token = await tokenStore.getToken(tokenStore.getKey());
 
     if (refresh) token = null; // clear token so are forced to get a new one
 
     if (!token) {
       const res = await fetch(`${baseUrl}/sessions`, {
+        ...fetchOptions,
         method: "POST",
         headers: {
+          ...fetchOptions?.headers,
           "Content-Type": "application/json",
           Authorization: `Basic ${Buffer.from(
             `${options.auth.username}:${options.auth.password}`
@@ -122,7 +155,7 @@ function DataApi<
       if (!token) throw new Error("Could not get token");
     }
 
-    setSharedData(sharedDataKey, token);
+    tokenStore.setToken(tokenStore.getKey(), token);
     return token;
   }
 
@@ -134,8 +167,15 @@ function DataApi<
     retry?: boolean;
     portalRanges?: PortalRanges;
     timeout?: number;
+    fetchOptions?: RequestInit;
   }): Promise<unknown> {
-    const { query, body, method = "POST", retry = false } = params;
+    const {
+      query,
+      body,
+      method = "POST",
+      retry = false,
+      fetchOptions = {},
+    } = params;
     const url = new URL(`${baseUrl}${params.url}`);
 
     if (query) {
@@ -165,9 +205,11 @@ function DataApi<
 
     const token = await getToken(retry);
     const res = await fetch(url.toString(), {
+      ...fetchOptions,
       method,
       body: body ? JSON.stringify(body) : undefined,
       headers: {
+        ...fetchOptions?.headers,
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
@@ -238,25 +280,33 @@ function DataApi<
     timeout?: number;
   };
 
+  type FetchOptions = {
+    fetch?: RequestInit;
+  };
+
   /**
    * List all records from a given layout, no find criteria applied.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function list(args?: any): Promise<GetResponse<Td, Ud>>;
+  async function list(): Promise<GetResponse<Td, Ud>>;
   async function list<T extends FieldData = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
-      ? ListParams<T, U> & Partial<WithLayout>
-      : ListParams<T, U> & WithLayout
+      ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
+      : ListParams<T, U> & WithLayout & FetchOptions
+  ): Promise<GetResponse<T, U>>;
+  async function list<T extends FieldData = Td, U extends Ud = Ud>(
+    args?: Opts["layout"] extends string
+      ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
+      : ListParams<T, U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
     const { layout = options.layout, ...params } = args ?? {};
     if (layout === undefined) throw new Error("Must specify layout");
 
     // rename and refactor limit, offset, and sort keys for this request
-    if (params.limit !== undefined)
+    if ("limit" in params && params.limit !== undefined)
       delete Object.assign(params, { _limit: params.limit })["limit"];
-    if (params.offset !== undefined)
+    if ("offset" in params && params.offset !== undefined)
       delete Object.assign(params, { _offset: params.offset })["offset"];
-    if (params.sort !== undefined)
+    if ("sort" in params && params.sort !== undefined)
       delete Object.assign(params, {
         _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
       })["sort"];
@@ -266,6 +316,7 @@ function DataApi<
       method: "GET",
       query: params as Record<string, string>,
       timeout: args?.timeout,
+      fetchOptions: args?.fetch,
     });
 
     if (zodTypes) {
@@ -280,13 +331,13 @@ function DataApi<
    */
   async function listAll<T extends FieldData = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
-      ? ListParams<T, U> & Partial<WithLayout>
-      : ListParams<T, U> & WithLayout
+      ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
+      : ListParams<T, U> & WithLayout & FetchOptions
   ) {
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args?.limit ?? 100;
     const offset = args?.offset ?? 0;
-    const myArgs: ListParams<T, U> = args ?? {};
+    const myArgs = args ?? {};
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -302,14 +353,15 @@ function DataApi<
    */
   async function create<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
-      ? CreateArgs<T, U> & Partial<WithLayout>
-      : CreateArgs<T, U> & WithLayout
+      ? CreateArgs<T, U> & Partial<WithLayout> & FetchOptions
+      : CreateArgs<T, U> & WithLayout & FetchOptions
   ): Promise<CreateResponse> {
     const { fieldData, layout = options.layout, ...params } = args;
     return (await request({
       url: `/layouts/${layout}/records`,
       body: { fieldData, ...(params ?? {}) },
       timeout: args.timeout,
+      fetchOptions: args.fetch,
     })) as CreateResponse;
   }
   /**
@@ -317,8 +369,8 @@ function DataApi<
    */
   async function get<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
-      ? GetArgs<U> & Partial<WithLayout>
-      : GetArgs<U> & WithLayout
+      ? GetArgs<U> & Partial<WithLayout> & FetchOptions
+      : GetArgs<U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
     args.recordId = asNumber(args.recordId);
     const { recordId, layout = options.layout, ...params } = args;
@@ -328,6 +380,7 @@ function DataApi<
       method: "GET",
       query: params as Record<string, string>,
       timeout: args.timeout,
+      fetchOptions: args.fetch,
     });
     if (zodTypes)
       return ZGetResponse(zodTypes).parse(data) as GetResponse<T, U>;
@@ -338,8 +391,8 @@ function DataApi<
    */
   async function update<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
-      ? UpdateArgs<T, U> & Partial<WithLayout>
-      : UpdateArgs<T, U> & WithLayout
+      ? UpdateArgs<T, U> & Partial<WithLayout> & FetchOptions
+      : UpdateArgs<T, U> & WithLayout & FetchOptions
   ): Promise<UpdateResponse> {
     args.recordId = asNumber(args.recordId);
     const { recordId, fieldData, layout = options.layout, ...params } = args;
@@ -348,6 +401,7 @@ function DataApi<
       body: { fieldData, ...(params ?? {}) },
       method: "PATCH",
       timeout: args.timeout,
+      fetchOptions: args.fetch,
     })) as UpdateResponse;
   }
   /**
@@ -355,8 +409,8 @@ function DataApi<
    */
   async function deleteRecord(
     args: Opts["layout"] extends string
-      ? DeleteArgs & Partial<WithLayout>
-      : DeleteArgs & WithLayout
+      ? DeleteArgs & Partial<WithLayout> & FetchOptions
+      : DeleteArgs & WithLayout & FetchOptions
   ): Promise<DeleteResponse> {
     args.recordId = asNumber(args.recordId);
     const { recordId, layout = options.layout, ...params } = args;
@@ -365,6 +419,7 @@ function DataApi<
       query: params as Record<string, string>,
       method: "DELETE",
       timeout: args.timeout,
+      fetchOptions: args.fetch,
     })) as DeleteResponse;
   }
 
@@ -373,14 +428,15 @@ function DataApi<
    */
   async function metadata(
     args: Opts["layout"] extends string
-      ? { timeout?: number } & Partial<WithLayout>
-      : { timeout?: number } & WithLayout
+      ? { timeout?: number } & Partial<WithLayout> & FetchOptions
+      : { timeout?: number } & WithLayout & FetchOptions
   ): Promise<MetadataResponse> {
     const { layout = options.layout } = args;
     return (await request({
       method: "GET",
       url: `/layouts/${layout}`,
       timeout: args.timeout,
+      fetchOptions: args.fetch,
     })) as MetadataResponse;
   }
   /**
@@ -430,8 +486,8 @@ function DataApi<
    */
   async function find<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
-      ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout>
-      : FindArgs<T, U> & IgnoreEmptyResult & WithLayout
+      ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout> & FetchOptions
+      : FindArgs<T, U> & IgnoreEmptyResult & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
     const {
       query: queryInput,
@@ -446,6 +502,7 @@ function DataApi<
       body: { query, ...params },
       method: "POST",
       timeout,
+      fetchOptions: args.fetch,
     }).catch((e: unknown) => {
       if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
         return { data: [] };
@@ -463,8 +520,8 @@ function DataApi<
    */
   async function findOne<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
-      ? FindArgs<T, U> & Partial<WithLayout>
-      : FindArgs<T, U> & WithLayout
+      ? FindArgs<T, U> & Partial<WithLayout> & FetchOptions
+      : FindArgs<T, U> & WithLayout & FetchOptions
   ): Promise<GetResponseOne<T, U>> {
     const res = await find<T, U>(args);
     if (res.data.length !== 1)
@@ -478,8 +535,8 @@ function DataApi<
    */
   async function findFirst<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
-      ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout>
-      : FindArgs<T, U> & IgnoreEmptyResult & WithLayout
+      ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout> & FetchOptions
+      : FindArgs<T, U> & IgnoreEmptyResult & WithLayout & FetchOptions
   ): Promise<GetResponseOne<T, U>> {
     const res = await find<T, U>(args);
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
@@ -492,8 +549,8 @@ function DataApi<
    */
   async function findAll<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
-      ? FindArgs<T, U> & Partial<WithLayout>
-      : FindArgs<T, U> & WithLayout
+      ? FindArgs<T, U> & Partial<WithLayout> & FetchOptions
+      : FindArgs<T, U> & WithLayout & FetchOptions
   ): Promise<FMRecord<T, U>[]> {
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args.limit ?? 100;
@@ -520,8 +577,8 @@ function DataApi<
 
   async function executeScript(
     args: Opts["layout"] extends string
-      ? ExecuteScriptArgs & Partial<WithLayout>
-      : ExecuteScriptArgs & WithLayout
+      ? ExecuteScriptArgs & Partial<WithLayout> & FetchOptions
+      : ExecuteScriptArgs & WithLayout & FetchOptions
   ) {
     const { script, scriptParam, layout = options.layout } = args;
     return (await request({
@@ -529,6 +586,7 @@ function DataApi<
       query: scriptParam ? { "script.param": scriptParam } : undefined,
       method: "GET",
       timeout: args.timeout,
+      fetchOptions: args.fetch,
     })) as Pick<ScriptResponse, "scriptResult" | "scriptError">;
   }
 

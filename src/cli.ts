@@ -51,9 +51,8 @@ async function runCodegen({ configLocation }: ConfigArgs) {
     return process.exit(1);
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const config: GenerateSchemaOptions = require(configLocation);
-  await generateSchemas(config).catch((err) => {
+  const config: GenerateSchemaOptions<unknown> = await import(configLocation);
+  await generateSchemas(config, configLocation).catch((err) => {
     console.error(err);
   });
   console.log(`✅ Generated schemas\n`);
