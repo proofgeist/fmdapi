@@ -7,6 +7,7 @@ import path from "path";
 import { GenerateSchemaOptions } from "./utils/codegen";
 import { config } from "dotenv";
 
+const defaultConfigPaths = ["./fmschema.config.mjs", "./fmschema.config.js"];
 type ConfigArgs = {
   configLocation: string;
 };
@@ -19,7 +20,7 @@ function init({ configLocation }: ConfigArgs) {
     );
   } else {
     const stubFile = fs.readFileSync(
-      path.resolve(__dirname, "../stubs/fmschema.config.stub.js"),
+      path.resolve(__dirname, "../stubs/fmschema.config.stub.mjs"),
       "utf8"
     );
     fs.writeFileSync(configLocation, stubFile, "utf8");
@@ -56,17 +57,14 @@ async function runCodegen({ configLocation }: ConfigArgs) {
   );
   await generateSchemas(config, configLocation).catch((err) => {
     console.error(err);
+    return process.exit(1);
   });
   console.log(`✅ Generated schemas\n`);
 }
 
 program
   .option("--init", "Add the configuration file to your project")
-  .option(
-    "--config <filename>",
-    "optional config file name",
-    "./fmschema.config.js" // default
-  )
+  .option("--config <filename>", "optional config file name")
   .option("--env-path <path>", "optional path to your .env file", ".env.local")
   .option(
     "--skip-env-check",
@@ -74,7 +72,10 @@ program
     false
   )
   .action(async (options) => {
-    const configLocation = path.resolve(options.config);
+    // check if options.config resolves to a file
+
+    const configPath = getConfigPath(options.config);
+    const configLocation = path.resolve(configPath ?? defaultConfigPaths[0]);
     if (options.init) return init({ configLocation });
 
     if (!options.skipEnvCheck) {
@@ -92,3 +93,26 @@ program
   });
 
 program.parse();
+
+function getConfigPath(configPath?: string): string | null {
+  if (configPath) {
+    // If a config path is specified, check if it exists
+    try {
+      fs.accessSync(configPath, fs.constants.F_OK);
+      return configPath;
+    } catch (e) {
+      // If it doesn't exist, continue to default paths
+    }
+  }
+
+  // Try default paths in order
+  for (const path of defaultConfigPaths) {
+    try {
+      fs.accessSync(path, fs.constants.F_OK);
+      return path;
+    } catch (e) {
+      // If path doesn't exist, try the next one
+    }
+  }
+  return null;
+}

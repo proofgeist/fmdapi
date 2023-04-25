@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.0.2
+
+### Patch Changes
+
+- improve cli, supports .mjs config file by default
+
 ## 3.0.1
 
 ### Patch Changes
