@@ -1,5 +1,12 @@
 # @proofgeist/fmdapi
 
+## 3.0.7
+
+### Patch Changes
+
+- fix: file return types to conform to zod validator
+- fix: if no token store is provided, default memory store was not being imported correctly
+
 ## 3.0.6
 
 ### Patch Changes

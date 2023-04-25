@@ -19,7 +19,7 @@ const setSharedData = (key: string, value: string, devFileName: string) => {
 };
 const getSharedData = (key: string, devFileName: string): string | null => {
   const data = getDataFromFile(devFileName);
-  return data[key];
+  return data[key] ?? null;
 };
 export const fileTokenStore = (
   fileName = "shared.json"
