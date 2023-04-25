@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist-browser",
-    "rootDir": "./src"
-  },
-  "include": ["./src/browser.ts", "./src/**/*.ts"]
-}

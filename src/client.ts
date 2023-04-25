@@ -43,7 +43,7 @@ export type ClientObjectProps = {
    * The layout to use by default for all requests. Can be overrridden on each request.
    */
   layout?: string;
-  tokenStore: TokenStoreDefinitions;
+  tokenStore?: TokenStoreDefinitions;
 };
 const ZodOptions = z.object({
   server: z
@@ -61,17 +61,19 @@ const ZodOptions = z.object({
     }),
   ]),
   layout: z.string().optional(),
-  tokenStore: z.object({
-    getKey: z.function().args().returns(z.string()).optional(),
-    getToken: z
-      .function()
-      .args(z.string())
-      .returns(
-        z.union([z.string().nullable(), z.promise(z.string().nullable())])
-      ),
-    setToken: z.function().args(z.string(), z.string()).returns(z.void()),
-    clearToken: z.function().args(z.string()).returns(z.void()),
-  }),
+  tokenStore: z
+    .object({
+      getKey: z.function().args().returns(z.string()).optional(),
+      getToken: z
+        .function()
+        .args(z.string())
+        .returns(
+          z.union([z.string().nullable(), z.promise(z.string().nullable())])
+        ),
+      setToken: z.function().args(z.string(), z.string()).returns(z.void()),
+      clearToken: z.function().args(z.string()).returns(z.void()),
+    })
+    .optional(),
 });
 
 class FileMakerError extends Error {
@@ -96,13 +98,7 @@ function DataApi<
 ) {
   const options = ZodOptions.strict().parse(input); // validate options
 
-  const tokenStore = options.tokenStore;
-
-  if (!tokenStore) throw new Error("No token store provided");
-
-  if (!tokenStore.getKey) {
-    tokenStore.getKey = () => `${options.server}/${options.db}`;
-  }
+  let tokenStore = options.tokenStore;
 
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
@@ -116,6 +112,18 @@ function DataApi<
     fetchOptions?: Omit<RequestInit, "method">
   ): Promise<string> {
     if ("apiKey" in options.auth) return options.auth.apiKey;
+
+    if (!tokenStore) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      tokenStore = await import("./tokenStore/memory.js");
+    }
+    if (!tokenStore) throw new Error("No token store provided");
+
+    if (!tokenStore.getKey) {
+      tokenStore.getKey = () => `${options.server}/${options.db}`;
+    }
+
     if (tokenStore === undefined) throw new Error("No token store provided");
     if (!tokenStore.getKey) throw new Error("No token store key provided");
 

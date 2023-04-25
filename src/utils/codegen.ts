@@ -12,6 +12,7 @@ import { F } from "ts-toolbelt";
 import chalk from "chalk";
 import { ClientObjectProps, isOttoAuth } from "../client";
 import { memoryStore } from "../tokenStore/memory";
+import { TokenStoreDefinitions } from "../tokenStore/types";
 
 type TSchema = {
   name: string;
@@ -139,6 +140,7 @@ const exportClientStatement = (args: {
   layout: string;
   useZod: boolean;
   envNames: Omit<ClientObjectProps, "layout" | "tokenStore">;
+  tokenStore?: ts.Expression;
 }) => [
   importStatement,
   undefinedTypeGuardStatement(args.envNames.db),
@@ -249,6 +251,14 @@ const exportClientStatement = (args: {
                     factory.createIdentifier("layout"),
                     factory.createStringLiteral(args.layout)
                   ),
+                  ...(args.tokenStore
+                    ? [
+                        factory.createPropertyAssignment(
+                          factory.createIdentifier("tokenStore"),
+                          args.tokenStore
+                        ),
+                      ]
+                    : []),
                 ],
                 true
               ),
@@ -564,7 +574,8 @@ type BuildSchemaArgs = {
   envNames: Omit<ClientObjectProps, "layout" | "tokenStore">;
   layoutName: string;
   strictNumbers?: boolean;
-};
+  configLocation?: string;
+} & Pick<GenerateSchemaOptions, "tokenStore">;
 const buildClientFile = (args: BuildSchemaArgs) => {
   const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
   const file = buildClient(args);
@@ -585,22 +596,18 @@ export const buildSchema = ({ type, ...args }: BuildSchemaArgs) => {
   return commentHeader + printer.printFile(file);
 };
 const buildClient = (args: BuildSchemaArgs) => {
-  const {
-    schemaName,
-    portalSchema = [],
-    strictNumbers = false,
-    envNames,
-    type,
-  } = args;
+  const { schemaName, portalSchema = [], envNames, type } = args;
   return factory.updateSourceFile(
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
       importTypeStatement(schemaName, portalSchema.length > 0, type === "zod"),
+      ...reimportConfigStatements(args.configLocation),
       ...exportClientStatement({
         envNames,
         useZod: type === "zod",
         schemaName: args.schemaName,
         layout: args.layoutName,
+        tokenStore: getTokenStoreFromConfig(args.configLocation),
         fieldTypeName: `T${varname(schemaName)}`,
         ...(portalSchema.length > 0
           ? { portalTypeName: `T${varname(schemaName)}Portals` }
@@ -822,6 +829,86 @@ export const getSchema = async (args: {
   return { schema, portalSchema, valueLists: valueListValuesUnique };
 };
 
+function reimportConfigStatements(configLocation?: string) {
+  if (!configLocation) return [];
+
+  const sourceFileText = fs.readFileSync(configLocation, "utf-8");
+  const sourceFile = ts.createSourceFile(
+    "x.ts",
+    sourceFileText,
+    ts.ScriptTarget.Latest
+  );
+
+  const imports: ts.ImportDeclaration[] = [];
+
+  sourceFile.forEachChild((child) => {
+    if (!ts.isImportDeclaration(child)) return;
+    const shouldIgnore = ts
+      .getLeadingCommentRanges(sourceFileText, child.getFullStart())
+      ?.map((range) =>
+        sourceFileText.slice(range.pos, range.end).replace(" ", "")
+      )
+      .some((o) => o.search("codgen-ignore"));
+
+    if (shouldIgnore) return;
+
+    imports.push(child);
+  });
+  return imports;
+}
+
+function getTokenStoreFromConfig(
+  configLocation?: string
+): ts.Expression | undefined {
+  if (!configLocation) return undefined;
+
+  const sourceFileText = fs.readFileSync(configLocation, "utf-8");
+  const sourceFile = ts.createSourceFile(
+    "x.ts",
+    sourceFileText,
+    ts.ScriptTarget.Latest
+  );
+
+  let result: ts.Expression | undefined = undefined;
+
+  sourceFile.forEachChild((child) => {
+    if (!ts.isVariableStatement(child)) return;
+    const testID = child.declarationList.declarations[0].name;
+    if (!ts.isIdentifier(testID) || testID.escapedText !== "config") return;
+
+    const init = child.declarationList.declarations[0].initializer;
+
+    if (init && ts.isObjectLiteralExpression(init)) {
+      const tokenStore = init.properties.find((o) => {
+        if (o.name && ts.isIdentifier(o.name)) {
+          return o.name.escapedText === "tokenStore";
+        }
+        return false;
+      });
+      if (!tokenStore) return;
+      if (ts.isPropertyAssignment(tokenStore)) {
+        if (ts.isIdentifier(tokenStore.initializer)) {
+          result = factory.createCallExpression(
+            tokenStore.initializer,
+            undefined,
+            []
+          );
+        } else if (
+          ts.isArrowFunction(tokenStore.initializer) &&
+          ts.isCallExpression(tokenStore.initializer.body)
+        ) {
+          result = tokenStore.initializer.body;
+        } else {
+          result = tokenStore.initializer;
+        }
+      }
+    }
+    return child.declarationList.declarations[0].initializer;
+  });
+
+  return result;
+}
+
 export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
 export type GenerateSchemaOptions = {
   envNames?: Partial<Omit<ClientObjectProps, "layout">>;
@@ -846,8 +933,12 @@ export type GenerateSchemaOptions = {
   generateClient?: boolean;
   path?: string;
   useZod?: boolean;
+  tokenStore?: () => TokenStoreDefinitions;
 };
-export const generateSchemas = async (options: GenerateSchemaOptions) => {
+export const generateSchemas = async (
+  options: GenerateSchemaOptions,
+  configLocation?: string
+) => {
   const {
     envNames,
     schemas,
@@ -864,6 +955,11 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
     server: "FM_SERVER",
     db: "FM_DATABASE",
   };
+
+  // if (configLocation) {
+  //   getTokenStoreFromConfig(configLocation);
+  //   return;
+  // }
 
   const server = process.env[envNames?.server ?? defaultEnvNames.server];
   const db = process.env[envNames?.db ?? defaultEnvNames.db];
@@ -938,6 +1034,7 @@ export const generateSchemas = async (options: GenerateSchemaOptions) => {
           valueLists,
           type: useZod ? "zod" : "ts",
           strictNumbers: item.strictNumbers,
+          configLocation,
           envNames: {
             auth: isOttoAuth(auth)
               ? {
