@@ -18,7 +18,8 @@
     "prepublishOnly": "tsc",
     "build": "tsc",
     "test": "jest",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "release": "yarn build && yarn test && changeset publish"
   },
   "dependencies": {
     "@changesets/cli": "^2.26.1",
