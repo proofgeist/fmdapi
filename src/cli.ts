@@ -52,10 +52,22 @@ async function runCodegen({ configLocation }: ConfigArgs) {
     return process.exit(1);
   });
 
-  const { config }: { config: GenerateSchemaOptions } = await import(
+  const module: { config: GenerateSchemaOptions } = await import(
     configLocation
   );
-  await generateSchemas(config, configLocation).catch((err) => {
+  if (!module.config) {
+    module.config = require(configLocation);
+  }
+  if (!module.config) {
+    console.error(
+      chalk.red(
+        `Error reading the config object from ${path.basename(
+          configLocation
+        )}. Are you sure you have a "config" object exported?`
+      )
+    );
+  }
+  await generateSchemas(module.config, configLocation).catch((err) => {
     console.error(err);
     return process.exit(1);
   });

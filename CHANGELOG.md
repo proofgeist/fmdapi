@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.0.3
+
+### Patch Changes
+
+- support commonJS and module imports in codegen cli
+
 ## 3.0.2
 
 ### Patch Changes
