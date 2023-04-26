@@ -52,10 +52,17 @@ async function runCodegen({ configLocation }: ConfigArgs) {
     return process.exit(1);
   });
 
-  const module: { config: GenerateSchemaOptions } = await import(
-    configLocation
-  );
-  let config = module.config;
+  let config;
+
+  try {
+    const module: { config: GenerateSchemaOptions } = await import(
+      configLocation
+    );
+    config = module.config;
+  } catch {
+    /* empty */
+  }
+
   if (!config) {
     config = require(configLocation);
   }
