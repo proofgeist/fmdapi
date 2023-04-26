@@ -23,6 +23,7 @@ import {
   ScriptResponse,
 } from "./client-types";
 import type { TokenStoreDefinitions } from "./tokenStore/types";
+import { memoryStore } from "./tokenStore/memory";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
@@ -98,7 +99,7 @@ function DataApi<
 ) {
   const options = ZodOptions.strict().parse(input); // validate options
 
-  let tokenStore = options.tokenStore;
+  const tokenStore = options.tokenStore ?? memoryStore();
 
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
@@ -113,11 +114,11 @@ function DataApi<
   ): Promise<string> {
     if ("apiKey" in options.auth) return options.auth.apiKey;
 
-    if (!tokenStore) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      tokenStore = (await import("./tokenStore/memory.js")).default();
-    }
+    // if (!tokenStore) {
+    //   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //   // @ts-ignore
+    //   tokenStore = (await import("./tokenStore/memory.js")).default();
+    // }
 
     if (!tokenStore) throw new Error("No token store provided");
 
