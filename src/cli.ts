@@ -54,6 +54,8 @@ async function runCodegen({ configLocation }: ConfigArgs) {
 
   let config;
 
+  console.log(`🔍 Reading config from ${configLocation}`);
+
   if (configLocation.endsWith(".mjs")) {
     const module: { config: GenerateSchemaOptions } = await import(
       configLocation
