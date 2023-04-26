@@ -54,18 +54,15 @@ async function runCodegen({ configLocation }: ConfigArgs) {
 
   let config;
 
-  try {
+  if (configLocation.endsWith(".mjs")) {
     const module: { config: GenerateSchemaOptions } = await import(
       configLocation
     );
     config = module.config;
-  } catch {
-    /* empty */
-  }
-
-  if (!config) {
+  } else {
     config = require(configLocation);
   }
+
   if (!config) {
     console.error(
       chalk.red(
@@ -95,7 +92,9 @@ program
     // check if options.config resolves to a file
 
     const configPath = getConfigPath(options.config);
-    const configLocation = path.resolve(configPath ?? defaultConfigPaths[0]);
+    const configLocation = path.toNamespacedPath(
+      path.resolve(configPath ?? defaultConfigPaths[0])
+    );
     if (options.init) return init({ configLocation });
 
     if (!options.skipEnvCheck) {
