@@ -95,6 +95,13 @@ const goodExecuteScriptResp = {
 };
 
 describe("find methods", () => {
+  const client = DataApi({
+    auth: { apiKey: "KEY_anything" },
+    db: "db",
+    server: "https://example.com",
+    tokenStore: memoryStore(),
+  });
+
   beforeEach(() => {
     fetch.resetMocks();
   });
@@ -103,13 +110,6 @@ describe("find methods", () => {
   });
 
   test("successful find", async () => {
-    const client = DataApi({
-      auth: { apiKey: "KEY_anything" },
-      db: "db",
-      server: "https://example.com",
-      tokenStore: memoryStore(),
-    });
-
     fetch.mockResponseOnce(JSON.stringify(goodFindResp));
 
     const resp = await client.find({
@@ -122,13 +122,6 @@ describe("find methods", () => {
     expect(Array.isArray(resp.data)).toBe(true);
   });
   test("successful findFirst with multiple return", async () => {
-    const client = DataApi({
-      auth: { apiKey: "KEY_anything" },
-      db: "db",
-      server: "https://example.com",
-      tokenStore: memoryStore(),
-    });
-
     fetch.mockResponseOnce(JSON.stringify(goodFindResp2));
 
     const resp = await client.findFirst({
@@ -141,13 +134,6 @@ describe("find methods", () => {
     expect(Array.isArray(resp.data)).toBe(false);
   });
   test("successful findOne", async () => {
-    const client = DataApi({
-      auth: { apiKey: "KEY_anything" },
-      db: "db",
-      server: "https://example.com",
-      tokenStore: memoryStore(),
-    });
-
     fetch.mockResponseOnce(JSON.stringify(goodFindResp));
 
     const resp = await client.findOne({
