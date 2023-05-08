@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.0.10
+
+### Patch Changes
+
+- 6745dd2: fix Codegen on Windows systems
+
 ## 3.0.9
 
 ### Patch Changes
