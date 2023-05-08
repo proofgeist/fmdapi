@@ -6,6 +6,7 @@ import { generateSchemas } from "./utils";
 import path from "path";
 import { GenerateSchemaOptions } from "./utils/codegen";
 import { config } from "dotenv";
+import { pathToFileURL } from "url";
 
 const defaultConfigPaths = ["./fmschema.config.mjs", "./fmschema.config.js"];
 type ConfigArgs = {
@@ -52,11 +53,16 @@ async function runCodegen({ configLocation }: ConfigArgs) {
     return process.exit(1);
   });
 
-  const module: { config: GenerateSchemaOptions } = await import(
-    configLocation
-  );
-  let config = module.config;
-  if (!config) {
+  let config;
+
+  console.log(`🔍 Reading config from ${configLocation}`);
+
+  if (configLocation.endsWith(".mjs")) {
+    const module: { config: GenerateSchemaOptions } = await import(
+      pathToFileURL(configLocation).toString()
+    );
+    config = module.config;
+  } else {
     config = require(configLocation);
   }
   if (!config) {
