@@ -1,5 +1,15 @@
 # @proofgeist/fmdapi
 
+## 3.1.0
+
+### Minor Changes
+
+- c4f2345: Support portal fields in query type
+
+### Patch Changes
+
+- 8fd05d8: fix: add more error trapping when importing config file in codegen CLI
+
 ## 3.0.10
 
 ### Patch Changes
