@@ -169,11 +169,19 @@ export const ZGetResponse = <
     dataInfo: ZDataInfo,
   });
 type ZGetResponseReturnType<T, U> = z.infer<ReturnType<typeof ZGetResponse>>;
-export type Query<T extends FieldData = FieldData> = Partial<{
+
+type SecondLevelKeys<T> = {
+  [K in keyof T]: keyof T[K];
+}[keyof T];
+export type Query<
+  T extends FieldData = FieldData,
+  U extends GenericPortalData = GenericPortalData
+> = Partial<{
   [key in keyof T]: T[key] | string;
-}> & {
-  omit?: boolean;
-};
+}> &
+  Partial<{ [key in SecondLevelKeys<U>]?: string }> & {
+    omit?: boolean;
+  };
 
 export type MetadataResponse = {
   fieldMetaData: FieldMetaData[];
