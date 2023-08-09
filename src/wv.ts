@@ -63,7 +63,13 @@ function DataApi<
     action?: "read" | "metaData";
   }): Promise<unknown> {
     const { action = "read", layout, body } = params;
-    const { fmFetch } = await import("@proofgeist/fm-webviewer-fetch");
+    const { fmFetch } = await import("@proofgeist/fm-webviewer-fetch").catch(
+      () => {
+        throw new Error(
+          "@proofgeist/fm-webviewer-fetch not found. Make sure you have it installed in your project."
+        );
+      }
+    );
 
     const resp = await fmFetch<RawFMResponse>(options.scriptName, {
       ...body,
