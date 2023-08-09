@@ -145,13 +145,17 @@ const exportClientStatement = (args: {
   webviewerScriptName?: string;
 }) => [
   importStatement(args.webviewerScriptName !== undefined),
-  undefinedTypeGuardStatement(args.envNames.db),
-  undefinedTypeGuardStatement(args.envNames.server),
-  ...(isOttoAuth(args.envNames.auth)
-    ? [undefinedTypeGuardStatement(args.envNames.auth.apiKey)]
+  ...(args.webviewerScriptName !== undefined
+    ? []
     : [
-        undefinedTypeGuardStatement(args.envNames.auth.username),
-        undefinedTypeGuardStatement(args.envNames.auth.password),
+        undefinedTypeGuardStatement(args.envNames.db),
+        undefinedTypeGuardStatement(args.envNames.server),
+        ...(isOttoAuth(args.envNames.auth)
+          ? [undefinedTypeGuardStatement(args.envNames.auth.apiKey)]
+          : [
+              undefinedTypeGuardStatement(args.envNames.auth.username),
+              undefinedTypeGuardStatement(args.envNames.auth.password),
+            ]),
       ]),
   factory.createVariableStatement(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
