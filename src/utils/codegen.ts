@@ -105,7 +105,7 @@ const importStatement = (wv = false) =>
       factory.createNamedImports([
         factory.createImportSpecifier(
           false,
-          wv ? factory.createIdentifier("DataApiWv") : undefined,
+          wv ? factory.createIdentifier("DataApiWV") : undefined,
           factory.createIdentifier("DataApi")
         ),
       ])
