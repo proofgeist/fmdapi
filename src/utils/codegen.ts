@@ -964,10 +964,9 @@ export type GenerateSchemaOptions = {
    * Requires "@proofgeist/fm-webviewer-fetch" installed as a peer dependency.
    * The REST API client (and related credentials) is still needed to generate the types.
    *
-   * @default false
    * @link https://fm-webviewer-fetch.proofgeist.com/
    */
-  webviewerScriptName?: boolean;
+  webviewerScriptName?: string;
 };
 export const generateSchemas = async (
   options: GenerateSchemaOptions,
@@ -1077,6 +1076,7 @@ export const generateSchemas = async (
       type: useZod ? "zod" : "ts",
       strictNumbers: item.strictNumbers,
       configLocation,
+      webviewerScriptName: options.webviewerScriptName,
       envNames: {
         auth: isOttoAuth(auth)
           ? {
