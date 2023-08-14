@@ -96,22 +96,23 @@ const exportIndexClientStatement = (schemaName: string) =>
     undefined
   );
 
-const importStatement = factory.createImportDeclaration(
-  undefined,
-  factory.createImportClause(
-    false,
+const importStatement = (wv = false) =>
+  factory.createImportDeclaration(
     undefined,
-    factory.createNamedImports([
-      factory.createImportSpecifier(
-        false,
-        undefined,
-        factory.createIdentifier("DataApi")
-      ),
-    ])
-  ),
-  factory.createStringLiteral("@proofgeist/fmdapi"),
-  undefined
-);
+    factory.createImportClause(
+      false,
+      undefined,
+      factory.createNamedImports([
+        factory.createImportSpecifier(
+          false,
+          wv ? factory.createIdentifier("DataApiWV") : undefined,
+          factory.createIdentifier("DataApi")
+        ),
+      ])
+    ),
+    factory.createStringLiteral("@proofgeist/fmdapi"),
+    undefined
+  );
 const undefinedTypeGuardStatement = (name: string) =>
   factory.createIfStatement(
     factory.createPrefixUnaryExpression(
@@ -141,15 +142,20 @@ const exportClientStatement = (args: {
   useZod: boolean;
   envNames: Omit<ClientObjectProps, "layout" | "tokenStore">;
   tokenStore?: ts.Expression;
+  webviewerScriptName?: string;
 }) => [
-  importStatement,
-  undefinedTypeGuardStatement(args.envNames.db),
-  undefinedTypeGuardStatement(args.envNames.server),
-  ...(isOttoAuth(args.envNames.auth)
-    ? [undefinedTypeGuardStatement(args.envNames.auth.apiKey)]
+  importStatement(args.webviewerScriptName !== undefined),
+  ...(args.webviewerScriptName !== undefined
+    ? []
     : [
-        undefinedTypeGuardStatement(args.envNames.auth.username),
-        undefinedTypeGuardStatement(args.envNames.auth.password),
+        undefinedTypeGuardStatement(args.envNames.db),
+        undefinedTypeGuardStatement(args.envNames.server),
+        ...(isOttoAuth(args.envNames.auth)
+          ? [undefinedTypeGuardStatement(args.envNames.auth.apiKey)]
+          : [
+              undefinedTypeGuardStatement(args.envNames.auth.username),
+              undefinedTypeGuardStatement(args.envNames.auth.password),
+            ]),
       ]),
   factory.createVariableStatement(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -180,82 +186,102 @@ const exportClientStatement = (args: {
             [
               factory.createObjectLiteralExpression(
                 [
-                  factory.createPropertyAssignment(
-                    factory.createIdentifier("auth"),
-                    factory.createObjectLiteralExpression(
-                      isOttoAuth(args.envNames.auth)
-                        ? [
-                            factory.createPropertyAssignment(
-                              factory.createIdentifier("apiKey"),
-                              factory.createPropertyAccessExpression(
-                                factory.createPropertyAccessExpression(
-                                  factory.createIdentifier("process"),
-                                  factory.createIdentifier("env")
-                                ),
-                                factory.createIdentifier(
-                                  args.envNames.auth.apiKey
-                                )
-                              )
+                  ...(args.webviewerScriptName !== undefined
+                    ? []
+                    : [
+                        factory.createPropertyAssignment(
+                          factory.createIdentifier("auth"),
+                          factory.createObjectLiteralExpression(
+                            isOttoAuth(args.envNames.auth)
+                              ? [
+                                  factory.createPropertyAssignment(
+                                    factory.createIdentifier("apiKey"),
+                                    factory.createPropertyAccessExpression(
+                                      factory.createPropertyAccessExpression(
+                                        factory.createIdentifier("process"),
+                                        factory.createIdentifier("env")
+                                      ),
+                                      factory.createIdentifier(
+                                        args.envNames.auth.apiKey
+                                      )
+                                    )
+                                  ),
+                                ]
+                              : [
+                                  factory.createPropertyAssignment(
+                                    factory.createIdentifier("username"),
+                                    factory.createPropertyAccessExpression(
+                                      factory.createPropertyAccessExpression(
+                                        factory.createIdentifier("process"),
+                                        factory.createIdentifier("env")
+                                      ),
+                                      factory.createIdentifier(
+                                        args.envNames.auth.username
+                                      )
+                                    )
+                                  ),
+                                  factory.createPropertyAssignment(
+                                    factory.createIdentifier("password"),
+                                    factory.createPropertyAccessExpression(
+                                      factory.createPropertyAccessExpression(
+                                        factory.createIdentifier("process"),
+                                        factory.createIdentifier("env")
+                                      ),
+                                      factory.createIdentifier(
+                                        args.envNames.auth.password
+                                      )
+                                    )
+                                  ),
+                                ],
+                            false
+                          )
+                        ),
+                      ]),
+                  ...(args.webviewerScriptName !== undefined
+                    ? []
+                    : [
+                        factory.createPropertyAssignment(
+                          factory.createIdentifier("db"),
+                          factory.createPropertyAccessExpression(
+                            factory.createPropertyAccessExpression(
+                              factory.createIdentifier("process"),
+                              factory.createIdentifier("env")
                             ),
-                          ]
-                        : [
-                            factory.createPropertyAssignment(
-                              factory.createIdentifier("username"),
-                              factory.createPropertyAccessExpression(
-                                factory.createPropertyAccessExpression(
-                                  factory.createIdentifier("process"),
-                                  factory.createIdentifier("env")
-                                ),
-                                factory.createIdentifier(
-                                  args.envNames.auth.username
-                                )
-                              )
+                            factory.createIdentifier(args.envNames.db)
+                          )
+                        ),
+                      ]),
+                  ...(args.webviewerScriptName !== undefined
+                    ? []
+                    : [
+                        factory.createPropertyAssignment(
+                          factory.createIdentifier("server"),
+                          factory.createPropertyAccessExpression(
+                            factory.createPropertyAccessExpression(
+                              factory.createIdentifier("process"),
+                              factory.createIdentifier("env")
                             ),
-                            factory.createPropertyAssignment(
-                              factory.createIdentifier("password"),
-                              factory.createPropertyAccessExpression(
-                                factory.createPropertyAccessExpression(
-                                  factory.createIdentifier("process"),
-                                  factory.createIdentifier("env")
-                                ),
-                                factory.createIdentifier(
-                                  args.envNames.auth.password
-                                )
-                              )
-                            ),
-                          ],
-                      false
-                    )
-                  ),
-                  factory.createPropertyAssignment(
-                    factory.createIdentifier("db"),
-                    factory.createPropertyAccessExpression(
-                      factory.createPropertyAccessExpression(
-                        factory.createIdentifier("process"),
-                        factory.createIdentifier("env")
-                      ),
-                      factory.createIdentifier(args.envNames.db)
-                    )
-                  ),
-                  factory.createPropertyAssignment(
-                    factory.createIdentifier("server"),
-                    factory.createPropertyAccessExpression(
-                      factory.createPropertyAccessExpression(
-                        factory.createIdentifier("process"),
-                        factory.createIdentifier("env")
-                      ),
-                      factory.createIdentifier(args.envNames.server)
-                    )
-                  ),
+                            factory.createIdentifier(args.envNames.server)
+                          )
+                        ),
+                      ]),
                   factory.createPropertyAssignment(
                     factory.createIdentifier("layout"),
                     factory.createStringLiteral(args.layout)
                   ),
-                  ...(args.tokenStore
+                  ...(args.tokenStore && args.webviewerScriptName === undefined
                     ? [
                         factory.createPropertyAssignment(
                           factory.createIdentifier("tokenStore"),
                           args.tokenStore
+                        ),
+                      ]
+                    : []),
+                  ...(args.webviewerScriptName !== undefined
+                    ? [
+                        factory.createPropertyAssignment(
+                          factory.createIdentifier("scriptName"),
+                          factory.createStringLiteral(args.webviewerScriptName)
                         ),
                       ]
                     : []),
@@ -575,6 +601,7 @@ type BuildSchemaArgs = {
   layoutName: string;
   strictNumbers?: boolean;
   configLocation?: string;
+  webviewerScriptName?: string;
 } & Pick<GenerateSchemaOptions, "tokenStore">;
 const buildClientFile = (args: BuildSchemaArgs) => {
   const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
@@ -612,6 +639,7 @@ const buildClient = (args: BuildSchemaArgs) => {
         ...(portalSchema.length > 0
           ? { portalTypeName: `T${varname(schemaName)}Portals` }
           : {}),
+        webviewerScriptName: args.webviewerScriptName,
       }),
     ]
   );
@@ -934,6 +962,15 @@ export type GenerateSchemaOptions = {
   path?: string;
   useZod?: boolean;
   tokenStore?: () => TokenStoreDefinitions;
+  /**
+   * If set, the generated files will include the webviewer client instead of the standard REST API client.
+   * This script should pass the parameter to the Execute Data API Script step and return the result to the webviewer per the "@proofgeist/fm-webviewer-fetch" documentation.
+   * Requires "@proofgeist/fm-webviewer-fetch" installed as a peer dependency.
+   * The REST API client (and related credentials) is still needed to generate the types.
+   *
+   * @link https://fm-webviewer-fetch.proofgeist.com/
+   */
+  webviewerScriptName?: string;
 };
 export const generateSchemas = async (
   options: GenerateSchemaOptions,
@@ -945,6 +982,7 @@ export const generateSchemas = async (
     path = "schema",
     useZod = true,
     generateClient = true,
+    webviewerScriptName,
   } = options;
 
   const defaultEnvNames = {
@@ -955,6 +993,13 @@ export const generateSchemas = async (
     server: "FM_SERVER",
     db: "FM_DATABASE",
   };
+
+  if (webviewerScriptName !== undefined && !!options.tokenStore)
+    console.log(
+      `${chalk.yellow(
+        "NOTE:"
+      )} The webviewer client does not store any tokens. The tokenStore option will be ignored.`
+    );
 
   // if (configLocation) {
   //   getTokenStoreFromConfig(configLocation);
@@ -1017,62 +1062,58 @@ export const generateSchemas = async (
   await fs.ensureDir(path);
   const clientExportsMap: { [key: string]: ts.ExportDeclaration } = {};
 
-  await Promise.all(
-    schemas.map(async (item) => {
-      const result = await getSchema({
-        client,
-        layout: item.layout,
-        valueLists: item.valueLists,
-      });
-      if (result) {
-        const { schema, portalSchema, valueLists } = result;
-        const args: BuildSchemaArgs = {
-          schemaName: item.schemaName,
-          schema,
-          layoutName: item.layout,
-          portalSchema,
-          valueLists,
-          type: useZod ? "zod" : "ts",
-          strictNumbers: item.strictNumbers,
-          configLocation,
-          envNames: {
-            auth: isOttoAuth(auth)
-              ? {
-                  apiKey:
-                    envNames?.auth && "apiKey" in envNames.auth
-                      ? envNames.auth.apiKey
-                      : defaultEnvNames.apiKey,
-                }
-              : {
-                  username:
-                    envNames?.auth && "username" in envNames.auth
-                      ? envNames.auth.username
-                      : defaultEnvNames.username,
-                  password:
-                    envNames?.auth && "password" in envNames.auth
-                      ? envNames.auth.password
-                      : defaultEnvNames.password,
-                },
-            db: envNames?.db ?? defaultEnvNames.db,
-            server: envNames?.server ?? defaultEnvNames.server,
-          },
-        };
-        const code = buildSchema(args);
-        fs.writeFile(join(path, `${item.schemaName}.ts`), code);
+  for await (const item of schemas) {
+    const result = await getSchema({
+      client,
+      layout: item.layout,
+      valueLists: item.valueLists,
+    });
+    if (!result) continue;
 
-        if (item.generateClient ?? generateClient) {
-          await ensureDir(join(path, "client"));
-          const clientCode = buildClientFile(args);
-          const clientExport = exportIndexClientStatement(item.schemaName);
-          clientExportsMap[item.schemaName] = clientExport;
-          fs.writeFile(
-            join(path, "client", `${item.schemaName}.ts`),
-            clientCode
-          );
-        }
-      }
-    })
-  );
+    const { schema, portalSchema, valueLists } = result;
+    const args: BuildSchemaArgs = {
+      schemaName: item.schemaName,
+      schema,
+      layoutName: item.layout,
+      portalSchema,
+      valueLists,
+      type: useZod ? "zod" : "ts",
+      strictNumbers: item.strictNumbers,
+      configLocation,
+      webviewerScriptName: options.webviewerScriptName,
+      envNames: {
+        auth: isOttoAuth(auth)
+          ? {
+              apiKey:
+                envNames?.auth && "apiKey" in envNames.auth
+                  ? envNames.auth.apiKey
+                  : defaultEnvNames.apiKey,
+            }
+          : {
+              username:
+                envNames?.auth && "username" in envNames.auth
+                  ? envNames.auth.username
+                  : defaultEnvNames.username,
+              password:
+                envNames?.auth && "password" in envNames.auth
+                  ? envNames.auth.password
+                  : defaultEnvNames.password,
+            },
+        db: envNames?.db ?? defaultEnvNames.db,
+        server: envNames?.server ?? defaultEnvNames.server,
+      },
+    };
+    const code = buildSchema(args);
+    fs.writeFile(join(path, `${item.schemaName}.ts`), code);
+
+    if (item.generateClient ?? generateClient) {
+      await ensureDir(join(path, "client"));
+      const clientCode = buildClientFile(args);
+      const clientExport = exportIndexClientStatement(item.schemaName);
+      clientExportsMap[item.schemaName] = clientExport;
+      fs.writeFile(join(path, "client", `${item.schemaName}.ts`), clientCode);
+    }
+  }
 
   if (Object.keys(clientExportsMap).length !== 0) {
     // add an index file with all clients exported, sorted by name
