@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.2.1
+
+### Patch Changes
+
+- 8146800: add removeFMTableNames to main export
+
 ## 3.2.0
 
 ### Minor Changes
