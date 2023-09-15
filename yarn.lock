@@ -1215,9 +1215,9 @@
     eslint-visitor-keys "^3.3.0"
 
 "@upstash/redis@^1.20.4":
-  version "1.20.4"
-  resolved "https://registry.yarnpkg.com/@upstash/redis/-/redis-1.20.4.tgz#6c02665bc0e9b7c56f37342003fc58139c994d22"
-  integrity sha512-U7j7py+yPvafB5KS7o+F19j2CWzZCwmQ4Tvs+n2lpCWuw/8CeFtWrFWPtQa5dgrVu6tu+Ki9DmhDiAbgMS5fGA==
+  version "1.22.0"
+  resolved "https://registry.yarnpkg.com/@upstash/redis/-/redis-1.22.0.tgz#3ae3ef056608c8598f46e8bc3b3f405a94781142"
+  integrity sha512-sXoJDoEqqik0HbrNE7yRWckOySEFsoBxfRdCgOqkc0w6py19ZZG50SpGkDDEUXSnBqP8VgGYXhWAiBpqxrt5oA==
   dependencies:
     isomorphic-fetch "^3.0.0"
 
