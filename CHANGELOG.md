@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.2.2
+
+### Patch Changes
+
+- b604cf6: remove webviewer import from main index
+
 ## 3.2.1
 
 ### Patch Changes
