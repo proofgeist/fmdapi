@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { program } from "commander";
+import { addCompletionSpecCommand } from "@fig/complete-commander";
 import chalk from "chalk";
 import fs from "fs-extra";
 import { generateSchemas } from "./utils";
@@ -114,6 +115,8 @@ program
     await runCodegen({ configLocation });
   });
 
+// This adds the "generate-fig-spec" subcommand to main program
+addCompletionSpecCommand(program);
 program.parse();
 
 function getConfigPath(configPath?: string): string | null {
