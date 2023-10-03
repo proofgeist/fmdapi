@@ -170,22 +170,31 @@ function DataApi<
    * Paginate through all records from a given layout, no find criteria applied.
    * ⚠️ WARNING: Use this method with caution, as it can be slow depending on the amount of records.
    */
+  async function listAll<
+    T extends FieldData = Td,
+    U extends Ud = Ud
+  >(): Promise<FMRecord<T, U>[]>;
   async function listAll<T extends FieldData = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions
-  ) {
+  ): Promise<FMRecord<T, U>[]>;
+  async function listAll<T extends FieldData = Td, U extends Ud = Ud>(
+    args?: Opts["layout"] extends string
+      ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
+      : ListParams<T, U> & WithLayout & FetchOptions
+  ): Promise<FMRecord<T, U>[]> {
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args?.limit ?? 100;
-    const offset = args?.offset ?? 0;
+    let offset = args?.offset ?? 0;
     const myArgs = args ?? {};
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const data = (await list(myArgs)) as unknown as GetResponse<T, U>;
+      const data = (await list(myArgs as any)) as unknown as GetResponse<T, U>;
       runningData = [...runningData, ...data.data];
       if (runningData.length >= data.dataInfo.foundCount) break;
-      myArgs.offset = offset + limit;
+      offset = offset + limit;
     }
     return runningData;
   }
