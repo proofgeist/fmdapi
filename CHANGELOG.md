@@ -1,5 +1,17 @@
 # @proofgeist/fmdapi
 
+## 3.2.7
+
+### Patch Changes
+
+- add types decl to package.json
+
+## 3.2.4
+
+### Patch Changes
+
+- improve exports
+
 ## 3.2.3
 
 ### Patch Changes
