@@ -60,7 +60,7 @@ devDependencies:
     version: 7.32.2(eslint@8.49.0)
   jest:
     specifier: ^28.1.1
-    version: 28.1.1(@types/node@20.6.0)(ts-node@10.7.0)
+    version: 28.1.1(@types/node@20.6.0)(ts-node@10.9.1)
   jest-fetch-mock:
     specifier: ^3.0.3
     version: 3.0.3
@@ -69,7 +69,7 @@ devDependencies:
     version: 28.0.5(@babel/core@7.18.5)(jest@28.1.1)(typescript@5.2.2)
   ts-node:
     specifier: ^10.7.0
-    version: 10.7.0(@types/node@20.6.0)(typescript@5.2.2)
+    version: 10.9.1(@types/node@20.6.0)(typescript@5.2.2)
   typescript:
     specifier: ^5.0.4
     version: 5.2.2
@@ -595,16 +595,11 @@ packages:
       prettier: 2.8.7
     dev: false
 
-  /@cspotcode/source-map-consumer@0.8.0:
-    resolution: {integrity: sha512-41qniHzTU8yAGbCp04ohlmSrZf8bkf/iJsl3V0dRGsQN/5GFfx+LbCSsCpp2gqrqjTVg/K6O8ycoV35JIwAzAg==}
-    engines: {node: '>= 12'}
-    dev: true
-
-  /@cspotcode/source-map-support@0.7.0:
-    resolution: {integrity: sha512-X4xqRHqN8ACt2aHVe51OxeA2HjbcL4MqFqXkrmQszJ1NOUuUu5u6Vqx/0lZSVNku7velL5FC/s5uEAj1lsBMhA==}
+  /@cspotcode/source-map-support@0.8.1:
+    resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
     dependencies:
-      '@cspotcode/source-map-consumer': 0.8.0
+      '@jridgewell/trace-mapping': 0.3.9
     dev: true
 
   /@eslint-community/eslint-utils@4.4.0(eslint@8.49.0):
@@ -692,7 +687,7 @@ packages:
       slash: 3.0.0
     dev: true
 
-  /@jest/core@28.1.1(ts-node@10.7.0):
+  /@jest/core@28.1.1(ts-node@10.9.1):
     resolution: {integrity: sha512-3pYsBoZZ42tXMdlcFeCc/0j9kOlK7MYuXs2B1QbvDgMoW1K9NJ4G/VYvIbMb26iqlkTfPHo7SC2JgjDOk/mxXw==}
     engines: {node: ^12.13.0 || ^14.15.0 || ^16.10.0 || >=17.0.0}
     peerDependencies:
@@ -713,7 +708,7 @@ packages:
       exit: 0.1.2
       graceful-fs: 4.2.11
       jest-changed-files: 28.0.2
-      jest-config: 28.1.1(@types/node@20.6.0)(ts-node@10.7.0)
+      jest-config: 28.1.1(@types/node@20.6.0)(ts-node@10.9.1)
       jest-haste-map: 28.1.1
       jest-message-util: 28.1.1
       jest-regex-util: 28.0.2
@@ -927,6 +922,13 @@ packages:
 
   /@jridgewell/trace-mapping@0.3.13:
     resolution: {integrity: sha512-o1xbKhp9qnIAoHJSWd6KlCZfqslL4valSF81H8ImioOAxluWYWOpWkpyktY2vnt4tbrX9XYaxovq6cgowaJp2w==}
+    dependencies:
+      '@jridgewell/resolve-uri': 3.0.7
+      '@jridgewell/sourcemap-codec': 1.4.15
+    dev: true
+
+  /@jridgewell/trace-mapping@0.3.9:
+    resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
     dependencies:
       '@jridgewell/resolve-uri': 3.0.7
       '@jridgewell/sourcemap-codec': 1.4.15
@@ -2790,7 +2792,7 @@ packages:
       - supports-color
     dev: true
 
-  /jest-cli@28.1.1(@types/node@20.6.0)(ts-node@10.7.0):
+  /jest-cli@28.1.1(@types/node@20.6.0)(ts-node@10.9.1):
     resolution: {integrity: sha512-+sUfVbJqb1OjBZ0OdBbI6OWfYM1i7bSfzYy6gze1F1w3OKWq8ZTEKkZ8a7ZQPq6G/G1qMh/uKqpdWhgl11NFQQ==}
     engines: {node: ^12.13.0 || ^14.15.0 || ^16.10.0 || >=17.0.0}
     hasBin: true
@@ -2800,14 +2802,14 @@ packages:
       node-notifier:
         optional: true
     dependencies:
-      '@jest/core': 28.1.1(ts-node@10.7.0)
+      '@jest/core': 28.1.1(ts-node@10.9.1)
       '@jest/test-result': 28.1.1
       '@jest/types': 28.1.1
       chalk: 4.1.2
       exit: 0.1.2
       graceful-fs: 4.2.11
       import-local: 3.1.0
-      jest-config: 28.1.1(@types/node@20.6.0)(ts-node@10.7.0)
+      jest-config: 28.1.1(@types/node@20.6.0)(ts-node@10.9.1)
       jest-util: 28.1.1
       jest-validate: 28.1.1
       prompts: 2.4.2
@@ -2818,7 +2820,7 @@ packages:
       - ts-node
     dev: true
 
-  /jest-config@28.1.1(@types/node@20.6.0)(ts-node@10.7.0):
+  /jest-config@28.1.1(@types/node@20.6.0)(ts-node@10.9.1):
     resolution: {integrity: sha512-tASynMhS+jVV85zKvjfbJ8nUyJS/jUSYZ5KQxLUN2ZCvcQc/OmhQl2j6VEL3ezQkNofxn5pQ3SPYWPHb0unTZA==}
     engines: {node: ^12.13.0 || ^14.15.0 || ^16.10.0 || >=17.0.0}
     peerDependencies:
@@ -2853,7 +2855,7 @@ packages:
       pretty-format: 28.1.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.7.0(@types/node@20.6.0)(typescript@5.2.2)
+      ts-node: 10.9.1(@types/node@20.6.0)(typescript@5.2.2)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3151,7 +3153,7 @@ packages:
       supports-color: 8.1.1
     dev: true
 
-  /jest@28.1.1(@types/node@20.6.0)(ts-node@10.7.0):
+  /jest@28.1.1(@types/node@20.6.0)(ts-node@10.9.1):
     resolution: {integrity: sha512-qw9YHBnjt6TCbIDMPMpJZqf9E12rh6869iZaN08/vpOGgHJSAaLLUn6H8W3IAEuy34Ls3rct064mZLETkxJ2XA==}
     engines: {node: ^12.13.0 || ^14.15.0 || ^16.10.0 || >=17.0.0}
     hasBin: true
@@ -3161,10 +3163,10 @@ packages:
       node-notifier:
         optional: true
     dependencies:
-      '@jest/core': 28.1.1(ts-node@10.7.0)
+      '@jest/core': 28.1.1(ts-node@10.9.1)
       '@jest/types': 28.1.1
       import-local: 3.1.0
-      jest-cli: 28.1.1(@types/node@20.6.0)(ts-node@10.7.0)
+      jest-cli: 28.1.1(@types/node@20.6.0)(ts-node@10.9.1)
     transitivePeerDependencies:
       - '@types/node'
       - supports-color
@@ -4198,7 +4200,7 @@ packages:
       '@babel/core': 7.18.5
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 28.1.1(@types/node@20.6.0)(ts-node@10.7.0)
+      jest: 28.1.1(@types/node@20.6.0)(ts-node@10.9.1)
       jest-util: 28.1.1
       json5: 2.2.3
       lodash.memoize: 4.1.2
@@ -4208,8 +4210,8 @@ packages:
       yargs-parser: 21.1.1
     dev: true
 
-  /ts-node@10.7.0(@types/node@20.6.0)(typescript@5.2.2):
-    resolution: {integrity: sha512-TbIGS4xgJoX2i3do417KSaep1uRAW/Lu+WAL2doDHC0D6ummjirVOXU5/7aiZotbQ5p1Zp9tP7U6cYhA0O7M8A==}
+  /ts-node@10.9.1(@types/node@20.6.0)(typescript@5.2.2):
+    resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
     peerDependencies:
       '@swc/core': '>=1.2.50'
@@ -4222,7 +4224,7 @@ packages:
       '@swc/wasm':
         optional: true
     dependencies:
-      '@cspotcode/source-map-support': 0.7.0
+      '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.8
       '@tsconfig/node12': 1.0.9
       '@tsconfig/node14': 1.0.1
