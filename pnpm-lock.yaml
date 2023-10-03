@@ -19,7 +19,7 @@ dependencies:
     version: 1.11.9
   dotenv:
     specifier: ^16.0.1
-    version: 16.0.1
+    version: 16.3.1
   fs-extra:
     specifier: ^11.1.1
     version: 11.1.1
@@ -1894,8 +1894,8 @@ packages:
       esutils: 2.0.3
     dev: true
 
-  /dotenv@16.0.1:
-    resolution: {integrity: sha512-1K6hR6wtk2FviQ4kEiSjFiH5rpzEVi8WW0x96aztHVMhEspNpc4DVOUTEHtEva5VThQ8IaBX1Pe4gSzpVVUsKQ==}
+  /dotenv@16.3.1:
+    resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
     engines: {node: '>=12'}
     dev: false
 
