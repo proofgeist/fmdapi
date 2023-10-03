@@ -1,5 +1,12 @@
 # @proofgeist/fmdapi
 
+## 3.2.3
+
+### Patch Changes
+
+- add wv path to export
+- 4fff462: allow no params to listAll method
+
 ## 3.2.2
 
 ### Patch Changes
