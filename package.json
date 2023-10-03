@@ -15,7 +15,10 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js"
     },
-    "./wv": "./dist/wv.js"
+    "./wv": {
+      "import": "./dist/wv.js",
+      "require": "./dist/wv.js"
+    }
   },
   "scripts": {
     "prepublishOnly": "tsc",
