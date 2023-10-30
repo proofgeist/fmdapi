@@ -74,7 +74,7 @@ devDependencies:
     specifier: ^5.0.4
     version: 5.2.2
   zod:
-    specifier: ^3.22.4
+    specifier: '*'
     version: 3.22.4
 
 packages:
