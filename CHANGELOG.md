@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.2.8
+
+### Patch Changes
+
+- update packages
+
 ## 3.2.7
 
 ### Patch Changes
