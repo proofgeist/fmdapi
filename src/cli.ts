@@ -2,9 +2,9 @@
 import { program } from "commander";
 import chalk from "chalk";
 import fs from "fs-extra";
-import { generateSchemas } from "./utils";
+import { generateSchemas } from "./utils/index.js";
 import path from "path";
-import { GenerateSchemaOptions } from "./utils/codegen";
+import { GenerateSchemaOptions } from "./utils/codegen.js";
 import { config } from "dotenv";
 import { pathToFileURL } from "url";
 
@@ -75,7 +75,8 @@ async function runCodegen({ configLocation }: ConfigArgs) {
       )
     );
   }
-  await generateSchemas(config, configLocation).catch((err) => {
+
+  await generateSchemas(config, configLocation).catch((err: unknown) => {
     console.error(err);
     return process.exit(1);
   });

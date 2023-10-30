@@ -6,13 +6,13 @@ import ts, {
   createPrinter,
   Statement,
 } from "typescript";
-import { FileMakerError, DataApi } from "..";
-import { FieldMetaData } from "../client-types";
+import { FileMakerError, DataApi } from "../index.js";
+import { FieldMetaData } from "../client-types.js";
 import { F } from "ts-toolbelt";
 import chalk from "chalk";
-import { ClientObjectProps, isOttoAuth } from "../client";
-import { memoryStore } from "../tokenStore/memory";
-import { TokenStoreDefinitions } from "../tokenStore/types";
+import { ClientObjectProps, isOttoAuth } from "../client.js";
+import { memoryStore } from "../tokenStore/memory.js";
+import { TokenStoreDefinitions } from "../tokenStore/types.js";
 
 type TSchema = {
   name: string;

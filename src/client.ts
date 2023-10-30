@@ -22,9 +22,9 @@ import {
   ScriptsMetadataResponse,
   RawFMResponse,
   ScriptResponse,
-} from "./client-types";
-import type { TokenStoreDefinitions } from "./tokenStore/types";
-import { memoryStore } from "./tokenStore/memory";
+} from "./client-types.js";
+import type { TokenStoreDefinitions } from "./tokenStore/types.js";
+import { memoryStore } from "./tokenStore/memory.js";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;

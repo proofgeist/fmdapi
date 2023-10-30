@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.2.10
+
+### Patch Changes
+
+- use absolute imports
+
 ## 3.2.9
 
 ### Patch Changes

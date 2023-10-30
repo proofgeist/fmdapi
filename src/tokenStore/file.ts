@@ -1,4 +1,4 @@
-import { TokenStoreDefinitions } from "./types";
+import { TokenStoreDefinitions } from "./types.js";
 import fs from "fs-extra";
 
 function getDataFromFile(devFileName: string): Record<string, string> {

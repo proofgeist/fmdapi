@@ -17,7 +17,7 @@ import {
   ZGetResponse,
   FMRecord,
   RawFMResponse,
-} from "./client-types";
+} from "./client-types.js";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
