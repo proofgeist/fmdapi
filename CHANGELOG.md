@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.2.9
+
+### Patch Changes
+
+- remove node-fetch dep
+
 ## 3.2.8
 
 ### Patch Changes
