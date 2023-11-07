@@ -10,12 +10,18 @@ module.exports = {
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
   ],
-  overrides: [],
+  overrides: [
+    {
+      files: ["**/*.test.js", "**/*.test.jsx"],
+      env: { jest: true },
+    },
+  ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
   },
+
   plugins: ["react", "@typescript-eslint"],
   rules: {
     "@typescript-eslint/no-var-requires": "off",
