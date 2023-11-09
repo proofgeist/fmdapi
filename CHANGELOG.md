@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.2.14
+
+### Patch Changes
+
+- fix: remove offset if 0
+
 ## 3.2.13
 
 ### Patch Changes

@@ -307,8 +307,10 @@ function DataApi<
     // rename and refactor limit, offset, and sort keys for this request
     if ("limit" in params && params.limit !== undefined)
       delete Object.assign(params, { _limit: params.limit })["limit"];
-    if ("offset" in params && params.offset !== undefined)
-      delete Object.assign(params, { _offset: params.offset })["offset"];
+    if ("offset" in params && params.offset !== undefined) {
+      if (params.offset === 0) delete params.offset;
+      else delete Object.assign(params, { _offset: params.offset })["offset"];
+    }
     if ("sort" in params && params.sort !== undefined)
       delete Object.assign(params, {
         _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
