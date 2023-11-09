@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.2.13
+
+### Patch Changes
+
+- fix: listAll pagination offset
+
 ## 3.2.10
 
 ### Patch Changes

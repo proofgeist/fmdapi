@@ -352,7 +352,10 @@ function DataApi<
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const data = (await list(args as any)) as unknown as GetResponse<T, U>;
+      const data = (await list({
+        ...args,
+        offset,
+      } as any)) as unknown as GetResponse<T, U>;
       runningData = [...runningData, ...data.data];
       if (runningData.length >= data.dataInfo.foundCount) break;
       offset = offset + limit;

@@ -1,11 +1,9 @@
 import fs, { ensureDir } from "fs-extra";
 import { join } from "path";
-import ts, {
-  factory,
-  createSourceFile,
-  createPrinter,
-  Statement,
-} from "typescript";
+import ts, { type Statement } from "typescript";
+const createPrinter = ts.createPrinter;
+const createSourceFile = ts.createSourceFile;
+const factory = ts.factory;
 import { FileMakerError, DataApi } from "../index.js";
 import { FieldMetaData } from "../client-types.js";
 import { F } from "ts-toolbelt";
@@ -105,12 +103,12 @@ const importStatement = (wv = false) =>
       factory.createNamedImports([
         factory.createImportSpecifier(
           false,
-          wv ? factory.createIdentifier("DataApiWV") : undefined,
+          undefined,
           factory.createIdentifier("DataApi")
         ),
       ])
     ),
-    factory.createStringLiteral("@proofgeist/fmdapi"),
+    factory.createStringLiteral(`@proofgeist/fmdapi${wv ? "/dist/wv" : ""}`),
     undefined
   );
 const undefinedTypeGuardStatement = (name: string) =>
