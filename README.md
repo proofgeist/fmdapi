@@ -179,7 +179,7 @@ Since version 3.0 uses the native `fetch` API, it is compatible with edge runtim
 
 This package also includes a helper function that will automatically generate types for each of your layouts. Use this tool regularly during development to easily keep your types updated with any schema changes in FileMaker. 🤯
 
-The generated file also produces a layout-specific client instance that will automatically type all of the methods for that layout **and** validates the response using the [`zod`](https://github.com/colinhacks/zod) library. This validaiton happens at runtime so you can protect against dangerous field changes even when you haven't ran the code generator recently, or in your production deployment!
+The generated file also produces a layout-specific client instance that will automatically type all of the methods for that layout **and** validates the response using the [`zod`](https://github.com/colinhacks/zod) library. This validation happens at runtime so you can protect against dangerous field changes even when you haven't ran the code generator recently, or in your production deployment!
 
 ### Setup instructions:
 
