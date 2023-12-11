@@ -6,7 +6,7 @@ import { generateSchemas } from "./utils/index.js";
 import path from "path";
 import { GenerateSchemaOptions } from "./utils/codegen.js";
 import { config } from "dotenv";
-import { pathToFileURL } from "url";
+import { pathToFileURL, fileURLToPath } from "url";
 
 const defaultConfigPaths = ["./fmschema.config.mjs", "./fmschema.config.js"];
 type ConfigArgs = {
@@ -21,7 +21,12 @@ function init({ configLocation }: ConfigArgs) {
     );
   } else {
     const stubFile = fs.readFileSync(
-      path.resolve(__dirname, "../stubs/fmschema.config.stub.mjs"),
+      path.resolve(
+        // @ts-ignore
+        typeof __dirname !== 'undefined' ? __dirname :
+          fileURLToPath(new URL('.', import.meta.url)),
+        "../stubs/fmschema.config.stub.mjs"
+      ),
       "utf8"
     );
     fs.writeFileSync(configLocation, stubFile, "utf8");
