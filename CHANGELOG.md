@@ -1,5 +1,12 @@
 # @proofgeist/fmdapi
 
+## 3.2.15
+
+### Patch Changes
+
+- e4d536e: Update findAll method similar to listAll method; offset fix
+- 08e951d: Fix ReferenceError: \_\_dirname is not defined
+
 ## 3.2.14
 
 ### Patch Changes
