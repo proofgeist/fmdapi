@@ -34,7 +34,8 @@ type OttoAuth =
       apiKey: `KEY_${string}`;
       ottoPort?: number;
     }
-  | { apiKey: `dk_${string}` };
+  | { apiKey: `dk_${string}`; ottoPort?: never };
+
 type UserPasswordAuth = { username: string; password: string };
 export function isOttoAuth(auth: ClientObjectProps["auth"]): auth is OttoAuth {
   return "apiKey" in auth;

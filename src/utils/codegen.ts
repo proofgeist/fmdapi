@@ -1024,7 +1024,7 @@ export const generateSchemas = async (
       : undefined) ?? process.env[defaultEnvNames.password];
 
   const auth: ClientObjectProps["auth"] = apiKey
-    ? { apiKey }
+    ? { apiKey: apiKey as any }
     : { username: username ?? "", password: password ?? "" };
 
   if (!server || !db || (!apiKey && !username)) {
@@ -1085,7 +1085,7 @@ export const generateSchemas = async (
               apiKey:
                 envNames?.auth && "apiKey" in envNames.auth
                   ? envNames.auth.apiKey
-                  : defaultEnvNames.apiKey,
+                  : (defaultEnvNames.apiKey as any),
             }
           : {
               username:
