@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.3.0
+
+### Minor Changes
+
+- Add support for OttoFMS proxy
+
 ## 3.2.15
 
 ### Patch Changes

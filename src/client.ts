@@ -29,10 +29,12 @@ import { memoryStore } from "./tokenStore/memory.js";
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
 }
-type OttoAuth = {
-  apiKey: string;
-  ottoPort?: number;
-};
+type OttoAuth =
+  | {
+      apiKey: `KEY_${string}`;
+      ottoPort?: number;
+    }
+  | { apiKey: `dk_${string}` };
 type UserPasswordAuth = { username: string; password: string };
 export function isOttoAuth(auth: ClientObjectProps["auth"]): auth is OttoAuth {
   return "apiKey" in auth;
@@ -106,7 +108,17 @@ function DataApi<
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
   );
   if ("apiKey" in options.auth) {
-    baseUrl.port = (options.auth.ottoPort ?? 3030).toString();
+    if (options.auth.apiKey.startsWith("KEY_")) {
+      // otto v3 uses port 3030
+      baseUrl.port = (options.auth.ottoPort ?? 3030).toString();
+    } else if (options.auth.apiKey.startsWith("dk_")) {
+      // otto v4 uses default port, but with /otto prefix
+      baseUrl.pathname = `/otto/fmi/data/vLatest/databases/${options.db}`;
+    } else {
+      throw new Error(
+        "Invalid Otto API key format. Must start with 'KEY_' (Otto v3) or 'dk_' (OttoFMS)"
+      );
+    }
   }
 
   async function getToken(
@@ -114,12 +126,6 @@ function DataApi<
     fetchOptions?: Omit<RequestInit, "method">
   ): Promise<string> {
     if ("apiKey" in options.auth) return options.auth.apiKey;
-
-    // if (!tokenStore) {
-    //   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //   // @ts-ignore
-    //   tokenStore = (await import("./tokenStore/memory.js")).default();
-    // }
 
     if (!tokenStore) throw new Error("No token store provided");
 
