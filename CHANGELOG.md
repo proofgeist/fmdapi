@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.3.2
+
+### Patch Changes
+
+- don't rename limit param for find request
+
 ## 3.3.1
 
 ### Patch Changes
