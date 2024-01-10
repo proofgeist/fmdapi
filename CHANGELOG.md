@@ -1,5 +1,12 @@
 # @proofgeist/fmdapi
 
+## 3.3.3
+
+### Patch Changes
+
+- a31c94c: add export for `tokenStores`
+  adjust offset for automatic pagination functions
+
 ## 3.3.2
 
 ### Patch Changes
