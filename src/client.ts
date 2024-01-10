@@ -315,7 +315,7 @@ function DataApi<
     if ("limit" in params && params.limit !== undefined)
       delete Object.assign(params, { _limit: params.limit })["limit"];
     if ("offset" in params && params.offset !== undefined) {
-      if (params.offset === 0) delete params.offset;
+      if (params.offset >= 1) delete params.offset;
       else delete Object.assign(params, { _offset: params.offset })["offset"];
     }
     if ("sort" in params && params.sort !== undefined)
@@ -357,7 +357,7 @@ function DataApi<
   ): Promise<FMRecord<T, U>[]> {
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args?.limit ?? 100;
-    let offset = args?.offset ?? 0;
+    let offset = args?.offset ?? 1;
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -524,7 +524,7 @@ function DataApi<
 
     // rename and refactor limit, offset, and sort keys for this request
     if ("offset" in params && params.offset !== undefined) {
-      if (params.offset === 0) delete params.offset;
+      if (params.offset >= 1) delete params.offset;
     }
 
     const data = (await request({
@@ -584,7 +584,7 @@ function DataApi<
   ): Promise<FMRecord<T, U>[]> {
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args.limit ?? 100;
-    let offset = args.offset ?? 0;
+    let offset = args.offset ?? 1;
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const data = await find<T, U>({

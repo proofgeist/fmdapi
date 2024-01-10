@@ -20,7 +20,8 @@
     "./dist/wv": {
       "import": "./dist/wv.js",
       "types": "./dist/wv.d.ts"
-    }
+    },
+    "./dist/tokenStore/*.js": "./dist/tokenStore/*.js"
   },
   "scripts": {
     "prepublishOnly": "tsc",
