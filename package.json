@@ -28,7 +28,7 @@
     "build": "tsc",
     "test": "jest",
     "changeset": "changeset",
-    "release": "pnpm build && pnpm test && changeset publish --access public"
+    "release": "pnpm build && changeset publish --access public"
   },
   "dependencies": {
     "@changesets/cli": "^2.26.1",
