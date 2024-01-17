@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.3.4
+
+### Patch Changes
+
+- 7b2cadd: Add type validation helper functions for detecting Otto API keys
+
 ## 3.3.3
 
 ### Patch Changes
