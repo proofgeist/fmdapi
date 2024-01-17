@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { S, L, U } from "ts-toolbelt";
 
 type TransformedFields<T extends Record<string, any>> = U.Merge<
@@ -23,4 +24,18 @@ export function removeFMTableNames<T extends Record<string, any>>(
     }
   }
   return newObj;
+}
+
+export type Otto3APIKey = `KEY_${string}`;
+export type OttoFMSAPIKey = `dk_${string}`;
+export type OttoAPIKey = Otto3APIKey | OttoFMSAPIKey;
+
+export function isOtto3APIKey(key: string): key is Otto3APIKey {
+  return key.startsWith("KEY_");
+}
+export function isOttoFMSAPIKey(key: string): key is OttoFMSAPIKey {
+  return key.startsWith("dk_");
+}
+export function isOttoAPIKey(key: string): key is OttoAPIKey {
+  return isOtto3APIKey(key) || isOttoFMSAPIKey(key);
 }
