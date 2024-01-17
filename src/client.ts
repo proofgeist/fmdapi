@@ -25,16 +25,17 @@ import {
 } from "./client-types.js";
 import type { TokenStoreDefinitions } from "./tokenStore/types.js";
 import { memoryStore } from "./tokenStore/memory.js";
+import { Otto3APIKey, OttoFMSAPIKey } from "./utils/utils.js";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
 }
 type OttoAuth =
   | {
-      apiKey: `KEY_${string}`;
+      apiKey: Otto3APIKey;
       ottoPort?: number;
     }
-  | { apiKey: `dk_${string}`; ottoPort?: never };
+  | { apiKey: OttoFMSAPIKey; ottoPort?: never };
 
 type UserPasswordAuth = { username: string; password: string };
 export function isOttoAuth(auth: ClientObjectProps["auth"]): auth is OttoAuth {
