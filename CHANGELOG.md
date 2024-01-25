@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.3.5
+
+### Patch Changes
+
+- 63f1da5: Update generated comment header
+
 ## 3.3.4
 
 ### Patch Changes
