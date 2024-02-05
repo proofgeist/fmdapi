@@ -354,8 +354,13 @@ function DataApi<
     let offset = args.offset ?? 1;
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const data = await find<T, U>({ ...args, ignoreEmptyResult: true });
+      const data = await find<T, U>({
+        ...args,
+        offset,
+        ignoreEmptyResult: true,
+      });
       runningData = [...runningData, ...data.data];
+      console.log(data.dataInfo);
       if (
         runningData.length === 0 ||
         runningData.length >= data.dataInfo.foundCount
