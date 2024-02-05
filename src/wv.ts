@@ -351,7 +351,7 @@ function DataApi<
   ): Promise<FMRecord<T, U>[]> {
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args.limit ?? 100;
-    const offset = args.offset ?? 1;
+    let offset = args.offset ?? 1;
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const data = await find<T, U>({ ...args, ignoreEmptyResult: true });
@@ -361,7 +361,7 @@ function DataApi<
         runningData.length >= data.dataInfo.foundCount
       )
         break;
-      args.offset = offset + limit;
+      offset = offset + limit;
     }
     return runningData;
   }

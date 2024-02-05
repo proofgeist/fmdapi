@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.3.6
+
+### Patch Changes
+
+- fix wv find
+
 ## 3.3.5
 
 ### Patch Changes
