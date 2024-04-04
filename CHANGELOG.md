@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.3.8
+
+### Patch Changes
+
+- don't reimport config statement
+
 ## 3.3.6
 
 ### Patch Changes

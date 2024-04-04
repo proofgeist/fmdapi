@@ -629,7 +629,7 @@ const buildClient = (args: BuildSchemaArgs) => {
     createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
     [
       importTypeStatement(schemaName, portalSchema.length > 0, type === "zod"),
-      ...reimportConfigStatements(args.configLocation),
+      // ...reimportConfigStatements(args.configLocation),
       ...exportClientStatement({
         envNames,
         useZod: type === "zod",

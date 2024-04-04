@@ -1,6 +1,6 @@
 {
   "name": "@proofgeist/fmdapi",
-  "version": "3.3.7",
+  "version": "3.3.8",
   "description": "FileMaker Data API client",
   "main": "dist/index.js",
   "repository": "git@github.com:proofgeist/fm-dapi.git",
@@ -21,7 +21,8 @@
       "import": "./dist/wv.js",
       "types": "./dist/wv.d.ts"
     },
-    "./dist/tokenStore/*.js": "./dist/tokenStore/*.js"
+    "./dist/tokenStore/*.js": "./dist/tokenStore/*.js",
+    "./dist/tokenStore/*": "./dist/tokenStore/*"
   },
   "scripts": {
     "prepublishOnly": "tsc",
