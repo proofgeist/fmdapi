@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 3.3.9
+
+### Patch Changes
+
+- 28067f8: fix list all method
+
 ## 3.3.8
 
 ### Patch Changes
