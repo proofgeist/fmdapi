@@ -145,19 +145,12 @@ function DataApi<
     const { layout = options.layout, fetch, ...params } = args ?? {};
     if (layout === undefined) throw new Error("Must specify layout");
 
-    // rename and refactor limit, offset, and sort keys for this request
-    if ("limit" in params && params.limit !== undefined)
-      delete Object.assign(params, { _limit: params.limit })["limit"];
-    if ("offset" in params && params.offset !== undefined)
-      delete Object.assign(params, { _offset: params.offset })["offset"];
     if ("sort" in params && params.sort !== undefined)
-      delete Object.assign(params, {
-        _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
-      })["sort"];
+      params.sort = Array.isArray(params.sort) ? params.sort : [params.sort];
 
     const data = await request({
       layout,
-      body: {},
+      body: params,
     });
 
     if (zodTypes) {
@@ -193,6 +186,7 @@ function DataApi<
     while (true) {
       const data = (await list({
         ...myArgs,
+        limit,
         offset,
       } as any)) as unknown as GetResponse<T, U>;
       runningData = [...runningData, ...data.data];
