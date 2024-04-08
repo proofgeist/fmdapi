@@ -1,6 +1,6 @@
 # @proofgeist/fmdapi
 
-## 3.3.9
+## 3.3.10
 
 ### Patch Changes
 
