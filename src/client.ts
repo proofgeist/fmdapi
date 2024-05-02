@@ -323,6 +323,17 @@ function DataApi<
       delete Object.assign(params, {
         _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
       })["sort"];
+    // if ("dateformats" in params && params.dateformats !== undefined)
+    //   delete Object.assign(params, {
+    //     dateformats:
+    //       params.dateformats === "US"
+    //         ? 0
+    //         : params.dateformats === "file_locale"
+    //         ? 1
+    //         : params.dateformats === "ISO8601"
+    //         ? 2
+    //         : 0,
+    //   })["dateformats"];
 
     const data = await request({
       url: `/layouts/${layout}/records`,
@@ -527,7 +538,19 @@ function DataApi<
     if ("offset" in params && params.offset !== undefined) {
       if (params.offset <= 1) delete params.offset;
     }
-
+    if ("dateformats" in params && params.dateformats !== undefined) {
+      // reassign dateformats to match FileMaker's expected values
+      // @ts-expect-error FM wants a string, so this is fine
+      params.dateformats = (
+        params.dateformats === "US"
+          ? 0
+          : params.dateformats === "file_locale"
+          ? 1
+          : params.dateformats === "ISO8601"
+          ? 2
+          : 0
+      ).toString();
+    }
     const data = (await request({
       url: `/layouts/${layout}/_find`,
       body: { query, ...params },

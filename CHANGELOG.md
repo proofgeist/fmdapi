@@ -1,5 +1,15 @@
 # @proofgeist/fmdapi
 
+## 3.4.0
+
+### Minor Changes
+
+- Handle dateformats option of DataAPI
+
+### Patch Changes
+
+- add more exports to index
+
 ## 3.3.10
 
 ### Patch Changes

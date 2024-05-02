@@ -119,6 +119,7 @@ export type GetParams<U extends GenericPortalData = GenericPortalData> =
   ScriptParams &
     PortalRangesParams<U> & {
       "layout.response"?: string;
+      dateformats?: "US" | "file_locale" | "ISO8601";
     };
 
 export type Sort<T extends FieldData = FieldData> = {
