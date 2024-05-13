@@ -1,4 +1,4 @@
-import { DataApiWV as DataApi } from "../src";
+import { DataApi } from "../src/wv";
 
 describe("try to init client", () => {
   test("without layout", () => {

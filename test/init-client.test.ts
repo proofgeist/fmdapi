@@ -1,12 +1,12 @@
-import { DataApi, FileMakerError } from "../src";
-import fetch from "jest-fetch-mock";
+import { DataApi, FileMakerError, OttoFMSAPIKey } from "../src";
 import memoryStore from "../src/tokenStore/memory";
+import { client } from "./setup";
 
 describe("try to init client", () => {
   test("without server", () => {
     expect(() =>
       DataApi({
-        auth: { apiKey: "anything" },
+        auth: { apiKey: "dk_anything" },
         db: "anything",
         server: "",
         tokenStore: memoryStore(),
@@ -16,7 +16,7 @@ describe("try to init client", () => {
   test("without https", () => {
     expect(() =>
       DataApi({
-        auth: { apiKey: "anything" },
+        auth: { apiKey: "dk_anything" },
         db: "anything",
         server: "http://example.com",
         tokenStore: memoryStore(),
@@ -26,7 +26,7 @@ describe("try to init client", () => {
   test("without db", () => {
     expect(() =>
       DataApi({
-        auth: { apiKey: "anything" },
+        auth: { apiKey: "dk_anything" },
         db: "",
         server: "https://example.com",
         tokenStore: memoryStore(),
@@ -68,6 +68,7 @@ describe("try to init client", () => {
   test("without apiKey", () => {
     expect(() =>
       DataApi({
+        // @ts-expect-error invalid api KEY
         auth: { apiKey: "" },
         db: "anything",
         server: "https://example.com",
@@ -75,10 +76,10 @@ describe("try to init client", () => {
       })
     ).toThrow();
   });
-  test("with too much auth", () => {
+  test("with too much auth (otto3)", () => {
     const client = DataApi({
       auth: {
-        apiKey: "anything",
+        apiKey: "KEY_anything",
         username: "anything",
         password: "anything",
       },
@@ -88,81 +89,32 @@ describe("try to init client", () => {
     });
     expect(client.baseUrl.toString()).toContain(":3030");
   });
+  test("with too much auth (otto4)", () => {
+    const client = DataApi({
+      auth: {
+        apiKey: "dk_anything",
+        username: "anything",
+        password: "anything",
+      },
+      db: "anything",
+      server: "https://example.com",
+      tokenStore: memoryStore(),
+    });
+    expect(client.baseUrl.toString()).toContain("/otto/");
+  });
 });
 
-const goodResp = {
-  response: {
-    dataInfo: {
-      database: "db",
-      layout: "layout",
-      table: "fake_table",
-      totalRecordCount: 7442,
-      foundCount: 7442,
-      returnedCount: 1,
-    },
-    data: [
-      {
-        fieldData: {
-          emailAll: "test@example.com",
-          name: "Fake Name",
-          emailPrimary: "cgesell@mrschilling.com",
-        },
-        portalData: {},
-        recordId: "5",
-        modId: "8",
-      },
-    ],
-  },
-  messages: [
-    {
-      code: "0",
-      message: "OK",
-    },
-  ],
-};
-
-describe("client methods (otto)", () => {
-  const client = DataApi({
-    auth: { apiKey: "KEY_anything" },
-    db: "db",
-    server: "https://example.com",
-    tokenStore: memoryStore(),
-  });
-  beforeEach(() => {
-    fetch.resetMocks();
-  });
-  afterEach(() => {
-    expect(fetch.mock.calls.length).toEqual(1);
-  });
-
+describe("client methods (otto 4)", () => {
   test("list", async () => {
-    fetch.mockResponseOnce(JSON.stringify(goodResp));
-
     await client.list({ layout: "layout" });
-    expect(fetch.mock.calls[0][0]).toEqual(
-      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records"
-    );
   });
   test("list with limit param", async () => {
-    fetch.mockResponseOnce(JSON.stringify(goodResp));
     await client.list({ layout: "layout", limit: 1 });
-    expect(fetch.mock.calls[0][0]).toEqual(
-      "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/layout/records?_limit=1"
-    );
   });
   test("missing layout should error", async () => {
-    fetch.mockResponseOnce(JSON.stringify(goodResp));
-
-    await client
-      .list({ layout: "not_a_layout" })
-      .catch((err) => {
-        expect(err).toBeInstanceOf(FileMakerError);
-        expect(err.code).toBe("105"); // missing layout error
-      })
-      .finally(() => {
-        expect(fetch.mock.calls[0][0]).toEqual(
-          "https://example.com:3030/fmi/data/vLatest/databases/db/layouts/not_a_layout/records"
-        );
-      });
+    await client.list({ layout: "not_a_layout" }).catch((err) => {
+      expect(err).toBeInstanceOf(FileMakerError);
+      expect(err.code).toBe("105"); // missing layout error
+    });
   });
 });

@@ -5,7 +5,18 @@ const config: Config.InitialOptions = {
   testEnvironment: "node",
   verbose: true,
   automock: false,
-  setupFiles: ["./test/setup.js"],
+  transform: {
+    "\\.[jt]sx?$": "ts-jest",
+  },
+  globals: {
+    "ts-jest": {
+      useESM: true,
+    },
+  },
+  moduleNameMapper: {
+    "(.+)\\.js": "$1",
+  },
+  extensionsToTreatAsEsm: [".ts"],
 };
 
 export default config;

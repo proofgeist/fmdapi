@@ -32,7 +32,7 @@
   "scripts": {
     "prepublishOnly": "tsc",
     "build": "tsc",
-    "test": "jest",
+    "test": "op inject -i op.env -o .env.local -f && jest",
     "changeset": "changeset",
     "release": "pnpm build && changeset publish --access public"
   },
@@ -40,8 +40,8 @@
     "@changesets/cli": "^2.26.1",
     "chalk": "4.1.2",
     "commander": "^9.5.0",
-    "dayjs": "^1.11.10",
-    "dotenv": "^16.3.1",
+    "dayjs": "^1.11.11",
+    "dotenv": "^16.4.5",
     "fs-extra": "^11.1.1",
     "ts-toolbelt": "^9.6.0"
   },
@@ -53,18 +53,18 @@
     "@proofgeist/fm-webviewer-fetch": "^2.1.0",
     "@types/fs-extra": "^11.0.3",
     "@types/jest": "^28.1.8",
-    "@types/node": "^20.8.9",
+    "@types/node": "^20.12.11",
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.62.0",
-    "@upstash/redis": "^1.24.2",
-    "eslint": "^8.52.0",
-    "eslint-plugin-react": "^7.33.2",
+    "@upstash/redis": "^1.30.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.1",
     "jest": "^28.1.3",
     "jest-fetch-mock": "^3.0.3",
     "ts-jest": "^28.0.8",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.4",
-    "zod": "*"
+    "typescript": "^5.4.5",
+    "zod": "^3.23.8"
   },
   "engines": {
     "node": ">=18.0.0"
