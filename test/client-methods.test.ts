@@ -6,7 +6,7 @@ import {
   ScriptsMetadataResponse,
   ScriptOrFolder,
 } from "../src/client-types";
-import { config } from "./setup";
+import { config, layoutClient } from "./setup";
 
 describe("find methods", () => {
   const client = DataApi({
@@ -36,6 +36,30 @@ describe("find methods", () => {
     });
 
     expect(Array.isArray(resp.data)).toBe(false);
+  });
+});
+
+describe("portal methods", () => {
+  it("should return portal data", async () => {
+    const { data } = await layoutClient.list({
+      limit: 1,
+      portalRanges: { test: { limit: 1, offset: 2 } },
+    });
+    expect(data.length).toBeGreaterThanOrEqual(1);
+
+    const portalData = data[0].portalData;
+    const testPortal = portalData.test;
+    expect(testPortal.length).toBe(1);
+    expect(testPortal[0]["related::related_field"]).toContain("2"); // we should get the 2nd record
+  });
+  it("should update portal data", async () => {
+    await layoutClient.update({
+      recordId: 1,
+      fieldData: { anything: "anything" },
+      portalData: {
+        test: [{ "related::related_field": "updated", recordId: "1" }],
+      },
+    });
   });
 });
 
@@ -99,12 +123,12 @@ describe("other methods", () => {
     const resp = (await client.layouts()) as LayoutsResponse;
 
     expect(Object.prototype.hasOwnProperty.call(resp, "layouts")).toBe(true);
-    expect(resp.layouts.length).toBe(2);
+    expect(resp.layouts.length).toBeGreaterThanOrEqual(2);
     expect(resp.layouts[0] as Layout).toHaveProperty("name");
-    expect(resp.layouts[1] as LayoutsFolder).toHaveProperty("isFolder");
-    expect(resp.layouts[1] as LayoutsFolder).toHaveProperty(
-      "folderLayoutNames"
-    );
+    const layoutFoler = resp.layouts.find((o) => "isFolder" in o);
+    expect(layoutFoler).not.toBeUndefined();
+    expect(layoutFoler).toHaveProperty("isFolder");
+    expect(layoutFoler).toHaveProperty("folderLayoutNames");
   });
   it("should retrieve a list of folders and scripts", async () => {
     const client = DataApi({

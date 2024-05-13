@@ -19,6 +19,16 @@ export type PortalsWithIds<U extends GenericPortalData = GenericPortalData> = {
     }
   >;
 };
+export type UpdatePortalsWithIds<
+  U extends GenericPortalData = GenericPortalData
+> = {
+  [key in keyof U]: Array<
+    U[key] & {
+      recordId: string;
+      modId?: string;
+    }
+  >;
+};
 
 export const getFMRecordAsZod = <
   T extends z.AnyZodObject,
@@ -82,16 +92,18 @@ export const ZDataInfo = z.object({
 });
 export type DataInfo = z.infer<typeof ZDataInfo>;
 
-export type CreateParams<U> = ScriptParams & { portalData?: U };
+export type CreateParams<U extends GenericPortalData = GenericPortalData> =
+  ScriptParams & { portalData?: UpdatePortalsWithIds<U> };
 
 export type CreateResponse = ScriptResponse & {
   recordId: string;
   modId: string;
 };
 
-export type UpdateParams<U> = CreateParams<U> & {
-  modId?: number;
-};
+export type UpdateParams<U extends GenericPortalData = GenericPortalData> =
+  CreateParams<U> & {
+    modId?: number;
+  };
 
 export type UpdateResponse = ScriptResponse & {
   modId: string;

@@ -191,22 +191,45 @@ function DataApi<
 
     if (query) {
       const searchParams = new URLSearchParams(query);
-      if (query.portalRanges) {
+      if (query.portalRanges && typeof query.portalRanges === "object") {
         for (const [portalName, value] of Object.entries(
-          params.portalRanges as PortalRanges
+          query.portalRanges as PortalRanges
         )) {
           if (value) {
             value.offset &&
+              value.offset > 0 &&
               searchParams.set(
-                `${portalName}._offset`,
+                `_offset.${portalName}`,
                 value.offset.toString()
               );
             value.limit &&
-              searchParams.set(`${portalName}._limit`, value.limit.toString());
+              searchParams.set(`_limit.${portalName}`, value.limit.toString());
           }
         }
       }
+      searchParams.delete("portalRanges");
       url.search = searchParams.toString();
+    }
+
+    if (body && "portalRanges" in body) {
+      for (const [portalName, value] of Object.entries(
+        body.portalRanges as PortalRanges
+      )) {
+        if (value) {
+          value.offset &&
+            value.offset > 0 &&
+            url.searchParams.set(
+              `_offset.${portalName}`,
+              value.offset.toString()
+            );
+          value.limit &&
+            url.searchParams.set(
+              `_limit.${portalName}`,
+              value.limit.toString()
+            );
+        }
+      }
+      delete body.portalRanges;
     }
 
     const controller = new AbortController();
