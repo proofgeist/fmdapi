@@ -691,6 +691,25 @@ function DataApi<
     })) as ScriptsMetadataResponse;
   }
 
+  type GlobalsArgs = {
+    globalFields: Record<string, string | number>,
+  };
+
+  /**
+   * Set global fields for the current session
+   */
+  async function globals(
+    args: GlobalsArgs & FetchOptions
+  ) {
+    const { globalFields } = args;
+    return (await request({
+      url: `/globals`,
+      method: "PATCH",
+      body: { globalFields },
+      fetchOptions: args.fetch,
+    })) as Record<string, never>;
+  }
+
   return {
     baseUrl, // returned only for testing purposes
     list,
@@ -705,9 +724,10 @@ function DataApi<
     findOne,
     findFirst,
     findAll,
+    executeScript,
     layouts,
     scripts,
-    executeScript,
+    globals,
   };
 }
 
