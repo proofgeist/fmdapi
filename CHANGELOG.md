@@ -1,5 +1,12 @@
 # @proofgeist/fmdapi
 
+## 3.5.0
+
+### Minor Changes
+
+- f7777c1: Support for write operations in FileMaker 2024
+- 514b2b6: Set global field values
+
 ## 3.4.2
 
 ### Patch Changes
