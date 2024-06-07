@@ -107,6 +107,8 @@ const result = await client.list<TContact>({ layout: "Contacts" });
 
 A (nearly) identical client designed to be used with the [fm-webviewer-fetch](https://github.com/proofgeist/fm-webviewer-fetch) library when integrating within a FileMaker WebViewer instead of the browser. Using this client requires a bit extra configuration within your FileMaker file, but provides great developer experience, especially when using TypeScript and the codegen features.
 
+(v3.5+) Support for write operations in FileMaker 2024
+
 Install the [fm-webviewer-fetch](https://github.com/proofgeist/fm-webviewer-fetch) library to your project:
 
 ```sh
@@ -257,14 +259,15 @@ import { fileTokenStore } from "@proofgeist/fmdapi/dist/tokenStore/file.js"; // 
 | valueLists     | `strict` `allowEmpty` `ignore` | `ignore`     | If `strict`, will add enum types based on the value list defined for the field. If `allowEmpty`, will append `""` to the value list. Otherwise, fields are typed as normal.                                                                                     |
 | strictNumbers  | `boolean`                      | `false`      | (v2.2.11+) If true, the zod schema will apply a transformer to force all number fields to be either `number` or `null`. <br>**WARNING:** If you are not using Zod or the auto-generated layout specific client, enabling this option may result in false types! |
 | generateClient | `boolean`                      | none         | If present, override the `generateClient` option for this schema only.                                                                                                                                                                                          |
- 
+
 #### Codegen CLI options
-| Option | Default | Description |
-| --- | --- | --- |
-| --init | false | Run with this flag to add the config file to your project |
-| --config <path> | - | path to a non-default config file |
-| --env-path <path> | .env.local | path to your .env file |
-| --skip-env-check | - | Ignore loading environment variables from a file. |
+
+| Option            | Default    | Description                                               |
+| ----------------- | ---------- | --------------------------------------------------------- |
+| --init            | false      | Run with this flag to add the config file to your project |
+| --config <path>   | -          | path to a non-default config file                         |
+| --env-path <path> | .env.local | path to your .env file                                    |
+| --skip-env-check  | -          | Ignore loading environment variables from a file.         |
 
 ## FAQ
 

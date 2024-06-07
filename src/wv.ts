@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod";
 import {
   CreateParams,
@@ -60,7 +61,7 @@ function DataApi<
   async function request(params: {
     layout: string;
     body: object;
-    action?: "read" | "metaData";
+    action?: "read" | "metaData" | "create" | "update" | "delete" | "duplicate";
   }): Promise<unknown> {
     const { action = "read", layout, body } = params;
     const { fmFetch } = await import("@proofgeist/fm-webviewer-fetch").catch(
@@ -142,6 +143,7 @@ function DataApi<
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { layout = options.layout, fetch, ...params } = args ?? {};
     if (layout === undefined) throw new Error("Must specify layout");
 
@@ -197,8 +199,7 @@ function DataApi<
   }
   /**
    * Create a new record in a given layout
-   * @deprecated Not supported by Execute Data API script step
-   * @throws {Error} Always
+   * @since FileMaker 2024
    */
   async function create<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
@@ -218,6 +219,7 @@ function DataApi<
       : GetArgs<U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
     args.recordId = asNumber(args.recordId);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { recordId, layout = options.layout, fetch, ...params } = args;
     if (!layout) throw new Error("Must specify layout");
     const data = await request({
@@ -230,8 +232,7 @@ function DataApi<
   }
   /**
    * Update a single record by internal RecordId
-   * @deprecated Not supported by Execute Data API script step
-   * @throws {Error} Always
+   * @since FileMaker 2024
    */
   async function update<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
@@ -241,12 +242,16 @@ function DataApi<
     args.recordId = asNumber(args.recordId);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { recordId, fieldData, layout = options.layout, ...params } = args;
-    throw new Error("Not supported by Execute Data API script step");
+    if (!layout) throw new Error("Must specify layout");
+    return (await request({
+      action: "update",
+      layout,
+      body: { recordId, fieldData, ...params },
+    })) as UpdateResponse;
   }
   /**
    * Delete a single record by internal RecordId
-   * @deprecated Not supported by Execute Data API script step
-   * @throws {Error} Always
+   * @since FileMaker 2024
    */
   async function deleteRecord(
     args: Opts["layout"] extends string
@@ -256,7 +261,12 @@ function DataApi<
     args.recordId = asNumber(args.recordId);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { recordId, layout = options.layout, fetch, ...params } = args;
-    throw new Error("Not supported by Execute Data API script step");
+    if (!layout) throw new Error("Must specify layout");
+    return (await request({
+      action: "update",
+      layout,
+      body: { recordId, ...params },
+    })) as DeleteResponse;
   }
 
   /**
@@ -288,7 +298,9 @@ function DataApi<
       query: queryInput,
       layout = options.layout,
       ignoreEmptyResult = false,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       timeout,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       fetch,
       ...params
     } = args;
@@ -371,11 +383,11 @@ function DataApi<
   return {
     list,
     listAll,
-    // create,
+    create,
     get,
-    // update,
-    // delete: deleteRecord,
-    // metadata,
+    update,
+    delete: deleteRecord,
+    metadata,
     find,
     findOne,
     findFirst,
