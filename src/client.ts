@@ -26,6 +26,7 @@ import {
 import type { TokenStoreDefinitions } from "./tokenStore/types.js";
 import { memoryStore } from "./tokenStore/memory.js";
 import { Otto3APIKey, OttoFMSAPIKey } from "./utils/utils.js";
+import { request as _request, getToken } from "./request.js";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
@@ -104,7 +105,7 @@ function DataApi<
 ) {
   const options = ZodOptions.strict().parse(input); // validate options
 
-  const tokenStore = options.tokenStore ?? memoryStore();
+  // const tokenStore = options.tokenStore ?? memoryStore();
 
   const baseUrl = new URL(
     `${options.server}/fmi/data/vLatest/databases/${options.db}`
@@ -123,52 +124,52 @@ function DataApi<
     }
   }
 
-  async function getToken(
-    refresh = false,
-    fetchOptions?: Omit<RequestInit, "method">
-  ): Promise<string> {
-    if ("apiKey" in options.auth) return options.auth.apiKey;
+  // async function getToken(
+  //   refresh = false,
+  //   fetchOptions?: Omit<RequestInit, "method">
+  // ): Promise<string> {
+  //   if ("apiKey" in options.auth) return options.auth.apiKey;
 
-    if (!tokenStore) throw new Error("No token store provided");
+  //   if (!tokenStore) throw new Error("No token store provided");
 
-    if (!tokenStore.getKey) {
-      tokenStore.getKey = () => `${options.server}/${options.db}`;
-    }
+  //   if (!tokenStore.getKey) {
+  //     tokenStore.getKey = () => `${options.server}/${options.db}`;
+  //   }
 
-    if (tokenStore === undefined) throw new Error("No token store provided");
-    if (!tokenStore.getKey) throw new Error("No token store key provided");
+  //   if (tokenStore === undefined) throw new Error("No token store provided");
+  //   if (!tokenStore.getKey) throw new Error("No token store key provided");
 
-    let token = await tokenStore.getToken(tokenStore.getKey());
+  //   let token = await tokenStore.getToken(tokenStore.getKey());
 
-    if (refresh) token = null; // clear token so are forced to get a new one
+  //   if (refresh) token = null; // clear token so are forced to get a new one
 
-    if (!token) {
-      const res = await fetch(`${baseUrl}/sessions`, {
-        ...fetchOptions,
-        method: "POST",
-        headers: {
-          ...fetchOptions?.headers,
-          "Content-Type": "application/json",
-          Authorization: `Basic ${Buffer.from(
-            `${options.auth.username}:${options.auth.password}`
-          ).toString("base64")}`,
-        },
-      });
+  //   if (!token) {
+  //     const res = await fetch(`${baseUrl}/sessions`, {
+  //       ...fetchOptions,
+  //       method: "POST",
+  //       headers: {
+  //         ...fetchOptions?.headers,
+  //         "Content-Type": "application/json",
+  //         Authorization: `Basic ${Buffer.from(
+  //           `${options.auth.username}:${options.auth.password}`
+  //         ).toString("base64")}`,
+  //       },
+  //     });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new FileMakerError(
-          data.messages[0].code,
-          data.messages[0].message
-        );
-      }
-      token = res.headers.get("X-FM-Data-Access-Token");
-      if (!token) throw new Error("Could not get token");
-    }
+  //     if (!res.ok) {
+  //       const data = await res.json();
+  //       throw new FileMakerError(
+  //         data.messages[0].code,
+  //         data.messages[0].message
+  //       );
+  //     }
+  //     token = res.headers.get("X-FM-Data-Access-Token");
+  //     if (!token) throw new Error("Could not get token");
+  //   }
 
-    tokenStore.setToken(tokenStore.getKey(), token);
-    return token;
-  }
+  //   tokenStore.setToken(tokenStore.getKey(), token);
+  //   return token;
+  // }
 
   async function request(params: {
     url: string;
@@ -180,104 +181,7 @@ function DataApi<
     timeout?: number;
     fetchOptions?: RequestInit;
   }): Promise<unknown> {
-    const {
-      query,
-      body,
-      method = "POST",
-      retry = false,
-      fetchOptions = {},
-    } = params;
-    const url = new URL(`${baseUrl}${params.url}`);
-
-    if (query) {
-      const searchParams = new URLSearchParams(query);
-      if (query.portalRanges && typeof query.portalRanges === "object") {
-        for (const [portalName, value] of Object.entries(
-          query.portalRanges as PortalRanges
-        )) {
-          if (value) {
-            value.offset &&
-              value.offset > 0 &&
-              searchParams.set(
-                `_offset.${portalName}`,
-                value.offset.toString()
-              );
-            value.limit &&
-              searchParams.set(`_limit.${portalName}`, value.limit.toString());
-          }
-        }
-      }
-      searchParams.delete("portalRanges");
-      url.search = searchParams.toString();
-    }
-
-    if (body && "portalRanges" in body) {
-      for (const [portalName, value] of Object.entries(
-        body.portalRanges as PortalRanges
-      )) {
-        if (value) {
-          value.offset &&
-            value.offset > 0 &&
-            url.searchParams.set(
-              `_offset.${portalName}`,
-              value.offset.toString()
-            );
-          value.limit &&
-            url.searchParams.set(
-              `_limit.${portalName}`,
-              value.limit.toString()
-            );
-        }
-      }
-      delete body.portalRanges;
-    }
-
-    const controller = new AbortController();
-    let timeout: NodeJS.Timeout | null = null;
-    if (params.timeout)
-      timeout = setTimeout(() => controller.abort(), params.timeout);
-
-    const token = await getToken(retry);
-    const res = await fetch(url.toString(), {
-      ...fetchOptions,
-      method,
-      body: body ? JSON.stringify(body) : undefined,
-      headers: {
-        ...fetchOptions?.headers,
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      signal: controller.signal,
-    });
-
-    if (timeout) clearTimeout(timeout);
-
-    let respData: RawFMResponse;
-    try {
-      respData = await res.json();
-    } catch {
-      respData = {};
-    }
-
-    if (!res.ok) {
-      if (respData?.messages?.[0].code === "952" && !retry) {
-        // token expired, get new token and retry once
-        return request({ ...params, retry: true });
-      } else {
-        throw new FileMakerError(
-          respData?.messages?.[0].code ?? "500",
-          `Filemaker Data API failed with (${res.status}): ${JSON.stringify(
-            respData,
-            null,
-            2
-          )}`
-        );
-      }
-    }
-
-    return respData.response;
+    return await _request({ options: options as ClientObjectProps, ...params });
   }
 
   type WithLayout = {
@@ -505,7 +409,7 @@ function DataApi<
       throw new Error("Cannot disconnect when using Otto API key.");
 
     const func = async () => {
-      const token = await getToken();
+      const token = await getToken({ options: options as ClientObjectProps });
       const url = new URL(`${baseUrl}/sessions/${token}`);
 
       const res = await fetch(url.toString(), {
@@ -692,15 +596,13 @@ function DataApi<
   }
 
   type GlobalsArgs = {
-    globalFields: Record<string, string | number>,
+    globalFields: Record<string, string | number>;
   };
 
   /**
    * Set global fields for the current session
    */
-  async function globals(
-    args: GlobalsArgs & FetchOptions
-  ) {
+  async function globals(args: GlobalsArgs & FetchOptions) {
     const { globalFields } = args;
     return (await request({
       url: `/globals`,
