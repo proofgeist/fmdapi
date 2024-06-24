@@ -16,19 +16,55 @@ import {
   LayoutMetadataResponse,
   GetResponseOne,
   ZGetResponse,
+  AllLayoutsMetadataResponse,
   FMRecord,
+  PortalRanges,
+  ScriptsMetadataResponse,
   RawFMResponse,
+  ScriptResponse,
 } from "./client-types.js";
+import { request as _request, getBaseUrl, getToken } from "./request.js";
+import { Adapter } from "./adapters/core.js";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
 }
 
+// type UserPasswordAuth = { username: string; password: string };
+// export function isOttoAuth(auth: ClientObjectProps["auth"]): auth is OttoAuth {
+//   return "apiKey" in auth;
+// }
+
 const ZodOptions = z.object({
-  scriptName: z.string(),
+  server: z
+    .string()
+    .refine((val) => val.startsWith("http"), { message: "must include http" }),
+  db: z.string().min(1),
+  auth: z.union([
+    z.object({
+      apiKey: z.string().min(1),
+      ottoPort: z.number().optional(),
+    }),
+    z.object({
+      username: z.string().min(1),
+      password: z.string().min(1),
+    }),
+  ]),
   layout: z.string().optional(),
+  tokenStore: z
+    .object({
+      getKey: z.function().args().returns(z.string()).optional(),
+      getToken: z
+        .function()
+        .args(z.string())
+        .returns(
+          z.union([z.string().nullable(), z.promise(z.string().nullable())])
+        ),
+      setToken: z.function().args(z.string(), z.string()).returns(z.any()),
+      clearToken: z.function().args(z.string()).returns(z.void()),
+    })
+    .optional(),
 });
-export type ClientObjectProps = z.infer<typeof ZodOptions>;
 
 class FileMakerError extends Error {
   public readonly code: string;
@@ -39,57 +75,34 @@ class FileMakerError extends Error {
   }
 }
 
-/**
- * A client intended to be used in a webviewer. This client uses the `fm-webviewer-fetch` package to make requests.
- * It requires that you have a script in your FM file that passes the parameter to the `Execute Data API` script step
- * and returns the result back to the webviewer, according to the `fm-webviewer-fetch` spec.
- * @link https://fm-webviewer-fetch.proofgeist.com/
- */
 function DataApi<
-  Opts extends ClientObjectProps,
   Td extends FieldData = FieldData,
   Ud extends GenericPortalData = GenericPortalData
 >(
-  input: Opts,
-  zodTypes?: {
-    fieldData: z.AnyZodObject;
-    portalData?: z.AnyZodObject;
-  }
+  adapter: Adapter,
+  options: ClientObjectProps
+  // zodTypes?: {
+  //   fieldData: z.AnyZodObject;
+  //   portalData?: z.AnyZodObject;
+  // }
 ) {
-  const options = ZodOptions.strict().parse(input); // validate options
+  // const options = ZodOptions.strict().parse(input); // validate options
 
-  async function request(params: {
-    layout: string;
-    body: object;
-    action?: "read" | "metaData" | "create" | "update" | "delete" | "duplicate";
-  }): Promise<unknown> {
-    const { action = "read", layout, body } = params;
-    const { fmFetch } = await import("@proofgeist/fm-webviewer-fetch").catch(
-      () => {
-        throw new Error(
-          "@proofgeist/fm-webviewer-fetch not found. Make sure you have it installed in your project."
-        );
-      }
-    );
+  // const baseUrl = getBaseUrl(options as ClientObjectProps);
+  const request = options.adapter.request;
 
-    const resp = await fmFetch<RawFMResponse>(options.scriptName, {
-      ...body,
-      layouts: layout,
-      action,
-      version: "vLatest",
-    });
-
-    if (resp.messages?.[0].code !== "0") {
-      throw new FileMakerError(
-        resp?.messages?.[0].code ?? "500",
-        `Filemaker Data API failed with (${
-          resp.messages?.[0].code
-        }): ${JSON.stringify(resp, null, 2)}`
-      );
-    }
-
-    return resp.response;
-  }
+  // async function request(params: {
+  //   url: string;
+  //   body?: object;
+  //   query?: Record<string, string>;
+  //   method?: string;
+  //   retry?: boolean;
+  //   portalRanges?: PortalRanges;
+  //   timeout?: number;
+  //   fetchOptions?: RequestInit;
+  // }): Promise<unknown> {
+  //   return await _request({ options: options as ClientObjectProps, ...params });
+  // }
 
   type WithLayout = {
     /**
@@ -143,16 +156,37 @@ function DataApi<
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { layout = options.layout, fetch, ...params } = args ?? {};
     if (layout === undefined) throw new Error("Must specify layout");
 
+    // rename and refactor limit, offset, and sort keys for this request
+    if ("limit" in params && params.limit !== undefined)
+      delete Object.assign(params, { _limit: params.limit })["limit"];
+    if ("offset" in params && params.offset !== undefined) {
+      if (params.offset <= 1) delete params.offset;
+      else delete Object.assign(params, { _offset: params.offset })["offset"];
+    }
     if ("sort" in params && params.sort !== undefined)
-      params.sort = Array.isArray(params.sort) ? params.sort : [params.sort];
+      delete Object.assign(params, {
+        _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
+      })["sort"];
+    // if ("dateformats" in params && params.dateformats !== undefined)
+    //   delete Object.assign(params, {
+    //     dateformats:
+    //       params.dateformats === "US"
+    //         ? 0
+    //         : params.dateformats === "file_locale"
+    //         ? 1
+    //         : params.dateformats === "ISO8601"
+    //         ? 2
+    //         : 0,
+    //   })["dateformats"];
 
-    const data = await request({
+    const data = await input.adapter.request({
+      action: "list",
+      data: params as ListParams,
       layout,
-      body: params,
+      fetch,
     });
 
     if (zodTypes) {
@@ -182,13 +216,11 @@ function DataApi<
     let runningData: GetResponse<T, U>["data"] = [];
     const limit = args?.limit ?? 100;
     let offset = args?.offset ?? 1;
-    const myArgs = args ?? {};
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const data = (await list({
-        ...myArgs,
-        limit,
+        ...args,
         offset,
       } as any)) as unknown as GetResponse<T, U>;
       runningData = [...runningData, ...data.data];
@@ -199,16 +231,19 @@ function DataApi<
   }
   /**
    * Create a new record in a given layout
-   * @since FileMaker 2024
    */
   async function create<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? CreateArgs<T, U> & Partial<WithLayout> & FetchOptions
       : CreateArgs<T, U> & WithLayout & FetchOptions
   ): Promise<CreateResponse> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { fieldData, layout = options.layout, ...params } = args;
-    throw new Error("Not supported by Execute Data API script step");
+    return (await request({
+      url: `/layouts/${layout}/records`,
+      body: { fieldData, ...(params ?? {}) },
+      timeout: args.timeout,
+      fetchOptions: args.fetch,
+    })) as CreateResponse;
   }
   /**
    * Get a single record by Internal RecordId
@@ -219,12 +254,14 @@ function DataApi<
       : GetArgs<U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
     args.recordId = asNumber(args.recordId);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { recordId, layout = options.layout, fetch, ...params } = args;
-    if (!layout) throw new Error("Must specify layout");
+
     const data = await request({
-      layout,
-      body: { recordId },
+      url: `/layouts/${layout}/records/${recordId}`,
+      method: "GET",
+      query: params as Record<string, string>,
+      timeout: args.timeout,
+      fetchOptions: fetch,
     });
     if (zodTypes)
       return ZGetResponse(zodTypes).parse(data) as GetResponse<T, U>;
@@ -232,7 +269,6 @@ function DataApi<
   }
   /**
    * Update a single record by internal RecordId
-   * @since FileMaker 2024
    */
   async function update<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
@@ -240,18 +276,17 @@ function DataApi<
       : UpdateArgs<T, U> & WithLayout & FetchOptions
   ): Promise<UpdateResponse> {
     args.recordId = asNumber(args.recordId);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { recordId, fieldData, layout = options.layout, ...params } = args;
-    if (!layout) throw new Error("Must specify layout");
     return (await request({
-      action: "update",
-      layout,
-      body: { recordId, fieldData, ...params },
+      url: `/layouts/${layout}/records/${recordId}`,
+      body: { fieldData, ...(params ?? {}) },
+      method: "PATCH",
+      timeout: args.timeout,
+      fetchOptions: args.fetch,
     })) as UpdateResponse;
   }
   /**
    * Delete a single record by internal RecordId
-   * @since FileMaker 2024
    */
   async function deleteRecord(
     args: Opts["layout"] extends string
@@ -259,13 +294,13 @@ function DataApi<
       : DeleteArgs & WithLayout & FetchOptions
   ): Promise<DeleteResponse> {
     args.recordId = asNumber(args.recordId);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { recordId, layout = options.layout, fetch, ...params } = args;
-    if (!layout) throw new Error("Must specify layout");
     return (await request({
-      action: "update",
-      layout,
-      body: { recordId, ...params },
+      url: `/layouts/${layout}/records/${recordId}`,
+      query: params as Record<string, string>,
+      method: "DELETE",
+      timeout: args.timeout,
+      fetchOptions: fetch,
     })) as DeleteResponse;
   }
 
@@ -278,12 +313,54 @@ function DataApi<
       : { timeout?: number } & WithLayout & FetchOptions
   ): Promise<LayoutMetadataResponse> {
     const { layout = options.layout } = args;
-    if (!layout) throw new Error("Must specify layout");
     return (await request({
-      layout,
-      action: "metaData",
-      body: {},
+      method: "GET",
+      url: `/layouts/${layout}`,
+      timeout: args.timeout,
+      fetchOptions: args.fetch,
     })) as LayoutMetadataResponse;
+  }
+  /**
+   * Forcibly logout of the Data API session
+   */
+  function disconnect(): Opts["auth"] extends OttoAuth ? never : Promise<void> {
+    if ("apiKey" in options.auth)
+      throw new Error("Cannot disconnect when using Otto API key.");
+
+    const func = async () => {
+      // await request({ url: "/sessions", method: "DELETE" });
+      const token = await getToken({ options: options as ClientObjectProps });
+      const url = new URL(`${baseUrl}/sessions/${token}`);
+
+      const res = await fetch(url.toString(), {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      let respData: RawFMResponse;
+      try {
+        respData = await res.json();
+      } catch {
+        respData = {};
+      }
+
+      if (!res.ok) {
+        throw new FileMakerError(
+          respData?.messages?.[0].code ?? "500",
+          `Filemaker Data API failed with (${res.status}): ${JSON.stringify(
+            respData,
+            null,
+            2
+          )}`
+        );
+      }
+
+      return respData.response;
+    };
+    return func() as Opts["auth"] extends OttoAuth ? never : Promise<void>;
   }
 
   /**
@@ -298,17 +375,35 @@ function DataApi<
       query: queryInput,
       layout = options.layout,
       ignoreEmptyResult = false,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       timeout,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       fetch,
       ...params
     } = args;
     const query = !Array.isArray(queryInput) ? [queryInput] : queryInput;
-    if (!layout) throw new Error("Must specify layout");
+
+    // rename and refactor limit, offset, and sort keys for this request
+    if ("offset" in params && params.offset !== undefined) {
+      if (params.offset <= 1) delete params.offset;
+    }
+    if ("dateformats" in params && params.dateformats !== undefined) {
+      // reassign dateformats to match FileMaker's expected values
+      // @ts-expect-error FM wants a string, so this is fine
+      params.dateformats = (
+        params.dateformats === "US"
+          ? 0
+          : params.dateformats === "file_locale"
+          ? 1
+          : params.dateformats === "ISO8601"
+          ? 2
+          : 0
+      ).toString();
+    }
     const data = (await request({
-      layout,
+      url: `/layouts/${layout}/_find`,
       body: { query, ...params },
+      method: "POST",
+      timeout,
+      fetchOptions: fetch,
     }).catch((e: unknown) => {
       if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
         return { data: [] };
@@ -369,7 +464,6 @@ function DataApi<
         ignoreEmptyResult: true,
       });
       runningData = [...runningData, ...data.data];
-      console.log(data.dataInfo);
       if (
         runningData.length === 0 ||
         runningData.length >= data.dataInfo.foundCount
@@ -380,7 +474,66 @@ function DataApi<
     return runningData;
   }
 
+  type ExecuteScriptArgs = {
+    script: string;
+    scriptParam?: string;
+    timeout?: number;
+  };
+
+  async function executeScript(
+    args: Opts["layout"] extends string
+      ? ExecuteScriptArgs & Partial<WithLayout> & FetchOptions
+      : ExecuteScriptArgs & WithLayout & FetchOptions
+  ) {
+    const { script, scriptParam, layout = options.layout } = args;
+    return (await request({
+      url: `/layouts/${layout}/script/${script}`,
+      query: scriptParam ? { "script.param": scriptParam } : undefined,
+      method: "GET",
+      timeout: args.timeout,
+      fetchOptions: args.fetch,
+    })) as Pick<ScriptResponse, "scriptResult" | "scriptError">;
+  }
+
+  /**
+   * Returns a list of available layouts on the database.
+   */
+  async function layouts(): Promise<AllLayoutsMetadataResponse> {
+    return (await request({
+      url: `/layouts`,
+      method: "GET",
+    })) as AllLayoutsMetadataResponse;
+  }
+  /**
+   * Returns a list of available scripts on the database.
+   * @returns
+   */
+  async function scripts(): Promise<ScriptsMetadataResponse> {
+    return (await request({
+      url: `/scripts`,
+      method: "GET",
+    })) as ScriptsMetadataResponse;
+  }
+
+  type GlobalsArgs = {
+    globalFields: Record<string, string | number>;
+  };
+
+  /**
+   * Set global fields for the current session
+   */
+  async function globals(args: GlobalsArgs & FetchOptions) {
+    const { globalFields } = args;
+    return (await request({
+      url: `/globals`,
+      method: "PATCH",
+      body: { globalFields },
+      fetchOptions: args.fetch,
+    })) as Record<string, never>;
+  }
+
   return {
+    baseUrl, // returned only for testing purposes
     list,
     listAll,
     create,
@@ -388,10 +541,15 @@ function DataApi<
     update,
     delete: deleteRecord,
     metadata,
+    disconnect,
     find,
     findOne,
     findFirst,
     findAll,
+    executeScript,
+    layouts,
+    scripts,
+    globals,
   };
 }
 

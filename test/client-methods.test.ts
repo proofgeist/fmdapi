@@ -2,7 +2,6 @@ import { DataApi } from "../src";
 import {
   LayoutsResponse,
   Layout,
-  LayoutsFolder,
   ScriptsMetadataResponse,
   ScriptOrFolder,
 } from "../src/client-types";

@@ -8,7 +8,7 @@ import { FileMakerError, DataApi } from "../index.js";
 import { FieldMetaData } from "../client-types.js";
 import { F } from "ts-toolbelt";
 import chalk from "chalk";
-import { ClientObjectProps, isOttoAuth } from "../client.js";
+import { ClientObjectProps, isOttoAuth } from "../client-old.js";
 import { memoryStore } from "../tokenStore/memory.js";
 import { TokenStoreDefinitions } from "../tokenStore/types.js";
 

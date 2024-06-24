@@ -1,195 +1,69 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod";
+import { Adapter } from "./adapters/core.js";
 import {
   CreateParams,
   CreateResponse,
+  DeleteParams,
   DeleteResponse,
+  FMRecord,
   FieldData,
   GenericPortalData,
   GetParams,
   GetResponse,
+  GetResponseOne,
   ListParams,
   Query,
   UpdateParams,
   UpdateResponse,
-  DeleteParams,
-  MetadataResponse,
-  GetResponseOne,
   ZGetResponse,
-  LayoutsResponse,
-  FMRecord,
-  PortalRanges,
-  ScriptsMetadataResponse,
-  RawFMResponse,
-  ScriptResponse,
 } from "./client-types.js";
-import type { TokenStoreDefinitions } from "./tokenStore/types.js";
-import { memoryStore } from "./tokenStore/memory.js";
-import { Otto3APIKey, OttoFMSAPIKey } from "./utils/utils.js";
-import { request as _request, getToken } from "./request.js";
+import { FileMakerError } from "./index.js";
 
 function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
 }
-type OttoAuth =
-  | {
-      apiKey: Otto3APIKey;
-      ottoPort?: number;
-    }
-  | { apiKey: OttoFMSAPIKey; ottoPort?: never };
 
-type UserPasswordAuth = { username: string; password: string };
-export function isOttoAuth(auth: ClientObjectProps["auth"]): auth is OttoAuth {
-  return "apiKey" in auth;
-}
-export type ClientObjectProps = {
-  server: string;
-  db: string;
-  auth: OttoAuth | UserPasswordAuth;
+export type ClientObjectProps<Adp extends Adapter = Adapter> = {
+  adapter: Adp;
   /**
    * The layout to use by default for all requests. Can be overrridden on each request.
    */
   layout?: string;
-  tokenStore?: TokenStoreDefinitions;
-};
-const ZodOptions = z.object({
-  server: z
-    .string()
-    .refine((val) => val.startsWith("http"), { message: "must include http" }),
-  db: z.string().min(1),
-  auth: z.union([
-    z.object({
-      apiKey: z.string().min(1),
-      ottoPort: z.number().optional(),
-    }),
-    z.object({
-      username: z.string().min(1),
-      password: z.string().min(1),
-    }),
-  ]),
-  layout: z.string().optional(),
-  tokenStore: z
-    .object({
-      getKey: z.function().args().returns(z.string()).optional(),
-      getToken: z
-        .function()
-        .args(z.string())
-        .returns(
-          z.union([z.string().nullable(), z.promise(z.string().nullable())])
-        ),
-      setToken: z.function().args(z.string(), z.string()).returns(z.any()),
-      clearToken: z.function().args(z.string()).returns(z.void()),
-    })
-    .optional(),
-});
-
-class FileMakerError extends Error {
-  public readonly code: string;
-
-  public constructor(code: string, message: string) {
-    super(message);
-    this.code = code;
-  }
-}
-
-function DataApi<
-  Opts extends ClientObjectProps,
-  Td extends FieldData = FieldData,
-  Ud extends GenericPortalData = GenericPortalData
->(
-  input: Opts,
-  zodTypes?: {
+  zodValidators?: {
     fieldData: z.AnyZodObject;
     portalData?: z.AnyZodObject;
-  }
-) {
-  const options = ZodOptions.strict().parse(input); // validate options
-
-  // const tokenStore = options.tokenStore ?? memoryStore();
-
-  const baseUrl = new URL(
-    `${options.server}/fmi/data/vLatest/databases/${options.db}`
-  );
-  if ("apiKey" in options.auth) {
-    if (options.auth.apiKey.startsWith("KEY_")) {
-      // otto v3 uses port 3030
-      baseUrl.port = (options.auth.ottoPort ?? 3030).toString();
-    } else if (options.auth.apiKey.startsWith("dk_")) {
-      // otto v4 uses default port, but with /otto prefix
-      baseUrl.pathname = `/otto/fmi/data/vLatest/databases/${options.db}`;
-    } else {
-      throw new Error(
-        "Invalid Otto API key format. Must start with 'KEY_' (Otto v3) or 'dk_' (OttoFMS)"
-      );
-    }
-  }
-
-  // async function getToken(
-  //   refresh = false,
-  //   fetchOptions?: Omit<RequestInit, "method">
-  // ): Promise<string> {
-  //   if ("apiKey" in options.auth) return options.auth.apiKey;
-
-  //   if (!tokenStore) throw new Error("No token store provided");
-
-  //   if (!tokenStore.getKey) {
-  //     tokenStore.getKey = () => `${options.server}/${options.db}`;
-  //   }
-
-  //   if (tokenStore === undefined) throw new Error("No token store provided");
-  //   if (!tokenStore.getKey) throw new Error("No token store key provided");
-
-  //   let token = await tokenStore.getToken(tokenStore.getKey());
-
-  //   if (refresh) token = null; // clear token so are forced to get a new one
-
-  //   if (!token) {
-  //     const res = await fetch(`${baseUrl}/sessions`, {
-  //       ...fetchOptions,
-  //       method: "POST",
-  //       headers: {
-  //         ...fetchOptions?.headers,
-  //         "Content-Type": "application/json",
-  //         Authorization: `Basic ${Buffer.from(
-  //           `${options.auth.username}:${options.auth.password}`
-  //         ).toString("base64")}`,
-  //       },
-  //     });
-
-  //     if (!res.ok) {
-  //       const data = await res.json();
-  //       throw new FileMakerError(
-  //         data.messages[0].code,
-  //         data.messages[0].message
-  //       );
-  //     }
-  //     token = res.headers.get("X-FM-Data-Access-Token");
-  //     if (!token) throw new Error("Could not get token");
-  //   }
-
-  //   tokenStore.setToken(tokenStore.getKey(), token);
-  //   return token;
-  // }
-
-  async function request(params: {
-    url: string;
-    body?: object;
-    query?: Record<string, string>;
-    method?: string;
-    retry?: boolean;
-    portalRanges?: PortalRanges;
-    timeout?: number;
-    fetchOptions?: RequestInit;
-  }): Promise<unknown> {
-    return await _request({ options: options as ClientObjectProps, ...params });
-  }
-
-  type WithLayout = {
-    /**
-     * The layout to use for the request.
-     */
-    layout: string;
   };
+};
+
+type WithLayout = {
+  /**
+   * The layout to use for the request.
+   */
+  layout: string;
+};
+
+type FetchOptions = {
+  fetch?: RequestInit;
+};
+
+function DataApi<
+  Adp extends Adapter = Adapter,
+  Td extends FieldData = FieldData,
+  Ud extends GenericPortalData = GenericPortalData,
+  Opts extends ClientObjectProps<Adp> = ClientObjectProps<Adp>
+>(options: Opts) {
+  const zodTypes = options.zodValidators;
+  const {
+    create,
+    delete: _adapterDelete,
+    find,
+    get,
+    list,
+    update,
+    layoutMetadata,
+    ...otherMethods
+  } = options.adapter;
+
   type CreateArgs<T extends Td = Td, U extends Ud = Ud> = CreateParams<U> & {
     fieldData: Partial<T>;
   };
@@ -218,26 +92,22 @@ function DataApi<
     timeout?: number;
   };
 
-  type FetchOptions = {
-    fetch?: RequestInit;
-  };
-
   /**
    * List all records from a given layout, no find criteria applied.
    */
-  async function list(): Promise<GetResponse<Td, Ud>>;
-  async function list<T extends FieldData = Td, U extends Ud = Ud>(
+  async function _list(): Promise<GetResponse<Td, Ud>>;
+  async function _list<T extends FieldData = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>>;
-  async function list<T extends FieldData = Td, U extends Ud = Ud>(
+  async function _list<T extends FieldData = Td, U extends Ud = Ud>(
     args?: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
-    const { layout = options.layout, fetch, ...params } = args ?? {};
-    if (layout === undefined) throw new Error("Must specify layout");
+    const { layout = options.layout, fetch, timeout, ...params } = args ?? {};
+    if (layout === undefined) throw new Error("Layout is required");
 
     // rename and refactor limit, offset, and sort keys for this request
     if ("limit" in params && params.limit !== undefined)
@@ -250,35 +120,21 @@ function DataApi<
       delete Object.assign(params, {
         _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
       })["sort"];
-    // if ("dateformats" in params && params.dateformats !== undefined)
-    //   delete Object.assign(params, {
-    //     dateformats:
-    //       params.dateformats === "US"
-    //         ? 0
-    //         : params.dateformats === "file_locale"
-    //         ? 1
-    //         : params.dateformats === "ISO8601"
-    //         ? 2
-    //         : 0,
-    //   })["dateformats"];
 
-    const data = await request({
-      url: `/layouts/${layout}/records`,
-      method: "GET",
-      query: params as Record<string, string>,
-      timeout: args?.timeout,
-      fetchOptions: fetch,
+    const result = await list({
+      layout,
+      data: params,
+      fetch,
+      timeout,
     });
 
-    if (zodTypes) {
-      ZGetResponse(zodTypes).parse(data);
-    }
-    return data as GetResponse<T, U>;
+    if (zodTypes) ZGetResponse(zodTypes).parse(result);
+    return result as GetResponse<T, U>;
   }
 
   /**
    * Paginate through all records from a given layout, no find criteria applied.
-   * ⚠️ WARNING: Use this method with caution, as it can be slow depending on the amount of records.
+   * ⚠️ WARNING: Use this method with caution, as it can be slow with large datasets
    */
   async function listAll<
     T extends FieldData = Td,
@@ -300,9 +156,10 @@ function DataApi<
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const data = (await list({
+      const data = (await _list({
         ...args,
         offset,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)) as unknown as GetResponse<T, U>;
       runningData = [...runningData, ...data.data];
       if (runningData.length >= data.dataInfo.foundCount) break;
@@ -310,62 +167,74 @@ function DataApi<
     }
     return runningData;
   }
+
   /**
    * Create a new record in a given layout
    */
-  async function create<T extends Td = Td, U extends Ud = Ud>(
+  async function _create<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? CreateArgs<T, U> & Partial<WithLayout> & FetchOptions
       : CreateArgs<T, U> & WithLayout & FetchOptions
   ): Promise<CreateResponse> {
-    const { fieldData, layout = options.layout, ...params } = args;
-    return (await request({
-      url: `/layouts/${layout}/records`,
-      body: { fieldData, ...(params ?? {}) },
-      timeout: args.timeout,
-      fetchOptions: args.fetch,
-    })) as CreateResponse;
+    const { layout = options.layout, fetch, timeout, ...params } = args ?? {};
+    if (layout === undefined) throw new Error("Layout is required");
+    return await create({ layout, data: params, fetch, timeout });
   }
+
   /**
    * Get a single record by Internal RecordId
    */
-  async function get<T extends Td = Td, U extends Ud = Ud>(
+  async function _get<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? GetArgs<U> & Partial<WithLayout> & FetchOptions
       : GetArgs<U> & WithLayout & FetchOptions
   ): Promise<GetResponse<T, U>> {
     args.recordId = asNumber(args.recordId);
-    const { recordId, layout = options.layout, fetch, ...params } = args;
+    const {
+      recordId,
+      layout = options.layout,
+      fetch,
+      timeout,
+      ...params
+    } = args;
+    if (layout === undefined) throw new Error("Layout is required");
 
-    const data = await request({
-      url: `/layouts/${layout}/records/${recordId}`,
-      method: "GET",
-      query: params as Record<string, string>,
-      timeout: args.timeout,
-      fetchOptions: fetch,
+    const data = await get({
+      layout,
+      data: { ...params, recordId },
+      fetch,
+      timeout,
     });
     if (zodTypes)
       return ZGetResponse(zodTypes).parse(data) as GetResponse<T, U>;
     return data as GetResponse<T, U>;
   }
+
   /**
    * Update a single record by internal RecordId
    */
-  async function update<T extends Td = Td, U extends Ud = Ud>(
+  async function _update<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? UpdateArgs<T, U> & Partial<WithLayout> & FetchOptions
       : UpdateArgs<T, U> & WithLayout & FetchOptions
   ): Promise<UpdateResponse> {
     args.recordId = asNumber(args.recordId);
-    const { recordId, fieldData, layout = options.layout, ...params } = args;
-    return (await request({
-      url: `/layouts/${layout}/records/${recordId}`,
-      body: { fieldData, ...(params ?? {}) },
-      method: "PATCH",
-      timeout: args.timeout,
-      fetchOptions: args.fetch,
-    })) as UpdateResponse;
+    const {
+      recordId,
+      layout = options.layout,
+      fetch,
+      timeout,
+      ...params
+    } = args;
+    if (layout === undefined) throw new Error("Layout is required");
+    return await update({
+      layout,
+      data: { ...params, recordId },
+      fetch,
+      timeout,
+    });
   }
+
   /**
    * Delete a single record by internal RecordId
    */
@@ -375,78 +244,27 @@ function DataApi<
       : DeleteArgs & WithLayout & FetchOptions
   ): Promise<DeleteResponse> {
     args.recordId = asNumber(args.recordId);
-    const { recordId, layout = options.layout, fetch, ...params } = args;
-    return (await request({
-      url: `/layouts/${layout}/records/${recordId}`,
-      query: params as Record<string, string>,
-      method: "DELETE",
-      timeout: args.timeout,
-      fetchOptions: fetch,
-    })) as DeleteResponse;
-  }
+    const {
+      recordId,
+      layout = options.layout,
+      fetch,
+      timeout,
+      ...params
+    } = args;
+    if (layout === undefined) throw new Error("Layout is required");
 
-  /**
-   * Get the metadata for a given layout
-   */
-  async function metadata(
-    args: Opts["layout"] extends string
-      ? { timeout?: number } & Partial<WithLayout> & FetchOptions
-      : { timeout?: number } & WithLayout & FetchOptions
-  ): Promise<MetadataResponse> {
-    const { layout = options.layout } = args;
-    return (await request({
-      method: "GET",
-      url: `/layouts/${layout}`,
-      timeout: args.timeout,
-      fetchOptions: args.fetch,
-    })) as MetadataResponse;
-  }
-  /**
-   * Forcibly logout of the Data API session
-   */
-  function disconnect(): Opts["auth"] extends OttoAuth ? never : Promise<void> {
-    if ("apiKey" in options.auth)
-      throw new Error("Cannot disconnect when using Otto API key.");
-
-    const func = async () => {
-      const token = await getToken({ options: options as ClientObjectProps });
-      const url = new URL(`${baseUrl}/sessions/${token}`);
-
-      const res = await fetch(url.toString(), {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      let respData: RawFMResponse;
-      try {
-        respData = await res.json();
-      } catch {
-        respData = {};
-      }
-
-      if (!res.ok) {
-        throw new FileMakerError(
-          respData?.messages?.[0].code ?? "500",
-          `Filemaker Data API failed with (${res.status}): ${JSON.stringify(
-            respData,
-            null,
-            2
-          )}`
-        );
-      }
-
-      return respData.response;
-    };
-    return func() as Opts["auth"] extends OttoAuth ? never : Promise<void>;
+    return _adapterDelete({
+      layout,
+      data: { ...params, recordId },
+      fetch,
+      timeout,
+    });
   }
 
   /**
    * Find records in a given layout
    */
-  async function find<T extends Td = Td, U extends Ud = Ud>(
+  async function _find<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
       ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout> & FetchOptions
       : FindArgs<T, U> & IgnoreEmptyResult & WithLayout & FetchOptions
@@ -460,6 +278,7 @@ function DataApi<
       ...params
     } = args;
     const query = !Array.isArray(queryInput) ? [queryInput] : queryInput;
+    if (layout === undefined) throw new Error("Layout is required");
 
     // rename and refactor limit, offset, and sort keys for this request
     if ("offset" in params && params.offset !== undefined) {
@@ -478,12 +297,11 @@ function DataApi<
           : 0
       ).toString();
     }
-    const data = (await request({
-      url: `/layouts/${layout}/_find`,
-      body: { query, ...params },
-      method: "POST",
+    const data = (await find({
+      data: { ...params, query },
+      layout,
+      fetch,
       timeout,
-      fetchOptions: fetch,
     }).catch((e: unknown) => {
       if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
         return { data: [] };
@@ -504,7 +322,7 @@ function DataApi<
       ? FindArgs<T, U> & Partial<WithLayout> & FetchOptions
       : FindArgs<T, U> & WithLayout & FetchOptions
   ): Promise<GetResponseOne<T, U>> {
-    const res = await find<T, U>(args);
+    const res = await _find<T, U>(args);
     if (res.data.length !== 1)
       throw new Error(`${res.data.length} records found; expecting exactly 1`);
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
@@ -519,14 +337,14 @@ function DataApi<
       ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout> & FetchOptions
       : FindArgs<T, U> & IgnoreEmptyResult & WithLayout & FetchOptions
   ): Promise<GetResponseOne<T, U>> {
-    const res = await find<T, U>(args);
+    const res = await _find<T, U>(args);
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
     return { ...res, data: res.data[0] };
   }
 
   /**
    * Helper method for `find` to page through all found results.
-   * ⚠️ WARNING: Use with caution as this can be a slow operation
+   * ⚠️ WARNING: Use with caution as this can be a slow operation with large datasets
    */
   async function findAll<T extends Td = Td, U extends Ud = Ud>(
     args: Opts["layout"] extends string
@@ -538,7 +356,7 @@ function DataApi<
     let offset = args.offset ?? 1;
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const data = await find<T, U>({
+      const data = await _find<T, U>({
         ...args,
         offset,
         ignoreEmptyResult: true,
@@ -554,84 +372,35 @@ function DataApi<
     return runningData;
   }
 
-  type ExecuteScriptArgs = {
-    script: string;
-    scriptParam?: string;
-    timeout?: number;
-  };
-
-  async function executeScript(
+  async function _layoutMetadata(
     args: Opts["layout"] extends string
-      ? ExecuteScriptArgs & Partial<WithLayout> & FetchOptions
-      : ExecuteScriptArgs & WithLayout & FetchOptions
+      ? { timeout?: number } & Partial<WithLayout> & FetchOptions
+      : { timeout?: number } & WithLayout & FetchOptions
   ) {
-    const { script, scriptParam, layout = options.layout } = args;
-    return (await request({
-      url: `/layouts/${layout}/script/${script}`,
-      query: scriptParam ? { "script.param": scriptParam } : undefined,
-      method: "GET",
-      timeout: args.timeout,
-      fetchOptions: args.fetch,
-    })) as Pick<ScriptResponse, "scriptResult" | "scriptError">;
-  }
-
-  /**
-   * Returns a list of available layouts on the database.
-   */
-  async function layouts(): Promise<LayoutsResponse> {
-    return (await request({
-      url: `/layouts`,
-      method: "GET",
-    })) as LayoutsResponse;
-  }
-  /**
-   * Returns a list of available scripts on the database.
-   * @returns
-   */
-  async function scripts(): Promise<ScriptsMetadataResponse> {
-    return (await request({
-      url: `/scripts`,
-      method: "GET",
-    })) as ScriptsMetadataResponse;
-  }
-
-  type GlobalsArgs = {
-    globalFields: Record<string, string | number>;
-  };
-
-  /**
-   * Set global fields for the current session
-   */
-  async function globals(args: GlobalsArgs & FetchOptions) {
-    const { globalFields } = args;
-    return (await request({
-      url: `/globals`,
-      method: "PATCH",
-      body: { globalFields },
-      fetchOptions: args.fetch,
-    })) as Record<string, never>;
+    const { layout, ...params } = args;
+    if (layout === undefined) throw new Error("Layout is required");
+    return await layoutMetadata({
+      layout,
+      fetch: params.fetch,
+      timeout: params.timeout,
+    });
   }
 
   return {
-    baseUrl, // returned only for testing purposes
-    list,
+    ...otherMethods,
+    list: _list,
     listAll,
-    create,
-    get,
-    update,
+    create: _create,
+    get: _get,
+    update: _update,
     delete: deleteRecord,
-    metadata,
-    disconnect,
-    find,
+    find: _find,
     findOne,
     findFirst,
     findAll,
-    executeScript,
-    layouts,
-    scripts,
-    globals,
+    layoutMetadata: _layoutMetadata,
   };
 }
 
 export default DataApi;
-export { DataApi, FileMakerError };
+export { DataApi };

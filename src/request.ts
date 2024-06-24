@@ -1,10 +1,27 @@
 import { PortalRanges, RawFMResponse } from "./client-types.js";
-import { ClientObjectProps, FileMakerError } from "./client.js";
+import { ClientObjectProps, FileMakerError } from "./client-old.js";
 import memoryStore from "./tokenStore/memory.js";
 
-function getBaseUrl(options: ClientObjectProps) {
-  return new URL(`${options.server}/fmi/data/vLatest/databases/${options.db}`);
+export function getBaseUrl(options: ClientObjectProps) {
+  const baseUrl = new URL(
+    `${options.server}/fmi/data/vLatest/databases/${options.db}`
+  );
+  if ("apiKey" in options.auth) {
+    if (options.auth.apiKey.startsWith("KEY_")) {
+      // otto v3 uses port 3030
+      baseUrl.port = (options.auth.ottoPort ?? 3030).toString();
+    } else if (options.auth.apiKey.startsWith("dk_")) {
+      // otto v4 uses default port, but with /otto prefix
+      baseUrl.pathname = `/otto/fmi/data/vLatest/databases/${options.db}`;
+    } else {
+      throw new Error(
+        "Invalid Otto API key format. Must start with 'KEY_' (Otto v3) or 'dk_' (OttoFMS)"
+      );
+    }
+  }
+  return baseUrl;
 }
+
 export async function getToken({
   refresh = false,
   options,

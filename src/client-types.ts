@@ -117,6 +117,10 @@ export type RangeParams = {
   offset?: number;
   limit?: number;
 };
+export type RangeParamsRaw = {
+  _offset?: number;
+  _limit?: number;
+};
 
 export type PortalRanges<U extends GenericPortalData = GenericPortalData> =
   Partial<{ [key in keyof U]: RangeParams }>;
@@ -145,6 +149,14 @@ export type ListParams<
 > = GetParams<U> &
   RangeParams & {
     sort?: Sort<T> | Array<Sort<T>>;
+  };
+
+export type ListParamsRaw<
+  T extends FieldData = FieldData,
+  U extends GenericPortalData = GenericPortalData
+> = GetParams<U> &
+  RangeParamsRaw & {
+    _sort?: Array<Sort<T>>;
   };
 
 export type GetResponse<
@@ -196,10 +208,21 @@ export type Query<
     omit?: boolean;
   };
 
-export type MetadataResponse = {
+export type LayoutMetadataResponse = {
   fieldMetaData: FieldMetaData[];
   portalMetaData: { [key: string]: FieldMetaData[] };
   valueLists?: ValueList[];
+};
+export type ProductInfoMetadataResponse = {
+  name: string;
+  dateFormat: string;
+  timeFormat: string;
+  timeStampFormat: string;
+};
+export type DatabaseMetadataResponse = {
+  databases: Array<{
+    name: string;
+  }>;
 };
 
 export type FieldMetaData = {
@@ -236,7 +259,7 @@ type ValueList = {
 /**
  * Represents the data returned by a call to the Data API `layouts` endpoint.
  */
-export type LayoutsResponse = {
+export type AllLayoutsMetadataResponse = {
   /**
    * A list of `Layout` or `LayoutsFolder` objects.
    */
