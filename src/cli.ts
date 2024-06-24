@@ -22,9 +22,11 @@ function init({ configLocation }: ConfigArgs) {
   } else {
     const stubFile = fs.readFileSync(
       path.resolve(
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        typeof __dirname !== 'undefined' ? __dirname :
-          fileURLToPath(new URL('.', import.meta.url)),
+        typeof __dirname !== "undefined"
+          ? __dirname
+          : fileURLToPath(new URL(".", import.meta.url)),
         "../stubs/fmschema.config.stub.mjs"
       ),
       "utf8"

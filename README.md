@@ -24,6 +24,11 @@ npm install @proofgeist/fmdapi zod
 yarn add @proofgeist/fmdapi zod
 ```
 
+## Upgrading to v4
+
+- adapters
+- pass layout into some functions (exposed from client)
+
 ## Usage
 
 Add the following envnironment variables to your project's `.env` file:

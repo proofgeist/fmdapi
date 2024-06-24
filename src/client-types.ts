@@ -322,3 +322,12 @@ export type RawFMResponse<T = unknown> = {
   response?: T;
   messages?: [{ code: string }];
 };
+
+export class FileMakerError extends Error {
+  public readonly code: string;
+
+  public constructor(code: string, message: string) {
+    super(message);
+    this.code = code;
+  }
+}

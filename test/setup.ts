@@ -1,4 +1,5 @@
-import { DataApi, type OttoFMSAPIKey } from "../src/index";
+import { OttoFMSAPIKey } from "../src/adapters/otto";
+import { DataApi, OttoAdapter } from "../src/index";
 
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
@@ -19,13 +20,17 @@ export const config = {
 };
 
 export const client = DataApi({
-  auth: { apiKey: process.env.OTTO_API_KEY as OttoFMSAPIKey },
-  db: process.env.FM_DATABASE,
-  server: process.env.FM_SERVER,
+  adapter: new OttoAdapter({
+    auth: { apiKey: process.env.OTTO_API_KEY as OttoFMSAPIKey },
+    db: process.env.FM_DATABASE,
+    server: process.env.FM_SERVER,
+  }),
 });
 export const layoutClient = DataApi({
-  auth: { apiKey: process.env.OTTO_API_KEY as OttoFMSAPIKey },
-  db: process.env.FM_DATABASE,
-  server: process.env.FM_SERVER,
+  adapter: new OttoAdapter({
+    auth: { apiKey: process.env.OTTO_API_KEY as OttoFMSAPIKey },
+    db: process.env.FM_DATABASE,
+    server: process.env.FM_SERVER,
+  }),
   layout: "layout",
 });

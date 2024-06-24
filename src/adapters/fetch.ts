@@ -28,9 +28,12 @@ export class FetchAdapter extends BaseFetchAdapter {
     this.tokenStore = args.tokenStore ?? memoryStore();
     this.getTokenKey =
       args.tokenStore?.getKey ?? (() => `${args.server}/${args.db}`);
+
+    if (this.username === "") throw new Error("Username is required");
+    if (this.password === "") throw new Error("Password is required");
   }
 
-  protected async getToken(args?: GetTokenArguments): Promise<string> {
+  protected getToken = async (args?: GetTokenArguments): Promise<string> => {
     const { refresh = false } = args ?? {};
     let token: string | null = null;
     if (!refresh) {
@@ -62,9 +65,9 @@ export class FetchAdapter extends BaseFetchAdapter {
 
     this.tokenStore.setToken(this.getTokenKey(), token);
     return token;
-  }
+  };
 
-  public async disconnect(): Promise<void> {
+  public disconnect = async (): Promise<void> => {
     const token = await this.tokenStore.getToken(this.getTokenKey());
     if (token) {
       await this.request({
@@ -79,18 +82,5 @@ export class FetchAdapter extends BaseFetchAdapter {
       });
       this.tokenStore.clearToken(this.getTokenKey());
     }
-  }
+  };
 }
-
-const adapter = new FetchAdapter({
-  server: "https://example.com",
-  db: "example",
-  auth: {
-    username: "admin",
-    password: "admin",
-  },
-});
-// @ts-expect-error should not have access to this function
-adapter.getToken();
-
-adapter.disconnect();

@@ -1,12 +1,10 @@
 import {
   AllLayoutsMetadataResponse,
   CreateResponse,
-  DatabaseMetadataResponse,
   DeleteResponse,
   GetResponse,
   LayoutMetadataResponse,
   PortalRanges,
-  ProductInfoMetadataResponse,
   RawFMResponse,
   ScriptResponse,
   ScriptsMetadataResponse,
@@ -26,7 +24,8 @@ import {
 } from "./core.js";
 
 export type ExecuteScriptOptions = BaseRequest & {
-  data: { script: string; scriptParam?: string };
+  script: string;
+  scriptParam?: string;
 };
 
 export type BaseFetchAdapterOptions = {
@@ -48,15 +47,17 @@ export class BaseFetchAdapter implements Adapter {
     this.baseUrl = new URL(
       `${this.server}/fmi/data/vLatest/databases/${this.db}`
     );
+
+    if (this.db === "") throw new Error("Database name is required");
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected async getToken(args?: GetTokenArguments): Promise<string> {
+  protected getToken = async (args?: GetTokenArguments): Promise<string> => {
     // method must be implemented in subclass
     throw new Error("getToken method not implemented by Fetch Adapter");
-  }
+  };
 
-  protected async request(params: {
+  protected request = async (params: {
     url: string;
     body?: object;
     query?: Record<string, string>;
@@ -65,11 +66,11 @@ export class BaseFetchAdapter implements Adapter {
     portalRanges?: PortalRanges;
     timeout?: number;
     fetchOptions?: RequestInit;
-  }): Promise<unknown> {
+  }): Promise<unknown> => {
     const {
       query,
       body,
-      method = "POST",
+      method = "GET",
       retry = false,
       fetchOptions = {},
     } = params;
@@ -168,9 +169,9 @@ export class BaseFetchAdapter implements Adapter {
     }
 
     return respData.response;
-  }
+  };
 
-  public async list(opts: ListOptions): Promise<GetResponse> {
+  public list = async (opts: ListOptions): Promise<GetResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       url: `/layouts/${layout}/records`,
@@ -179,9 +180,9 @@ export class BaseFetchAdapter implements Adapter {
       timeout: opts.timeout,
     });
     return resp as GetResponse;
-  }
+  };
 
-  public async get(opts: GetOptions): Promise<GetResponse> {
+  public get = async (opts: GetOptions): Promise<GetResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       url: `/layouts/${layout}/records/${data.recordId}`,
@@ -189,20 +190,21 @@ export class BaseFetchAdapter implements Adapter {
       timeout: opts.timeout,
     });
     return resp as GetResponse;
-  }
+  };
 
-  public async find(opts: FindOptions): Promise<GetResponse> {
+  public find = async (opts: FindOptions): Promise<GetResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       url: `/layouts/${layout}/_find`,
       body: data,
+      method: "POST",
       fetchOptions: opts.fetch,
       timeout: opts.timeout,
     });
     return resp as GetResponse;
-  }
+  };
 
-  public async create(opts: CreateOptions): Promise<CreateResponse> {
+  public create = async (opts: CreateOptions): Promise<CreateResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       url: `/layouts/${layout}/records`,
@@ -212,21 +214,24 @@ export class BaseFetchAdapter implements Adapter {
       timeout: opts.timeout,
     });
     return resp as CreateResponse;
-  }
+  };
 
-  public async update(opts: UpdateOptions): Promise<UpdateResponse> {
-    const { data, layout } = opts;
+  public update = async (opts: UpdateOptions): Promise<UpdateResponse> => {
+    const {
+      data: { recordId, ...data },
+      layout,
+    } = opts;
     const resp = await this.request({
-      url: `/layouts/${layout}/records/${data.recordId}`,
+      url: `/layouts/${layout}/records/${recordId}`,
       body: data,
       method: "PATCH",
       fetchOptions: opts.fetch,
       timeout: opts.timeout,
     });
     return resp as UpdateResponse;
-  }
+  };
 
-  public async delete(opts: DeleteOptions): Promise<DeleteResponse> {
+  public delete = async (opts: DeleteOptions): Promise<DeleteResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       url: `/layouts/${layout}/records/${data.recordId}`,
@@ -235,24 +240,23 @@ export class BaseFetchAdapter implements Adapter {
       timeout: opts.timeout,
     });
     return resp as DeleteResponse;
-  }
+  };
 
-  public async layoutMetadata(
+  public layoutMetadata = async (
     opts: LayoutMetadataOptions
-  ): Promise<LayoutMetadataResponse> {
+  ): Promise<LayoutMetadataResponse> => {
     return (await this.request({
       url: `/layouts/${opts.layout}`,
       fetchOptions: opts.fetch,
       timeout: opts.timeout,
     })) as LayoutMetadataResponse;
-  }
+  };
 
   /**
    * Execute a script within the database
    */
-  public async executeScript(opts: ExecuteScriptOptions) {
-    const { data, layout } = opts;
-    const { script, scriptParam } = data;
+  public executeScript = async (opts: ExecuteScriptOptions) => {
+    const { script, scriptParam, layout } = opts;
     const resp = await this.request({
       url: `/layouts/${layout}/script/${script}`,
       query: scriptParam ? { "script.param": scriptParam } : undefined,
@@ -260,38 +264,38 @@ export class BaseFetchAdapter implements Adapter {
       timeout: opts.timeout,
     });
     return resp as ScriptResponse;
-  }
+  };
 
   /**
    * Returns a list of available layouts on the database.
    */
-  public async layouts(opts?: Omit<BaseRequest, "layout">) {
+  public layouts = async (opts?: Omit<BaseRequest, "layout">) => {
     return (await this.request({
       url: "/layouts",
       fetchOptions: opts?.fetch,
       timeout: opts?.timeout,
     })) as AllLayoutsMetadataResponse;
-  }
+  };
 
   /**
    * Returns a list of available scripts on the database.
    */
-  public async scripts(opts?: Omit<BaseRequest, "layout">) {
+  public scripts = async (opts?: Omit<BaseRequest, "layout">) => {
     return (await this.request({
       url: "/scripts",
       fetchOptions: opts?.fetch,
       timeout: opts?.timeout,
     })) as ScriptsMetadataResponse;
-  }
+  };
 
   /**
    * Set global fields for the current session
    */
-  public async globals(
+  public globals = async (
     opts: Omit<BaseRequest, "layout"> & {
       globalFields: Record<string, string | number>;
     }
-  ) {
+  ) => {
     return (await this.request({
       url: "/globals",
       method: "PATCH",
@@ -299,5 +303,5 @@ export class BaseFetchAdapter implements Adapter {
       fetchOptions: opts?.fetch,
       timeout: opts?.timeout,
     })) as Record<string, never>;
-  }
+  };
 }

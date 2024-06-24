@@ -23,8 +23,7 @@ function asNumber(input: string | number): number {
   return typeof input === "string" ? parseInt(input) : input;
 }
 
-export type ClientObjectProps<Adp extends Adapter = Adapter> = {
-  adapter: Adp;
+export type ClientObjectProps = {
   /**
    * The layout to use by default for all requests. Can be overrridden on each request.
    */
@@ -47,11 +46,11 @@ type FetchOptions = {
 };
 
 function DataApi<
-  Adp extends Adapter = Adapter,
+  Opts extends ClientObjectProps = ClientObjectProps,
   Td extends FieldData = FieldData,
   Ud extends GenericPortalData = GenericPortalData,
-  Opts extends ClientObjectProps<Adp> = ClientObjectProps<Adp>
->(options: Opts) {
+  Adp extends Adapter = Adapter
+>(options: Opts & { adapter: Adp }) {
   const zodTypes = options.zodValidators;
   const {
     create,
@@ -388,6 +387,7 @@ function DataApi<
 
   return {
     ...otherMethods,
+    layout: options.layout as Opts["layout"],
     list: _list,
     listAll,
     create: _create,

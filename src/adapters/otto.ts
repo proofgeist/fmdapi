@@ -14,6 +14,11 @@ export function isOttoAPIKey(key: string): key is OttoAPIKey {
   return isOtto3APIKey(key) || isOttoFMSAPIKey(key);
 }
 
+export function isOttoAuth(auth: unknown): auth is OttoAuth {
+  if (typeof auth !== "object" || auth === null) return false;
+  return "apiKey" in auth;
+}
+
 type OttoAuth =
   | {
       apiKey: Otto3APIKey;
@@ -47,7 +52,7 @@ export class OttoAdapter extends BaseFetchAdapter {
     }
   }
 
-  protected async getToken(): Promise<string> {
+  protected getToken = async (): Promise<string> => {
     return this.apiKey;
-  }
+  };
 }

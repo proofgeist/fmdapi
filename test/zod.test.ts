@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DataApi } from "../src";
+import { DataApi, OttoAdapter } from "../src";
 import { z, ZodError } from "zod";
 import { ZGetResponse } from "../src/client-types";
 import { config } from "./setup";
@@ -18,24 +18,24 @@ const ZCustomerPortals = z.object({
 });
 type TCustomerPortals = z.infer<typeof ZCustomerPortals>;
 
-const client = DataApi<any, TCustomer>(
-  {
+const client = DataApi<any, TCustomer>({
+  adapter: new OttoAdapter({
     auth: config.auth,
     db: config.db,
     server: config.server,
-    layout: "customer",
-  },
-  { fieldData: ZCustomer }
-);
-const clientPortalData = DataApi<any, TCustomer, TCustomerPortals>(
-  {
+  }),
+  layout: "customer",
+  zodValidators: { fieldData: ZCustomer },
+});
+const clientPortalData = DataApi<any, TCustomer, TCustomerPortals>({
+  adapter: new OttoAdapter({
     auth: config.auth,
     db: config.db,
     server: config.server,
-    layout: "customer",
-  },
-  { fieldData: ZCustomer, portalData: ZCustomerPortals }
-);
+  }),
+  layout: "customer",
+  zodValidators: { fieldData: ZCustomer, portalData: ZCustomerPortals },
+});
 
 const record_portals_bad = {
   fieldData: {
@@ -75,7 +75,7 @@ describe("zod validation", () => {
   });
   it("client with portal data passed as zod type", async () => {
     await clientPortalData
-      .list({})
+      .list()
       .then(
         (data) =>
           data.data[0].portalData.PortalTable[0]["related::related_field"]

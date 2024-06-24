@@ -1,36 +1,38 @@
-import { DataApi, FileMakerError, OttoFMSAPIKey } from "../src";
+import { DataApi, FetchAdapter, FileMakerError, OttoAdapter } from "../src";
 import memoryStore from "../src/tokenStore/memory";
 import { client } from "./setup";
 
 describe("try to init client", () => {
   test("without server", () => {
-    expect(() =>
-      DataApi({
-        auth: { apiKey: "dk_anything" },
-        db: "anything",
-        server: "",
-        tokenStore: memoryStore(),
-      })
-    ).toThrow();
+    expect(() => {
+      return DataApi({
+        adapter: new OttoAdapter({
+          auth: { apiKey: "dk_anything" },
+          db: "anything",
+          server: "",
+        }),
+      });
+    }).toThrow();
   });
   test("without https", () => {
     expect(() =>
       DataApi({
-        auth: { apiKey: "dk_anything" },
-        db: "anything",
-        server: "http://example.com",
-        tokenStore: memoryStore(),
+        adapter: new OttoAdapter({
+          auth: { apiKey: "dk_anything" },
+          db: "anything",
+          server: "http://example.com",
+        }),
       })
     ).not.toThrow();
   });
   test("without db", () => {
-    expect(() =>
-      DataApi({
-        auth: { apiKey: "dk_anything" },
-        db: "",
-        server: "https://example.com",
-        tokenStore: memoryStore(),
-      })
+    expect(
+      () =>
+        new OttoAdapter({
+          auth: { apiKey: "dk_anything" },
+          db: "",
+          server: "https://example.com",
+        })
     ).toThrow();
   });
   test("without auth", () => {
@@ -48,57 +50,66 @@ describe("try to init client", () => {
   test("without password", () => {
     expect(() =>
       DataApi({
-        auth: { username: "anything", password: "" },
-        db: "anything",
-        server: "https://example.com",
-        tokenStore: memoryStore(),
+        adapter: new FetchAdapter({
+          auth: { username: "anything", password: "" },
+          db: "anything",
+          server: "https://example.com",
+          tokenStore: memoryStore(),
+        }),
       })
     ).toThrow();
   });
   test("without username", () => {
     expect(() =>
       DataApi({
-        auth: { username: "", password: "anything" },
-        db: "anything",
-        server: "https://example.com",
-        tokenStore: memoryStore(),
+        adapter: new FetchAdapter({
+          auth: { username: "", password: "anything" },
+          db: "anything",
+          server: "https://example.com",
+          tokenStore: memoryStore(),
+        }),
       })
     ).toThrow();
   });
   test("without apiKey", () => {
     expect(() =>
       DataApi({
-        // @ts-expect-error invalid api KEY
-        auth: { apiKey: "" },
-        db: "anything",
-        server: "https://example.com",
-        tokenStore: memoryStore(),
+        adapter: new OttoAdapter({
+          // @ts-expect-error invalid api KEY
+          auth: { apiKey: "" },
+          db: "anything",
+          server: "https://example.com",
+        }),
       })
     ).toThrow();
   });
   test("with too much auth (otto3)", () => {
     const client = DataApi({
-      auth: {
-        apiKey: "KEY_anything",
-        username: "anything",
-        password: "anything",
-      },
-      db: "anything",
-      server: "https://example.com",
-      tokenStore: memoryStore(),
+      adapter: new OttoAdapter({
+        auth: {
+          apiKey: "KEY_anything",
+          // @ts-expect-error too much auth
+          username: "anything",
+          password: "anything",
+        },
+        db: "anything",
+        server: "https://example.com",
+      }),
     });
     expect(client.baseUrl.toString()).toContain(":3030");
   });
   test("with too much auth (otto4)", () => {
     const client = DataApi({
-      auth: {
-        apiKey: "dk_anything",
-        username: "anything",
-        password: "anything",
-      },
-      db: "anything",
-      server: "https://example.com",
-      tokenStore: memoryStore(),
+      adapter: new OttoAdapter({
+        auth: {
+          apiKey: "dk_anything",
+          // @ts-expect-error too much auth
+          username: "anything",
+          password: "anything",
+        },
+        db: "anything",
+        server: "https://example.com",
+      }),
     });
     expect(client.baseUrl.toString()).toContain("/otto/");
   });

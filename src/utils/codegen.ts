@@ -8,9 +8,17 @@ import { FileMakerError, DataApi } from "../index.js";
 import { FieldMetaData } from "../client-types.js";
 import { F } from "ts-toolbelt";
 import chalk from "chalk";
-import { ClientObjectProps, isOttoAuth } from "../client-old.js";
 import { memoryStore } from "../tokenStore/memory.js";
 import { TokenStoreDefinitions } from "../tokenStore/types.js";
+import {
+  OttoAPIKey,
+  OttoAdapter,
+  OttoAdapterOptions,
+  isOttoAuth,
+} from "../adapters/otto.js";
+import { FetchAdapter, FetchAdapterOptions } from "../adapters/fetch.js";
+
+type ClientObjectProps = OttoAdapterOptions | FetchAdapterOptions;
 
 type TSchema = {
   name: string;
@@ -826,7 +834,7 @@ export const getSchema = async (args: {
     }, [] as TSchema[]);
 
   const { client, layout, valueLists = "ignore" } = args;
-  const meta = await client.metadata({ layout }).catch((err) => {
+  const meta = await client.layoutMetadata({ layout }).catch((err) => {
     if (err instanceof FileMakerError && err.code === "105") {
       console.log(
         chalk.bold.red("ERROR:"),
@@ -1027,7 +1035,7 @@ export const generateSchemas = async (
       : undefined) ?? process.env[defaultEnvNames.password];
 
   const auth: ClientObjectProps["auth"] = apiKey
-    ? { apiKey: apiKey as any }
+    ? { apiKey: apiKey as OttoAPIKey }
     : { username: username ?? "", password: password ?? "" };
 
   if (!server || !db || (!apiKey && !username)) {
@@ -1059,7 +1067,18 @@ export const generateSchemas = async (
     return;
   }
 
-  const client = DataApi({ auth, server, db, tokenStore: memoryStore() });
+  const client = isOttoAuth(auth)
+    ? DataApi({
+        adapter: new OttoAdapter({ auth, server, db }),
+      })
+    : DataApi({
+        adapter: new FetchAdapter({
+          auth,
+          server,
+          db,
+          tokenStore: memoryStore(),
+        }),
+      });
   await fs.ensureDir(path);
   const clientExportsMap: { [key: string]: ts.ExportDeclaration } = {};
 
@@ -1088,7 +1107,7 @@ export const generateSchemas = async (
               apiKey:
                 envNames?.auth && "apiKey" in envNames.auth
                   ? envNames.auth.apiKey
-                  : (defaultEnvNames.apiKey as any),
+                  : (defaultEnvNames.apiKey as OttoAPIKey),
             }
           : {
               username:

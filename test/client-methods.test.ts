@@ -1,17 +1,19 @@
-import { DataApi } from "../src";
+import { DataApi, OttoAdapter } from "../src";
 import {
-  LayoutsResponse,
   Layout,
   ScriptsMetadataResponse,
   ScriptOrFolder,
+  AllLayoutsMetadataResponse,
 } from "../src/client-types";
 import { config, layoutClient } from "./setup";
 
 describe("find methods", () => {
   const client = DataApi({
-    auth: config.auth,
-    db: config.db,
-    server: config.server,
+    adapter: new OttoAdapter({
+      auth: config.auth,
+      db: config.db,
+      server: config.server,
+    }),
   });
 
   test("successful find", async () => {
@@ -65,9 +67,11 @@ describe("portal methods", () => {
 describe("other methods", () => {
   it("should allow list method without layout param", async () => {
     const client = DataApi({
-      auth: config.auth,
-      db: config.db,
-      server: config.server,
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
       layout: "layout",
     });
 
@@ -76,9 +80,11 @@ describe("other methods", () => {
   it("should require list method to have layout param", async () => {
     // if not passed into the top-level client
     const client = DataApi({
-      auth: config.auth,
-      db: config.db,
-      server: config.server,
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
     });
 
     expect(client.list()).rejects.toThrow();
@@ -86,9 +92,11 @@ describe("other methods", () => {
 
   it("findOne with 2 results should fail", async () => {
     const client = DataApi({
-      auth: config.auth,
-      db: config.db,
-      server: config.server,
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
     });
 
     expect(
@@ -101,9 +109,11 @@ describe("other methods", () => {
 
   it("should rename offset param", async () => {
     const client = DataApi({
-      auth: config.auth,
-      db: config.db,
-      server: config.server,
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
     });
 
     await client.list({
@@ -114,12 +124,14 @@ describe("other methods", () => {
 
   it("should retrieve a list of folders and layouts", async () => {
     const client = DataApi({
-      auth: config.auth,
-      db: config.db,
-      server: config.server,
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
     });
 
-    const resp = (await client.layouts()) as LayoutsResponse;
+    const resp = (await client.layouts()) as AllLayoutsMetadataResponse;
 
     expect(Object.prototype.hasOwnProperty.call(resp, "layouts")).toBe(true);
     expect(resp.layouts.length).toBeGreaterThanOrEqual(2);
@@ -131,9 +143,11 @@ describe("other methods", () => {
   });
   it("should retrieve a list of folders and scripts", async () => {
     const client = DataApi({
-      auth: config.auth,
-      db: config.db,
-      server: config.server,
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
     });
 
     const resp = (await client.scripts()) as ScriptsMetadataResponse;
@@ -146,9 +160,11 @@ describe("other methods", () => {
 
   it("should paginate through all records", async () => {
     const client = DataApi({
-      auth: config.auth,
-      db: config.db,
-      server: config.server,
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
       layout: "layout",
     });
 
@@ -158,9 +174,11 @@ describe("other methods", () => {
 
   it("should paginate using findAll method", async () => {
     const client = DataApi({
-      auth: config.auth,
-      db: config.db,
-      server: config.server,
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
       layout: "layout",
     });
 
@@ -173,9 +191,11 @@ describe("other methods", () => {
 
   it("should return from execute script", async () => {
     const client = DataApi({
-      auth: config.auth,
-      db: config.db,
-      server: config.server,
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
       layout: "layout",
     });
 
@@ -184,6 +204,7 @@ describe("other methods", () => {
     const resp = await client.executeScript({
       script: "script",
       scriptParam: param,
+      layout: client.layout,
     });
 
     expect(resp.scriptResult).toBe("result");
