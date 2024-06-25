@@ -105,7 +105,7 @@ const exportIndexClientStatement = (schemaName: string) =>
     undefined
   );
 
-const importStatement = (wv = false) =>
+const importStatement = (adapter: "Otto" | "Fetch" | "WebViewer") => [
   factory.createImportDeclaration(
     undefined,
     factory.createImportClause(
@@ -117,11 +117,54 @@ const importStatement = (wv = false) =>
           undefined,
           factory.createIdentifier("DataApi")
         ),
+        ...(adapter === "Otto"
+          ? [
+              factory.createImportSpecifier(
+                false,
+                undefined,
+                factory.createIdentifier("OttoAdapter")
+              ),
+              factory.createImportSpecifier(
+                false,
+                undefined,
+                factory.createIdentifier("OttoAPIKey")
+              ),
+            ]
+          : adapter === "Fetch"
+          ? [
+              factory.createImportSpecifier(
+                false,
+                undefined,
+                factory.createIdentifier("FetchAdapter")
+              ),
+            ]
+          : []),
       ])
     ),
-    factory.createStringLiteral(`@proofgeist/fmdapi${wv ? "/dist/wv" : ""}`),
+    factory.createStringLiteral(`@proofgeist/fmdapi`),
     undefined
-  );
+  ),
+  ...(adapter === "WebViewer"
+    ? [
+        factory.createImportDeclaration(
+          undefined,
+          factory.createImportClause(
+            false,
+            undefined,
+            factory.createNamedImports([
+              factory.createImportSpecifier(
+                false,
+                undefined,
+                factory.createIdentifier("WebViewerAdapter")
+              ),
+            ])
+          ),
+          factory.createStringLiteral(`@proofgeist/fm-webviewer-fetch`),
+          undefined
+        ),
+      ]
+    : []),
+];
 const undefinedTypeGuardStatement = (name: string) =>
   factory.createIfStatement(
     factory.createPrefixUnaryExpression(
@@ -153,7 +196,13 @@ const exportClientStatement = (args: {
   tokenStore?: ts.Expression;
   webviewerScriptName?: string;
 }) => [
-  importStatement(args.webviewerScriptName !== undefined),
+  ...importStatement(
+    args.webviewerScriptName
+      ? "WebViewer"
+      : isOttoAuth(args.envNames.auth)
+      ? "Otto"
+      : "Fetch"
+  ),
   ...(args.webviewerScriptName !== undefined
     ? []
     : [
@@ -195,134 +244,181 @@ const exportClientStatement = (args: {
             [
               factory.createObjectLiteralExpression(
                 [
-                  ...(args.webviewerScriptName !== undefined
-                    ? []
-                    : [
-                        factory.createPropertyAssignment(
-                          factory.createIdentifier("auth"),
-                          factory.createObjectLiteralExpression(
-                            isOttoAuth(args.envNames.auth)
+                  factory.createPropertyAssignment(
+                    factory.createIdentifier("adapter"),
+                    factory.createNewExpression(
+                      factory.createIdentifier(
+                        args.webviewerScriptName
+                          ? "WebViewerAdapter"
+                          : isOttoAuth(args.envNames.auth)
+                          ? "OttoAdapter"
+                          : "FetchAdapter"
+                      ),
+                      undefined,
+                      [
+                        factory.createObjectLiteralExpression(
+                          [
+                            ...(args.webviewerScriptName !== undefined
                               ? [
                                   factory.createPropertyAssignment(
-                                    factory.createIdentifier("apiKey"),
-                                    factory.createPropertyAccessExpression(
-                                      factory.createPropertyAccessExpression(
-                                        factory.createIdentifier("process"),
-                                        factory.createIdentifier("env")
-                                      ),
-                                      factory.createIdentifier(
-                                        args.envNames.auth.apiKey
-                                      )
+                                    factory.createIdentifier("scriptName"),
+                                    factory.createStringLiteral(
+                                      args.webviewerScriptName
                                     )
                                   ),
                                 ]
                               : [
+                                  ...(args.tokenStore &&
+                                  !isOttoAuth(args.envNames.auth)
+                                    ? [
+                                        factory.createPropertyAssignment(
+                                          factory.createIdentifier(
+                                            "tokenStore"
+                                          ),
+                                          args.tokenStore
+                                        ),
+                                      ]
+                                    : []),
                                   factory.createPropertyAssignment(
-                                    factory.createIdentifier("username"),
+                                    factory.createIdentifier("auth"),
+                                    factory.createObjectLiteralExpression(
+                                      isOttoAuth(args.envNames.auth)
+                                        ? [
+                                            factory.createPropertyAssignment(
+                                              factory.createIdentifier(
+                                                "apiKey"
+                                              ),
+                                              factory.createAsExpression(
+                                                factory.createPropertyAccessExpression(
+                                                  factory.createPropertyAccessExpression(
+                                                    factory.createIdentifier(
+                                                      "process"
+                                                    ),
+                                                    factory.createIdentifier(
+                                                      "env"
+                                                    )
+                                                  ),
+                                                  factory.createIdentifier(
+                                                    args.envNames.auth.apiKey
+                                                  )
+                                                ),
+                                                factory.createTypeReferenceNode(
+                                                  factory.createIdentifier(
+                                                    "OttoAPIKey"
+                                                  ),
+                                                  undefined
+                                                )
+                                              )
+                                            ),
+                                          ]
+                                        : [
+                                            factory.createPropertyAssignment(
+                                              factory.createIdentifier(
+                                                "username"
+                                              ),
+                                              factory.createPropertyAccessExpression(
+                                                factory.createPropertyAccessExpression(
+                                                  factory.createIdentifier(
+                                                    "process"
+                                                  ),
+                                                  factory.createIdentifier(
+                                                    "env"
+                                                  )
+                                                ),
+                                                factory.createIdentifier(
+                                                  args.envNames.auth.username
+                                                )
+                                              )
+                                            ),
+                                            factory.createPropertyAssignment(
+                                              factory.createIdentifier(
+                                                "password"
+                                              ),
+                                              factory.createPropertyAccessExpression(
+                                                factory.createPropertyAccessExpression(
+                                                  factory.createIdentifier(
+                                                    "process"
+                                                  ),
+                                                  factory.createIdentifier(
+                                                    "env"
+                                                  )
+                                                ),
+                                                factory.createIdentifier(
+                                                  args.envNames.auth.password
+                                                )
+                                              )
+                                            ),
+                                          ],
+                                      false
+                                    )
+                                  ),
+                                  factory.createPropertyAssignment(
+                                    factory.createIdentifier("db"),
+                                    factory.createPropertyAccessExpression(
+                                      factory.createPropertyAccessExpression(
+                                        factory.createIdentifier("process"),
+                                        factory.createIdentifier("env")
+                                      ),
+                                      factory.createIdentifier(args.envNames.db)
+                                    )
+                                  ),
+                                  factory.createPropertyAssignment(
+                                    factory.createIdentifier("server"),
                                     factory.createPropertyAccessExpression(
                                       factory.createPropertyAccessExpression(
                                         factory.createIdentifier("process"),
                                         factory.createIdentifier("env")
                                       ),
                                       factory.createIdentifier(
-                                        args.envNames.auth.username
+                                        args.envNames.server
                                       )
                                     )
                                   ),
-                                  factory.createPropertyAssignment(
-                                    factory.createIdentifier("password"),
-                                    factory.createPropertyAccessExpression(
-                                      factory.createPropertyAccessExpression(
-                                        factory.createIdentifier("process"),
-                                        factory.createIdentifier("env")
-                                      ),
-                                      factory.createIdentifier(
-                                        args.envNames.auth.password
-                                      )
-                                    )
-                                  ),
-                                ],
-                            false
-                          )
+                                ]),
+                          ],
+                          true
                         ),
-                      ]),
-                  ...(args.webviewerScriptName !== undefined
-                    ? []
-                    : [
-                        factory.createPropertyAssignment(
-                          factory.createIdentifier("db"),
-                          factory.createPropertyAccessExpression(
-                            factory.createPropertyAccessExpression(
-                              factory.createIdentifier("process"),
-                              factory.createIdentifier("env")
-                            ),
-                            factory.createIdentifier(args.envNames.db)
-                          )
-                        ),
-                      ]),
-                  ...(args.webviewerScriptName !== undefined
-                    ? []
-                    : [
-                        factory.createPropertyAssignment(
-                          factory.createIdentifier("server"),
-                          factory.createPropertyAccessExpression(
-                            factory.createPropertyAccessExpression(
-                              factory.createIdentifier("process"),
-                              factory.createIdentifier("env")
-                            ),
-                            factory.createIdentifier(args.envNames.server)
-                          )
-                        ),
-                      ]),
+                      ]
+                    )
+                  ),
+
                   factory.createPropertyAssignment(
                     factory.createIdentifier("layout"),
                     factory.createStringLiteral(args.layout)
                   ),
-                  ...(args.tokenStore && args.webviewerScriptName === undefined
+
+                  ...(args.useZod
                     ? [
                         factory.createPropertyAssignment(
-                          factory.createIdentifier("tokenStore"),
-                          args.tokenStore
-                        ),
-                      ]
-                    : []),
-                  ...(args.webviewerScriptName !== undefined
-                    ? [
-                        factory.createPropertyAssignment(
-                          factory.createIdentifier("scriptName"),
-                          factory.createStringLiteral(args.webviewerScriptName)
+                          factory.createIdentifier("zodValidators"),
+                          factory.createObjectLiteralExpression(
+                            [
+                              factory.createPropertyAssignment(
+                                factory.createIdentifier("fieldData"),
+                                factory.createIdentifier(
+                                  `Z${varname(args.schemaName)}`
+                                )
+                              ),
+                              // only add portal type if a portal type was passed
+                              ...(args.portalTypeName
+                                ? [
+                                    factory.createPropertyAssignment(
+                                      factory.createIdentifier("portalData"),
+                                      factory.createIdentifier(
+                                        `Z${varname(args.schemaName)}Portals`
+                                      )
+                                    ),
+                                  ]
+                                : []),
+                            ],
+                            false
+                          )
                         ),
                       ]
                     : []),
                 ],
                 true
               ),
-              ...(args.useZod
-                ? [
-                    factory.createObjectLiteralExpression(
-                      [
-                        factory.createPropertyAssignment(
-                          factory.createIdentifier("fieldData"),
-                          factory.createIdentifier(
-                            `Z${varname(args.schemaName)}`
-                          )
-                        ),
-                        // only add portal type if a portal type was passed
-                        ...(args.portalTypeName
-                          ? [
-                              factory.createPropertyAssignment(
-                                factory.createIdentifier("portalData"),
-                                factory.createIdentifier(
-                                  `Z${varname(args.schemaName)}Portals`
-                                )
-                              ),
-                            ]
-                          : []),
-                      ],
-                      true
-                    ),
-                  ]
-                : []),
             ]
           )
         ),

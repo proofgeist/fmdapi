@@ -13,31 +13,22 @@
     "codegen": "dist/cli.js"
   },
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./dist/wv": {
-      "import": "./dist/wv.js",
-      "types": "./dist/wv.d.ts"
-    },
-    "./utils": {
-      "import": "./dist/utils/index.js",
-      "types": "./dist/utils/index.d.ts"
-    },
-    "./dist/tokenStore/*.js": "./dist/tokenStore/*.js",
-    "./dist/tokenStore/*": "./dist/tokenStore/*",
-    "./dist/*": "./dist/*"
+    ".": "./dist/index.js",
+    "./utils/*": "./dist/utils/*",
+    "./tokenStore/*": "./dist/tokenStore/*",
+    "./dist/*": "./dist/*",
+    "./adapters/*": "./dist/adapters/*"
   },
   "scripts": {
     "prepublishOnly": "tsc",
     "build": "tsc",
     "test": "op inject -i op.env -o .env.local -f && jest",
+    "test:codegen": "op inject -i op.env -o .env.local -f && ts-node-esm ./test/codegen.ts",
     "changeset": "changeset",
     "release": "pnpm build && changeset publish --access public"
   },
   "dependencies": {
-    "@changesets/cli": "^2.26.1",
+    "@changesets/cli": "^2.27.6",
     "chalk": "4.1.2",
     "commander": "^9.5.0",
     "dayjs": "^1.11.11",
@@ -53,17 +44,17 @@
     "@proofgeist/fm-webviewer-fetch": "^2.1.0",
     "@types/fs-extra": "^11.0.3",
     "@types/jest": "^28.1.8",
-    "@types/node": "^20.12.11",
+    "@types/node": "^20.14.8",
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.62.0",
-    "@upstash/redis": "^1.30.1",
+    "@upstash/redis": "^1.31.6",
     "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react": "^7.34.3",
     "jest": "^28.1.3",
     "jest-fetch-mock": "^3.0.3",
     "ts-jest": "^28.0.8",
     "ts-node": "^10.9.1",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.2",
     "zod": "^3.23.8"
   },
   "engines": {

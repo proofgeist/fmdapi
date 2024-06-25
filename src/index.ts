@@ -5,6 +5,6 @@ export { DataApi, FileMakerError };
 export * from "./utils/utils.js";
 
 export { FetchAdapter } from "./adapters/fetch.js";
-export { OttoAdapter, OttoAPIKey } from "./adapters/otto.js";
+export { OttoAdapter, type OttoAPIKey } from "./adapters/otto.js";
 
 export default DataApi;

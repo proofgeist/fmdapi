@@ -12,6 +12,7 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "declaration": true /* Generates corresponding .d.ts files. */
   },
-  "exclude": ["*.config.ts", "test", "dist", "schema"],
+  "exclude": ["*.config.ts", "test", "dist", "schema", "docs"],
+
   "include": ["./src/index.ts", "./src/**/*.ts"]
 }

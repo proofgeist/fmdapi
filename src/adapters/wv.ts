@@ -35,11 +35,11 @@ export class WebViewerAdapter implements Adapter {
     this.scriptName = options.scriptName;
   }
 
-  protected async request(params: {
+  protected request = async (params: {
     layout: string;
     body: object;
     action?: "read" | "metaData" | "create" | "update" | "delete" | "duplicate";
-  }): Promise<unknown> {
+  }): Promise<unknown> => {
     const { action = "read", layout, body } = params;
 
     const resp = await fmFetch<RawFMResponse>(this.scriptName, {
@@ -59,36 +59,36 @@ export class WebViewerAdapter implements Adapter {
     }
 
     return resp.response;
-  }
+  };
 
-  public async list(opts: ListOptions): Promise<GetResponse> {
+  public list = async (opts: ListOptions): Promise<GetResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       body: data,
       layout,
     });
     return resp as GetResponse;
-  }
+  };
 
-  public async get(opts: GetOptions): Promise<GetResponse> {
+  public get = async (opts: GetOptions): Promise<GetResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       body: data,
       layout,
     });
     return resp as GetResponse;
-  }
+  };
 
-  public async find(opts: FindOptions): Promise<GetResponse> {
+  public find = async (opts: FindOptions): Promise<GetResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       body: data,
       layout,
     });
     return resp as GetResponse;
-  }
+  };
 
-  public async create(opts: CreateOptions): Promise<CreateResponse> {
+  public create = async (opts: CreateOptions): Promise<CreateResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       action: "create",
@@ -96,9 +96,9 @@ export class WebViewerAdapter implements Adapter {
       layout,
     });
     return resp as CreateResponse;
-  }
+  };
 
-  public async update(opts: UpdateOptions): Promise<UpdateResponse> {
+  public update = async (opts: UpdateOptions): Promise<UpdateResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       action: "update",
@@ -106,9 +106,9 @@ export class WebViewerAdapter implements Adapter {
       body: data,
     });
     return resp as UpdateResponse;
-  }
+  };
 
-  public async delete(opts: DeleteOptions): Promise<DeleteResponse> {
+  public delete = async (opts: DeleteOptions): Promise<DeleteResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
       action: "delete",
@@ -116,15 +116,15 @@ export class WebViewerAdapter implements Adapter {
       layout,
     });
     return resp as DeleteResponse;
-  }
+  };
 
-  public async layoutMetadata(
+  public layoutMetadata = async (
     opts: LayoutMetadataOptions
-  ): Promise<LayoutMetadataResponse> {
+  ): Promise<LayoutMetadataResponse> => {
     return (await this.request({
       action: "metaData",
       layout: opts.layout,
       body: {},
     })) as LayoutMetadataResponse;
-  }
+  };
 }
