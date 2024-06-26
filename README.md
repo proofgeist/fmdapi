@@ -110,34 +110,7 @@ const result = await client.list<TContact>({ layout: "Contacts" });
 
 💡 TIP: For a more ergonomic TypeScript experience, use the [included codegen tool](#automatic-type-generation) to generate these types based on your FileMaker layout metadata.
 
-## WebViewer Client (v3.2+)
-
-A (nearly) identical client designed to be used with the [fm-webviewer-fetch](https://github.com/proofgeist/fm-webviewer-fetch) library when integrating within a FileMaker WebViewer instead of the browser. Using this client requires a bit extra configuration within your FileMaker file, but provides great developer experience, especially when using TypeScript and the codegen features.
-
-(v3.5+) Support for write operations in FileMaker 2024
-
-Install the [fm-webviewer-fetch](https://github.com/proofgeist/fm-webviewer-fetch) library to your project:
-
-```sh
-npm install @proofgeist/fm-webviewer-fetch
-# or
-yarn add @proofgeist/fm-webviewer-fetch
-```
-
-Configure a script in your FileMaker file to execute the Data API
-
-```typescript
-import { DataApiWV } from "@proofgeist/fmdapi";
-
-const client = DataApiWV({
-  scriptName: "ExecuteDataApi", // you must configure this script!
-});
-```
-
-| Option       | Type     | Description                                                                                                                                          |
-| ------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scriptName` | `string` | FileMaker Script name that passes the parameter to the Execute Data API Script Step and returns the results according to the fm-webviewer-fetch spec |
-| `layout`     | `string` | _(optional)_ If provided, will be the default layout used for all methods (can be overridden on a per-call basis)                                    |
+For full docs, see the [wiki](https://github.com/proofgeist/fmdapi/wiki)
 
 ## Edge Runtime Support (v3.0+)
 
