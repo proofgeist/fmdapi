@@ -1,12 +1,6 @@
 # @proofgeist/fmdapi
 
-## 4.0.0-beta.1
-
-### Patch Changes
-
-- Support webviewer import in codegen
-
-## 4.0.0-beta.0
+## 4.0.0
 
 ### Major Changes
 
@@ -15,6 +9,7 @@
 ### Patch Changes
 
 - b6eb3dc: Add `layout` property to client return. Use for reference or as a helper to custom method which do not automatically recieve the layout property
+- 76f46c9: Support webviewer import in codegen
 - b6eb3dc: Remove `baseUrl` from client return
 
 ## 3.5.0
