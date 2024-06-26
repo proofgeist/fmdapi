@@ -1,0 +1,12 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@proofgeist/fmdapi": "3.5.0"
+  },
+  "changesets": [
+    "kind-seahorses-marry",
+    "nice-chicken-applaud",
+    "yellow-stingrays-drum"
+  ]
+}

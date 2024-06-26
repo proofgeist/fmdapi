@@ -1,5 +1,16 @@
 # @proofgeist/fmdapi
 
+## 4.0.0-beta.0
+
+### Major Changes
+
+- b6eb3dc: Extendable Adapters
+
+### Patch Changes
+
+- b6eb3dc: Add `layout` property to client return. Use for reference or as a helper to custom method which do not automatically recieve the layout property
+- b6eb3dc: Remove `baseUrl` from client return
+
 ## 3.5.0
 
 ### Minor Changes
