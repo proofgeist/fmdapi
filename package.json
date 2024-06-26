@@ -1,6 +1,6 @@
 {
   "name": "@proofgeist/fmdapi",
-  "version": "4.0.0-beta.0",
+  "version": "4.0.0-beta.1",
   "description": "FileMaker Data API client",
   "main": "dist/index.js",
   "repository": "git@github.com:proofgeist/fm-dapi.git",

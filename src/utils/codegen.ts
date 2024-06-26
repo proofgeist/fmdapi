@@ -159,7 +159,7 @@ const importStatement = (adapter: "Otto" | "Fetch" | "WebViewer") => [
               ),
             ])
           ),
-          factory.createStringLiteral(`@proofgeist/fm-webviewer-fetch`),
+          factory.createStringLiteral(`@proofgeist/fm-webviewer-fetch/adapter`),
           undefined
         ),
       ]

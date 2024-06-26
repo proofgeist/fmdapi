@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.0.0-beta.1
+
+### Patch Changes
+
+- Support webviewer import in codegen
+
 ## 4.0.0-beta.0
 
 ### Major Changes
