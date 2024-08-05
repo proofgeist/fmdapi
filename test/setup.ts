@@ -34,3 +34,11 @@ export const layoutClient = DataApi({
   }),
   layout: "layout",
 });
+export const weirdPortalClient = DataApi({
+  adapter: new OttoAdapter({
+    auth: { apiKey: process.env.OTTO_API_KEY as OttoFMSAPIKey },
+    db: process.env.FM_DATABASE,
+    server: process.env.FM_SERVER,
+  }),
+  layout: "Weird Portals",
+});

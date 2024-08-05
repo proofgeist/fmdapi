@@ -9,6 +9,7 @@ export const config: GenerateSchemaOptions = {
   schemas: [
     // add your layouts and name schemas here
     { layout: "layout", schemaName: "testLayout" },
+    { layout: "Weird Portals", schemaName: "weirdPortals" },
 
     // repeat as needed for each schema...
     // { layout: "my_other_layout", schemaName: "MyOtherSchema" },

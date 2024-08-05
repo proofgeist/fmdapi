@@ -5,7 +5,7 @@ import {
   ScriptOrFolder,
   AllLayoutsMetadataResponse,
 } from "../src/client-types";
-import { config, layoutClient } from "./setup";
+import { config, layoutClient, weirdPortalClient } from "./setup";
 
 describe("find methods", () => {
   const client = DataApi({
@@ -41,12 +41,17 @@ describe("find methods", () => {
 });
 
 describe("portal methods", () => {
-  it("should return portal data", async () => {
+  it("should return portal data with limit and offset", async () => {
+    const result = await layoutClient.list({
+      limit: 1,
+    });
+    expect(result.data[0].portalData.test.length).toBe(50); // default portal limit is 50
+
     const { data } = await layoutClient.list({
       limit: 1,
       portalRanges: { test: { limit: 1, offset: 2 } },
     });
-    expect(data.length).toBeGreaterThanOrEqual(1);
+    expect(data.length).toBe(1);
 
     const portalData = data[0].portalData;
     const testPortal = portalData.test;
@@ -61,6 +66,23 @@ describe("portal methods", () => {
         test: [{ "related::related_field": "updated", recordId: "1" }],
       },
     });
+  });
+  it.only("should handle portal methods with strange names", async () => {
+    const { data } = await weirdPortalClient.list({
+      limit: 1,
+      portalRanges: {
+        "long_and_strange.portalName#forTesting": { limit: 100 },
+      },
+    });
+
+    expect(
+      "long_and_strange.portalName#forTesting" in data[0].portalData
+    ).toBeTruthy();
+
+    const portalData =
+      data[0].portalData["long_and_strange.portalName#forTesting"];
+
+    expect(portalData.length).toBeGreaterThan(50);
   });
 });
 
