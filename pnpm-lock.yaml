@@ -53,7 +53,7 @@ importers:
         version: 5.62.0(eslint@8.57.0)(typescript@5.5.4)
       '@upstash/redis':
         specifier: ^1.31.6
-        version: 1.33.0
+        version: 1.34.0
       eslint:
         specifier: ^8.57.0
         version: 8.57.0
@@ -627,8 +627,8 @@ packages:
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
 
-  '@upstash/redis@1.33.0':
-    resolution: {integrity: sha512-5WOilc7AE0ITAdE3NCyMwgOq1n3RHcqW0OfmbotiAyfA+QAEe1R7kXin8L/Yladgdc5lkA0GcYyewqKfAw53jQ==}
+  '@upstash/redis@1.34.0':
+    resolution: {integrity: sha512-TrXNoJLkysIl8SBc4u9bNnyoFYoILpCcFJcLyWCccb/QSUmaVKdvY0m5diZqc3btExsapcMbaw/s/wh9Sf1pJw==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -3238,7 +3238,7 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@upstash/redis@1.33.0':
+  '@upstash/redis@1.34.0':
     dependencies:
       crypto-js: 4.2.0
 
