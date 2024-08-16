@@ -1,5 +1,5 @@
 /**
- * @type {import("@proofgeist/fmdapi/dist/utils/codegen").GenerateSchemaOptions}
+ * @type {import("@proofgeist/fmdapi/dist/utils/codegen.d.ts").GenerateSchemaOptions}
  */
 const config = {
   schemas: [
