@@ -1,5 +1,12 @@
 # @proofgeist/fmdapi
 
+## 4.0.1
+
+### Patch Changes
+
+- eaba131: Fix type import for config file in codegen
+- acd66f2: codegen: allow schema names that end with numbers
+
 ## 4.0.0
 
 ### Major Changes
