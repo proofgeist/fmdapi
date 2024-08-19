@@ -26,8 +26,7 @@ type TSchema = {
   values?: string[];
 };
 
-const varname = (name: string) =>
-  name.replace(/[^a-zA-Z_]+|[^a-zA-Z_0-9]+/g, "");
+const varname = (name: string) => name.replace(/[^a-zA-Z0-9_]/g, "");
 
 const commentHeader = `
 /**
