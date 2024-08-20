@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.0.2
+
+### Patch Changes
+
+- fix omit type for queries
+
 ## 4.0.1
 
 ### Patch Changes

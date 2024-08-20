@@ -38,6 +38,11 @@ describe("find methods", () => {
 
     expect(Array.isArray(resp.data)).toBe(false);
   });
+  it("find with omit", async () => {
+    await layoutClient.find<{ anything: string }>({
+      query: { anything: "anything", omit: "true" },
+    });
+  });
 });
 
 describe("portal methods", () => {
@@ -67,7 +72,7 @@ describe("portal methods", () => {
       },
     });
   });
-  it.only("should handle portal methods with strange names", async () => {
+  it("should handle portal methods with strange names", async () => {
     const { data } = await weirdPortalClient.list({
       limit: 1,
       portalRanges: {

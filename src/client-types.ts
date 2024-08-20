@@ -205,7 +205,7 @@ export type Query<
   [key in keyof T]: T[key] | string;
 }> &
   Partial<{ [key in SecondLevelKeys<U>]?: string }> & {
-    omit?: boolean;
+    omit?: "true";
   };
 
 export type LayoutMetadataResponse = {
