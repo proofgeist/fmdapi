@@ -53,7 +53,7 @@ export class OttoAdapter extends BaseFetchAdapter {
     }
   }
 
-  protected getToken = async (): Promise<string> => {
+  protected override getToken = async (): Promise<string> => {
     return this.apiKey;
   };
 }

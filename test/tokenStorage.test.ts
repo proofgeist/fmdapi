@@ -1,5 +1,6 @@
 import { DataApi, FetchAdapter } from '../src';
 import { upstashTokenStore } from '../src/tokenStore';
+import { describe, it } from 'vitest';
 
 describe('TokenStorage', () => {
   it('should allow passing upstash to client init', () => {

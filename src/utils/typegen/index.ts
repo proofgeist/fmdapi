@@ -1,11 +1,15 @@
 import { Project, ScriptKind } from 'ts-morph';
 import {
-  BuildSchemaArgs,
-  ClientObjectProps,
-  GenerateSchemaOptions,
+  type BuildSchemaArgs,
+  type ClientObjectProps,
+  type GenerateSchemaOptions,
 } from './types.js';
 import chalk from 'chalk';
-import { isOttoAuth, OttoAdapter, OttoAPIKey } from '../../adapters/otto.js';
+import {
+  isOttoAuth,
+  OttoAdapter,
+  type OttoAPIKey,
+} from '../../adapters/otto.js';
 import DataApi from '../../client.js';
 import { FetchAdapter } from '../../adapters/fetch.js';
 import { memoryStore } from '../../tokenStore/index.js';

@@ -5,18 +5,18 @@ const createPrinter = ts.createPrinter;
 const createSourceFile = ts.createSourceFile;
 const factory = ts.factory;
 import { FileMakerError, DataApi } from '../index.js';
-import { FieldMetaData } from '../client-types.js';
-import { F } from 'ts-toolbelt';
+import type { FieldMetaData } from '../client-types.js';
+import type { F } from 'ts-toolbelt';
 import chalk from 'chalk';
 import { memoryStore } from '../tokenStore/memory.js';
-import { TokenStoreDefinitions } from '../tokenStore/types.js';
+import { type TokenStoreDefinitions } from '../tokenStore/types.js';
 import {
-  OttoAPIKey,
+  type OttoAPIKey,
   OttoAdapter,
-  OttoAdapterOptions,
+  type OttoAdapterOptions,
   isOttoAuth,
 } from '../adapters/otto.js';
-import { FetchAdapter, FetchAdapterOptions } from '../adapters/fetch.js';
+import { FetchAdapter,type FetchAdapterOptions } from '../adapters/fetch.js';
 
 type ClientObjectProps = OttoAdapterOptions | FetchAdapterOptions;
 
@@ -948,7 +948,7 @@ export const getSchema = async (args: {
   if (!meta) return;
   const schema = schemaReducer(meta.fieldMetaData);
   const portalSchema = Object.keys(meta.portalMetaData).map((schemaName) => {
-    const schema = schemaReducer(meta.portalMetaData[schemaName]);
+    const schema = schemaReducer(meta.portalMetaData[schemaName] ?? []);
     return { schemaName, schema };
   });
   const valueListValues =
@@ -1012,10 +1012,10 @@ function getTokenStoreFromConfig(
 
   sourceFile.forEachChild((child) => {
     if (!ts.isVariableStatement(child)) return;
-    const testID = child.declarationList.declarations[0].name;
-    if (!ts.isIdentifier(testID) || testID.escapedText !== 'config') return;
+    const testID = child.declarationList.declarations[0]?.name;
+    if (!testID || !ts.isIdentifier(testID) || testID.escapedText !== 'config') return;
 
-    const init = child.declarationList.declarations[0].initializer;
+    const init = child.declarationList.declarations[0]?.initializer;
 
     if (init && ts.isObjectLiteralExpression(init)) {
       const tokenStore = init.properties.find((o) => {
@@ -1042,7 +1042,7 @@ function getTokenStoreFromConfig(
         }
       }
     }
-    return child.declarationList.declarations[0].initializer;
+    return child.declarationList.declarations[0]?.initializer;
   });
 
   return result;
@@ -1242,7 +1242,8 @@ export const generateSchemas = async (
     const exportNames = Object.keys(clientExportsMap).sort();
     const clientExports: ts.ExportDeclaration[] = [];
     for (let i = 0; i < exportNames.length; i++) {
-      clientExports.push(clientExportsMap[exportNames[i]]);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      clientExports.push(clientExportsMap[exportNames[i] !]!);
     }
 
     const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });

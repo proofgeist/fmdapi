@@ -1,5 +1,5 @@
 import { type SourceFile } from 'ts-morph';
-import { BuildSchemaArgs, TSchema } from './types.js';
+import type { BuildSchemaArgs, TSchema } from './types.js';
 import { varname } from './constants.js';
 
 export function buildSchema(

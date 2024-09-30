@@ -1,6 +1,6 @@
-import { FetchAdapterOptions } from '../../adapters/fetch.js';
-import { OttoAdapterOptions } from '../../adapters/otto.js';
-import { TokenStoreDefinitions } from '../../tokenStore/types.js';
+import { type FetchAdapterOptions } from '../../adapters/fetch.js';
+import { type OttoAdapterOptions } from '../../adapters/otto.js';
+import { type TokenStoreDefinitions } from '../../tokenStore/types.js';
 
 export type ClientObjectProps = OttoAdapterOptions | FetchAdapterOptions;
 

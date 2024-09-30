@@ -6,6 +6,7 @@ import {
   AllLayoutsMetadataResponse,
 } from '../src/client-types';
 import { config, layoutClient, weirdPortalClient } from './setup';
+import { describe, test, expect, it } from 'vitest';
 
 describe('find methods', () => {
   const client = DataApi({

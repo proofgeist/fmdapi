@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { Adapter } from './adapters/core.js';
-import {
+import type { Adapter } from './adapters/core.js';
+import type {
   CreateParams,
   CreateResponse,
   DeleteParams,
@@ -15,8 +15,8 @@ import {
   Query,
   UpdateParams,
   UpdateResponse,
-  ZGetResponse,
 } from './client-types.js';
+import { ZGetResponse } from './client-types.js';
 import { FileMakerError } from './index.js';
 
 function asNumber(input: string | number): number {
@@ -325,6 +325,7 @@ function DataApi<
     if (res.data.length !== 1)
       throw new Error(`${res.data.length} records found; expecting exactly 1`);
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
+    if (!res.data[0]) throw new Error('No data found');
     return { ...res, data: res.data[0] };
   }
 
@@ -338,6 +339,7 @@ function DataApi<
   ): Promise<GetResponseOne<T, U>> {
     const res = await _find<T, U>(args);
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
+    if (!res.data[0]) throw new Error('No data found');
     return { ...res, data: res.data[0] };
   }
 

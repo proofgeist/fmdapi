@@ -1,4 +1,4 @@
-import {
+import type {
   AllLayoutsMetadataResponse,
   CreateResponse,
   DeleteResponse,
@@ -11,7 +11,7 @@ import {
   UpdateResponse,
 } from '../client-types.js';
 import { FileMakerError } from '../index.js';
-import {
+import type {
   Adapter,
   BaseRequest,
   CreateOptions,
@@ -22,7 +22,7 @@ import {
   ListOptions,
   UpdateOptions,
 } from './core.js';
-import {
+import type {
   BaseFetchAdapterOptions,
   GetTokenArguments,
 } from './fetch-base-types.js';

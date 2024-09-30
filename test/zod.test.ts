@@ -3,6 +3,7 @@ import { DataApi, OttoAdapter } from '../src';
 import { z, ZodError } from 'zod';
 import { ZGetResponse } from '../src/client-types';
 import { config } from './setup';
+import { describe, expect, it } from 'vitest';
 
 type TCustomer = {
   name: string;

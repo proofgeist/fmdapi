@@ -5,7 +5,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { config } from 'dotenv';
 import { pathToFileURL, fileURLToPath } from 'url';
-import { GenerateSchemaOptions } from './utils/typegen/types.js';
+import type { GenerateSchemaOptions } from './utils/typegen/types.js';
 import { generateTypedClients } from './utils/index.js';
 
 const defaultConfigPaths = ['./fmschema.config.mjs', './fmschema.config.js'];
@@ -104,7 +104,7 @@ program
 
     const configPath = getConfigPath(options.config);
     const configLocation = path.toNamespacedPath(
-      path.resolve(configPath ?? defaultConfigPaths[0]),
+      path.resolve(configPath ?? defaultConfigPaths[0] ?? ''),
     );
     if (options.init) return init({ configLocation });
 

@@ -1,5 +1,5 @@
 import { CodeBlockWriter, SourceFile, VariableDeclarationKind } from 'ts-morph';
-import { BuildSchemaArgs } from './types.js';
+import { type BuildSchemaArgs } from './types.js';
 import { isOttoAuth } from '../../adapters/otto.js';
 
 export function buildLayoutClient(

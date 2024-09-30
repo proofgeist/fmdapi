@@ -1,8 +1,8 @@
-import { type DataApi } from '../../client.js';
-import { TSchema, ValueListsOptions } from './types.js';
-import { F } from 'ts-toolbelt';
+import type { DataApi } from '../../client.js';
+import type { TSchema, ValueListsOptions } from './types.js';
+import type { F } from 'ts-toolbelt';
 import chalk from 'chalk';
-import { FieldMetaData, FileMakerError } from '../../client-types.js';
+import { type FieldMetaData, FileMakerError } from '../../client-types.js';
 
 /**
  * Calls the FileMaker Data API to get the layout metadata and returns a schema
@@ -57,7 +57,7 @@ export const getLayoutMetadata = async (args: {
   if (!meta) return;
   const schema = schemaReducer(meta.fieldMetaData);
   const portalSchema = Object.keys(meta.portalMetaData).map((schemaName) => {
-    const schema = schemaReducer(meta.portalMetaData[schemaName]);
+    const schema = schemaReducer(meta.portalMetaData[schemaName] ?? []);
     return { schemaName, schema };
   });
   const valueListValues =
@@ -66,13 +66,10 @@ export const getLayoutMetadata = async (args: {
       values: vl.values.map((o) => o.value),
     })) ?? [];
   // remove duplicates from valueListValues
-  const valueListValuesUnique = valueListValues.reduce(
-    (acc, vl) => {
-      if (acc.find((o) => o.name === vl.name)) return acc;
-      return [...acc, vl];
-    },
-    [] as typeof valueListValues,
-  );
+  const valueListValuesUnique = valueListValues.reduce((acc, vl) => {
+    if (acc.find((o) => o.name === vl.name)) return acc;
+    return [...acc, vl];
+  }, [] as typeof valueListValues);
 
   return { schema, portalSchema, valueLists: valueListValuesUnique };
 };

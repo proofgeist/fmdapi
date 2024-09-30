@@ -1,6 +1,6 @@
 import { FileMakerError } from '../index.js';
 import memoryStore from '../tokenStore/memory.js';
-import { TokenStoreDefinitions } from '../tokenStore/types.js';
+import type { TokenStoreDefinitions } from '../tokenStore/types.js';
 import type {
   BaseFetchAdapterOptions,
   GetTokenArguments,
@@ -33,7 +33,9 @@ export class FetchAdapter extends BaseFetchAdapter {
     if (this.password === '') throw new Error('Password is required');
   }
 
-  protected getToken = async (args?: GetTokenArguments): Promise<string> => {
+  protected override getToken = async (
+    args?: GetTokenArguments,
+  ): Promise<string> => {
     const { refresh = false } = args ?? {};
     let token: string | null = null;
     if (!refresh) {

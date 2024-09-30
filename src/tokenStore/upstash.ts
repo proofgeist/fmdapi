@@ -1,5 +1,5 @@
-import { TokenStoreDefinitions } from './types.js';
-import { Redis, RedisConfigNodejs } from '@upstash/redis';
+import type { TokenStoreDefinitions } from './types.js';
+import { Redis, type RedisConfigNodejs } from '@upstash/redis';
 
 export function upstashTokenStore(
   config: RedisConfigNodejs,
