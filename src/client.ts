@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import type { Adapter } from './adapters/core.js';
+import { z } from "zod";
+import type { Adapter } from "./adapters/core.js";
 import type {
   CreateParams,
   CreateResponse,
@@ -15,12 +15,12 @@ import type {
   Query,
   UpdateParams,
   UpdateResponse,
-} from './client-types.js';
-import { ZGetResponse } from './client-types.js';
-import { FileMakerError } from './index.js';
+} from "./client-types.js";
+import { ZGetResponse } from "./client-types.js";
+import { FileMakerError } from "./index.js";
 
 function asNumber(input: string | number): number {
-  return typeof input === 'string' ? parseInt(input) : input;
+  return typeof input === "string" ? parseInt(input) : input;
 }
 
 export type ClientObjectProps = {
@@ -96,29 +96,29 @@ function DataApi<
    */
   async function _list(): Promise<GetResponse<Td, Ud>>;
   async function _list<T extends FieldData = Td, U extends Ud = Ud>(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions,
   ): Promise<GetResponse<T, U>>;
   async function _list<T extends FieldData = Td, U extends Ud = Ud>(
-    args?: Opts['layout'] extends string
+    args?: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions,
   ): Promise<GetResponse<T, U>> {
     const { layout = options.layout, fetch, timeout, ...params } = args ?? {};
-    if (layout === undefined) throw new Error('Layout is required');
+    if (layout === undefined) throw new Error("Layout is required");
 
     // rename and refactor limit, offset, and sort keys for this request
-    if ('limit' in params && params.limit !== undefined)
-      delete Object.assign(params, { _limit: params.limit })['limit'];
-    if ('offset' in params && params.offset !== undefined) {
+    if ("limit" in params && params.limit !== undefined)
+      delete Object.assign(params, { _limit: params.limit })["limit"];
+    if ("offset" in params && params.offset !== undefined) {
       if (params.offset <= 1) delete params.offset;
-      else delete Object.assign(params, { _offset: params.offset })['offset'];
+      else delete Object.assign(params, { _offset: params.offset })["offset"];
     }
-    if ('sort' in params && params.sort !== undefined)
+    if ("sort" in params && params.sort !== undefined)
       delete Object.assign(params, {
         _sort: Array.isArray(params.sort) ? params.sort : [params.sort],
-      })['sort'];
+      })["sort"];
 
     const result = await list({
       layout,
@@ -140,16 +140,16 @@ function DataApi<
     U extends Ud = Ud,
   >(): Promise<FMRecord<T, U>[]>;
   async function listAll<T extends FieldData = Td, U extends Ud = Ud>(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions,
   ): Promise<FMRecord<T, U>[]>;
   async function listAll<T extends FieldData = Td, U extends Ud = Ud>(
-    args?: Opts['layout'] extends string
+    args?: Opts["layout"] extends string
       ? ListParams<T, U> & Partial<WithLayout> & FetchOptions
       : ListParams<T, U> & WithLayout & FetchOptions,
   ): Promise<FMRecord<T, U>[]> {
-    let runningData: GetResponse<T, U>['data'] = [];
+    let runningData: GetResponse<T, U>["data"] = [];
     const limit = args?.limit ?? 100;
     let offset = args?.offset ?? 1;
 
@@ -171,12 +171,12 @@ function DataApi<
    * Create a new record in a given layout
    */
   async function _create<T extends Td = Td, U extends Ud = Ud>(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? CreateArgs<T, U> & Partial<WithLayout> & FetchOptions
       : CreateArgs<T, U> & WithLayout & FetchOptions,
   ): Promise<CreateResponse> {
     const { layout = options.layout, fetch, timeout, ...params } = args ?? {};
-    if (layout === undefined) throw new Error('Layout is required');
+    if (layout === undefined) throw new Error("Layout is required");
     return await create({ layout, data: params, fetch, timeout });
   }
 
@@ -184,7 +184,7 @@ function DataApi<
    * Get a single record by Internal RecordId
    */
   async function _get<T extends Td = Td, U extends Ud = Ud>(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? GetArgs<U> & Partial<WithLayout> & FetchOptions
       : GetArgs<U> & WithLayout & FetchOptions,
   ): Promise<GetResponse<T, U>> {
@@ -196,7 +196,7 @@ function DataApi<
       timeout,
       ...params
     } = args;
-    if (layout === undefined) throw new Error('Layout is required');
+    if (layout === undefined) throw new Error("Layout is required");
 
     const data = await get({
       layout,
@@ -213,7 +213,7 @@ function DataApi<
    * Update a single record by internal RecordId
    */
   async function _update<T extends Td = Td, U extends Ud = Ud>(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? UpdateArgs<T, U> & Partial<WithLayout> & FetchOptions
       : UpdateArgs<T, U> & WithLayout & FetchOptions,
   ): Promise<UpdateResponse> {
@@ -225,7 +225,7 @@ function DataApi<
       timeout,
       ...params
     } = args;
-    if (layout === undefined) throw new Error('Layout is required');
+    if (layout === undefined) throw new Error("Layout is required");
     return await update({
       layout,
       data: { ...params, recordId },
@@ -238,7 +238,7 @@ function DataApi<
    * Delete a single record by internal RecordId
    */
   async function deleteRecord(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? DeleteArgs & Partial<WithLayout> & FetchOptions
       : DeleteArgs & WithLayout & FetchOptions,
   ): Promise<DeleteResponse> {
@@ -250,7 +250,7 @@ function DataApi<
       timeout,
       ...params
     } = args;
-    if (layout === undefined) throw new Error('Layout is required');
+    if (layout === undefined) throw new Error("Layout is required");
 
     return _adapterDelete({
       layout,
@@ -264,7 +264,7 @@ function DataApi<
    * Find records in a given layout
    */
   async function _find<T extends Td = Td, U extends Ud = Ud>(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout> & FetchOptions
       : FindArgs<T, U> & IgnoreEmptyResult & WithLayout & FetchOptions,
   ): Promise<GetResponse<T, U>> {
@@ -277,21 +277,21 @@ function DataApi<
       ...params
     } = args;
     const query = !Array.isArray(queryInput) ? [queryInput] : queryInput;
-    if (layout === undefined) throw new Error('Layout is required');
+    if (layout === undefined) throw new Error("Layout is required");
 
     // rename and refactor limit, offset, and sort keys for this request
-    if ('offset' in params && params.offset !== undefined) {
+    if ("offset" in params && params.offset !== undefined) {
       if (params.offset <= 1) delete params.offset;
     }
-    if ('dateformats' in params && params.dateformats !== undefined) {
+    if ("dateformats" in params && params.dateformats !== undefined) {
       // reassign dateformats to match FileMaker's expected values
       // @ts-expect-error FM wants a string, so this is fine
       params.dateformats = (
-        params.dateformats === 'US'
+        params.dateformats === "US"
           ? 0
-          : params.dateformats === 'file_locale'
+          : params.dateformats === "file_locale"
             ? 1
-            : params.dateformats === 'ISO8601'
+            : params.dateformats === "ISO8601"
               ? 2
               : 0
       ).toString();
@@ -302,7 +302,7 @@ function DataApi<
       fetch,
       timeout,
     }).catch((e: unknown) => {
-      if (ignoreEmptyResult && e instanceof FileMakerError && e.code === '401')
+      if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
         return { data: [] };
       throw e;
     })) as GetResponse<T, U>;
@@ -317,7 +317,7 @@ function DataApi<
    * Helper method for `find`. Will only return the first result or throw error if there is more than 1 result.
    */
   async function findOne<T extends Td = Td, U extends Ud = Ud>(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? FindArgs<T, U> & Partial<WithLayout> & FetchOptions
       : FindArgs<T, U> & WithLayout & FetchOptions,
   ): Promise<GetResponseOne<T, U>> {
@@ -325,7 +325,7 @@ function DataApi<
     if (res.data.length !== 1)
       throw new Error(`${res.data.length} records found; expecting exactly 1`);
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
-    if (!res.data[0]) throw new Error('No data found');
+    if (!res.data[0]) throw new Error("No data found");
     return { ...res, data: res.data[0] };
   }
 
@@ -333,13 +333,13 @@ function DataApi<
    * Helper method for `find`. Will only return the first result instead of an array.
    */
   async function findFirst<T extends Td = Td, U extends Ud = Ud>(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout> & FetchOptions
       : FindArgs<T, U> & IgnoreEmptyResult & WithLayout & FetchOptions,
   ): Promise<GetResponseOne<T, U>> {
     const res = await _find<T, U>(args);
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
-    if (!res.data[0]) throw new Error('No data found');
+    if (!res.data[0]) throw new Error("No data found");
     return { ...res, data: res.data[0] };
   }
 
@@ -348,11 +348,11 @@ function DataApi<
    * ⚠️ WARNING: Use with caution as this can be a slow operation with large datasets
    */
   async function findAll<T extends Td = Td, U extends Ud = Ud>(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? FindArgs<T, U> & Partial<WithLayout> & FetchOptions
       : FindArgs<T, U> & WithLayout & FetchOptions,
   ): Promise<FMRecord<T, U>[]> {
-    let runningData: GetResponse<T, U>['data'] = [];
+    let runningData: GetResponse<T, U>["data"] = [];
     const limit = args.limit ?? 100;
     let offset = args.offset ?? 1;
     // eslint-disable-next-line no-constant-condition
@@ -374,12 +374,12 @@ function DataApi<
   }
 
   async function _layoutMetadata(
-    args: Opts['layout'] extends string
+    args: Opts["layout"] extends string
       ? { timeout?: number } & Partial<WithLayout> & FetchOptions
       : { timeout?: number } & WithLayout & FetchOptions,
   ) {
     const { layout, ...params } = args;
-    if (layout === undefined) throw new Error('Layout is required');
+    if (layout === undefined) throw new Error("Layout is required");
     return await layoutMetadata({
       layout,
       fetch: params.fetch,
@@ -389,7 +389,7 @@ function DataApi<
 
   return {
     ...otherMethods,
-    layout: options.layout as Opts['layout'],
+    layout: options.layout as Opts["layout"],
     list: _list,
     listAll,
     create: _create,

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DataApi, OttoAdapter } from '../src';
-import { z, ZodError } from 'zod';
-import { ZGetResponse } from '../src/client-types';
-import { config } from './setup';
-import { describe, expect, it } from 'vitest';
+import { DataApi, OttoAdapter } from "../src";
+import { z, ZodError } from "zod";
+import { ZGetResponse } from "../src/client-types";
+import { config } from "./setup";
+import { describe, expect, it } from "vitest";
 
 type TCustomer = {
   name: string;
@@ -11,7 +11,7 @@ type TCustomer = {
 };
 const ZCustomer = z.object({ name: z.string(), phone: z.string() });
 const ZPortalTable = z.object({
-  'related::related_field': z.string(),
+  "related::related_field": z.string(),
 });
 
 const ZCustomerPortals = z.object({
@@ -25,7 +25,7 @@ const client = DataApi<any, TCustomer>({
     db: config.db,
     server: config.server,
   }),
-  layout: 'customer',
+  layout: "customer",
   zodValidators: { fieldData: ZCustomer },
 });
 const clientPortalData = DataApi<any, TCustomer, TCustomerPortals>({
@@ -34,56 +34,56 @@ const clientPortalData = DataApi<any, TCustomer, TCustomerPortals>({
     db: config.db,
     server: config.server,
   }),
-  layout: 'customer',
+  layout: "customer",
   zodValidators: { fieldData: ZCustomer, portalData: ZCustomerPortals },
 });
 
 const record_portals_bad = {
   fieldData: {
-    name: 'Fake Name',
-    phone: '5551231234',
+    name: "Fake Name",
+    phone: "5551231234",
   },
   portalData: {
     PortalTable: [
       {
         fieldData: {
-          'related::related_field_bad': 'related field data',
+          "related::related_field_bad": "related field data",
         },
         portalData: {},
-        recordId: '53',
-        modId: '3',
+        recordId: "53",
+        modId: "3",
       },
     ],
   },
-  recordId: '5',
-  modId: '8',
+  recordId: "5",
+  modId: "8",
 };
 
-describe('zod validation', () => {
-  it('should pass validation, allow extra fields', async () => {
+describe("zod validation", () => {
+  it("should pass validation, allow extra fields", async () => {
     await client.list();
   });
-  it('list method: should fail validation when field is missing', async () => {
+  it("list method: should fail validation when field is missing", async () => {
     await expect(
-      client.list({ layout: 'customer_fieldsMissing' }),
+      client.list({ layout: "customer_fieldsMissing" }),
     ).rejects.toBeInstanceOf(ZodError);
   });
-  it('find method: should properly infer from root type', async () => {
+  it("find method: should properly infer from root type", async () => {
     // the following should not error if typed properly
-    const resp = await client.find({ query: { name: 'test' } });
+    const resp = await client.find({ query: { name: "test" } });
     resp.data[0].fieldData.name;
     resp.data[0].fieldData.phone;
   });
-  it('client with portal data passed as zod type', async () => {
+  it("client with portal data passed as zod type", async () => {
     await clientPortalData
       .list()
       .then(
         (data) =>
-          data.data[0].portalData.PortalTable[0]['related::related_field'],
+          data.data[0].portalData.PortalTable[0]["related::related_field"],
       )
       .catch();
   });
-  it('client with portal data fails validation', async () => {
+  it("client with portal data fails validation", async () => {
     expect(() =>
       ZGetResponse({
         fieldData: ZCustomer,
@@ -93,9 +93,9 @@ describe('zod validation', () => {
   });
 });
 
-it('should properly type limit/offset in portals', async () => {
+it("should properly type limit/offset in portals", async () => {
   await clientPortalData.find({
-    query: { name: 'test' },
+    query: { name: "test" },
     portalRanges: { PortalTable: { limit: 500, offset: 5 } },
   });
 });

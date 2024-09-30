@@ -10,4 +10,4 @@ export const commentHeader = `
 /* eslint-disable */
 `;
 
-export const varname = (name: string) => name.replace(/[^a-zA-Z0-9_]/g, '');
+export const varname = (name: string) => name.replace(/[^a-zA-Z0-9_]/g, "");

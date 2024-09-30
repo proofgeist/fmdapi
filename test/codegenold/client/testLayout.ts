@@ -13,17 +13,17 @@ import {
   OttoAdapter,
   OttoAPIKey,
   FetchAdapter,
-} from '@proofgeist/fmdapi';
-import { WebViewerAdapter } from '@proofgeist/fm-webviewer-fetch/adapter';
-if (!process.env.FM_DATABASE) throw new Error('Missing env var: FM_DATABASE');
-if (!process.env.FM_SERVER) throw new Error('Missing env var: FM_SERVER');
-if (!process.env.OTTO_API_KEY) throw new Error('Missing env var: OTTO_API_KEY');
+} from "@proofgeist/fmdapi";
+import { WebViewerAdapter } from "@proofgeist/fm-webviewer-fetch/adapter";
+if (!process.env.FM_DATABASE) throw new Error("Missing env var: FM_DATABASE");
+if (!process.env.FM_SERVER) throw new Error("Missing env var: FM_SERVER");
+if (!process.env.OTTO_API_KEY) throw new Error("Missing env var: OTTO_API_KEY");
 export const client = DataApi<any, TtestLayout, TtestLayoutPortals>({
   adapter: new OttoAdapter({
     auth: { apiKey: process.env.OTTO_API_KEY as OttoAPIKey },
     db: process.env.FM_DATABASE,
     server: process.env.FM_SERVER,
   }),
-  layout: 'layout',
+  layout: "layout",
   zodValidators: { fieldData: ZtestLayout, portalData: ZtestLayoutPortals },
 });

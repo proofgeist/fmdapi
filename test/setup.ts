@@ -1,8 +1,8 @@
-import { OttoFMSAPIKey } from '../src/adapters/otto';
-import { DataApi, OttoAdapter } from '../src/index';
+import { OttoFMSAPIKey } from "../src/adapters/otto";
+import { DataApi, OttoAdapter } from "../src/index";
 
-import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
 
 if (
   !process.env.FM_SERVER ||
@@ -10,7 +10,7 @@ if (
   !process.env.OTTO_API_KEY
 )
   throw new Error(
-    'FM_SERVER, FM_DATABASE, and OTTO_API_KEY must be set in the environment',
+    "FM_SERVER, FM_DATABASE, and OTTO_API_KEY must be set in the environment",
   );
 
 export const config = {
@@ -32,7 +32,7 @@ export const layoutClient = DataApi({
     db: process.env.FM_DATABASE,
     server: process.env.FM_SERVER,
   }),
-  layout: 'layout',
+  layout: "layout",
 });
 export const weirdPortalClient = DataApi({
   adapter: new OttoAdapter({
@@ -40,5 +40,5 @@ export const weirdPortalClient = DataApi({
     db: process.env.FM_DATABASE,
     server: process.env.FM_SERVER,
   }),
-  layout: 'Weird Portals',
+  layout: "Weird Portals",
 });

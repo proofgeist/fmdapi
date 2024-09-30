@@ -1,4 +1,4 @@
-import type { TokenStoreDefinitions } from './types.js';
+import type { TokenStoreDefinitions } from "./types.js";
 
 export function memoryStore(): TokenStoreDefinitions {
   const data: Record<string, string> = {};

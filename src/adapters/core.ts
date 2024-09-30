@@ -11,7 +11,7 @@ import type {
   Query,
   UpdateParams,
   UpdateResponse,
-} from '../client-types.js';
+} from "../client-types.js";
 
 export type BaseRequest = {
   layout: string;

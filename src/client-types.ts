@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const ZFieldValue = z.union([z.string(), z.number(), z.null()]);
 export type FieldValue = z.infer<typeof ZFieldValue>;
@@ -64,21 +64,21 @@ export type FMRecord<
 
 export type ScriptParams = {
   script?: string;
-  'script.param'?: string;
-  'script.prerequest'?: string;
-  'script.prerequest.param'?: string;
-  'script.presort'?: string;
-  'script.presort.param'?: string;
+  "script.param"?: string;
+  "script.prerequest"?: string;
+  "script.prerequest.param"?: string;
+  "script.presort"?: string;
+  "script.presort.param"?: string;
   timeout?: number;
 };
 
 const ZScriptResponse = z.object({
   scriptResult: z.string().optional(),
   scriptError: z.string().optional(),
-  'scriptResult.prerequest': z.string().optional(),
-  'scriptError.prerequest': z.string().optional(),
-  'scriptResult.presort': z.string().optional(),
-  'scriptError.presort': z.string().optional(),
+  "scriptResult.prerequest": z.string().optional(),
+  "scriptError.prerequest": z.string().optional(),
+  "scriptResult.presort": z.string().optional(),
+  "scriptError.presort": z.string().optional(),
 });
 export type ScriptResponse = z.infer<typeof ZScriptResponse>;
 
@@ -134,13 +134,13 @@ export type PortalRangesParams<
 export type GetParams<U extends GenericPortalData = GenericPortalData> =
   ScriptParams &
     PortalRangesParams<U> & {
-      'layout.response'?: string;
-      dateformats?: 'US' | 'file_locale' | 'ISO8601';
+      "layout.response"?: string;
+      dateformats?: "US" | "file_locale" | "ISO8601";
     };
 
 export type Sort<T extends FieldData = FieldData> = {
   fieldName: keyof T;
-  sortOrder: 'ascend' | 'descend' | string;
+  sortOrder: "ascend" | "descend" | string;
 };
 
 export type ListParams<
@@ -205,7 +205,7 @@ export type Query<
   [key in keyof T]: T[key] | string;
 }> &
   Partial<{ [key in SecondLevelKeys<U>]?: string }> & {
-    omit?: 'true';
+    omit?: "true";
   };
 
 export type LayoutMetadataResponse = {
@@ -227,16 +227,16 @@ export type DatabaseMetadataResponse = {
 
 export type FieldMetaData = {
   name: string;
-  type: 'normal' | 'calculation' | 'summary';
+  type: "normal" | "calculation" | "summary";
   displayType:
-    | 'editText'
-    | 'popupList'
-    | 'popupMenu'
-    | 'checkBox'
-    | 'calendar'
-    | 'radioButtons'
-    | 'secureText';
-  result: 'text' | 'number' | 'date' | 'time' | 'timeStamp' | 'container';
+    | "editText"
+    | "popupList"
+    | "popupMenu"
+    | "checkBox"
+    | "calendar"
+    | "radioButtons"
+    | "secureText";
+  result: "text" | "number" | "date" | "time" | "timeStamp" | "container";
   global: boolean;
   autoEnter: boolean;
   fourDigitYear: boolean;
@@ -252,7 +252,7 @@ export type FieldMetaData = {
 type ValueList = {
   name: string;
   // TODO need to test type of value list from other file
-  type: 'customList' | 'byField';
+  type: "customList" | "byField";
   values: Array<{ value: string; displayValue: string }>;
 };
 

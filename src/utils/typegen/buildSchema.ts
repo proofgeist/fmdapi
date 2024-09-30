@@ -1,11 +1,12 @@
-import { type SourceFile } from 'ts-morph';
-import type { BuildSchemaArgs, TSchema } from './types.js';
-import { varname } from './constants.js';
+import { type SourceFile } from "ts-morph";
+import type { BuildSchemaArgs, TSchema } from "./types.js";
+import { varname } from "./constants.js";
 
 export function buildSchema(
   schemaFile: SourceFile,
   { type, ...args }: BuildSchemaArgs,
 ): void {
+  console.log("buildSchema", args);
   // make sure schema has unique keys, in case a field is on the layout mulitple times
   args.schema.reduce(
     (acc: TSchema[], el) =>
@@ -15,7 +16,7 @@ export function buildSchema(
     [],
   );
 
-  if (type === 'ts') {
+  if (type === "ts") {
     buildTSSchema(schemaFile, args);
   } else {
     buildZodSchema(schemaFile, args);
@@ -26,10 +27,10 @@ function buildTSSchema(
   schemaFile: SourceFile,
   args: Pick<
     BuildSchemaArgs,
-    'schema' | 'schemaName' | 'portalSchema' | 'valueLists' | 'strictNumbers'
+    "schema" | "schemaName" | "portalSchema" | "valueLists" | "strictNumbers"
   >,
 ) {
-  throw new Error('Not implemented');
+  throw new Error("Not implemented");
   //   const {
   //     schema,
   //     schemaName,
@@ -49,7 +50,7 @@ function buildZodSchema(
   schemaFile: SourceFile,
   args: Pick<
     BuildSchemaArgs,
-    'schema' | 'schemaName' | 'portalSchema' | 'valueLists' | 'strictNumbers'
+    "schema" | "schemaName" | "portalSchema" | "valueLists" | "strictNumbers"
   >,
 ) {
   // setup
@@ -62,8 +63,8 @@ function buildZodSchema(
   } = args;
 
   schemaFile.addImportDeclaration({
-    moduleSpecifier: 'zod',
-    namedImports: ['z'],
+    moduleSpecifier: "zod",
+    namedImports: ["z"],
   });
 
   // build the portals
@@ -115,9 +116,9 @@ function buildTypeZod(
             .write(`z.object(`)
             .block(() => {
               for (const field of schema) {
-                if (field.type === 'string') {
+                if (field.type === "string") {
                   writer.writeLine(`${writer.quote(field.name)}: z.string(),`);
-                } else if (field.type === 'fmnumber') {
+                } else if (field.type === "fmnumber") {
                   if (strictNumbers) {
                     writer.writeLine(
                       `${writer.quote(field.name)}: z.number().nullable(),`,
@@ -129,7 +130,7 @@ function buildTypeZod(
                       )}: z.union([z.string(), z.number()]),`,
                     );
                   }
-                } else if (field.type === 'valueList') {
+                } else if (field.type === "valueList") {
                   writer
                     .writeLine(
                       `${writer.quote(field.name)}: z.enum([${field.values?.map(
@@ -138,17 +139,17 @@ function buildTypeZod(
                             .quote(v)
                             .conditionalWrite(
                               i !== (field.values ?? []).length - 1,
-                              ', ',
+                              ", ",
                             ),
                       )}])`,
                     )
-                    .conditionalWrite(field.values?.includes(''), `.catch('')`);
+                    .conditionalWrite(field.values?.includes(""), `.catch('')`);
                 } else {
                   writer.writeLine(`${writer.quote(field.name)}: z.any()`);
                 }
               }
             })
-            .write(')');
+            .write(")");
         },
       },
     ],
@@ -177,7 +178,7 @@ function buildValueListZod(
         initializer: (writer) => {
           writer.write(
             `z.enum([${values.map((v, i) =>
-              writer.quote(v).conditionalWrite(i !== values.length - 1, ', '),
+              writer.quote(v).conditionalWrite(i !== values.length - 1, ", "),
             )}])`,
           );
         },
