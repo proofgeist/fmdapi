@@ -23,7 +23,7 @@
     "prepublishOnly": "tsc",
     "build": "tsc",
     "test": "op inject -i op.env -o .env.local -f && jest",
-    "test:codegen": "op inject -i op.env -o .env.local -f && ts-node-esm ./test/codegen.ts",
+    "test:codegen": "op inject -i op.env -o .env.local -f && pnpx tsx ./test/typegen.ts",
     "changeset": "changeset",
     "release": "pnpm build && changeset publish --access public"
   },
@@ -34,6 +34,7 @@
     "dayjs": "^1.11.11",
     "dotenv": "^16.4.5",
     "fs-extra": "^11.1.1",
+    "ts-morph": "^23.0.0",
     "ts-toolbelt": "^9.6.0"
   },
   "peerDependencies": {
@@ -48,6 +49,7 @@
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.62.0",
     "@upstash/redis": "^1.31.6",
+    "esbuild-runner": "^2.2.2",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.3",
     "jest": "^28.1.3",

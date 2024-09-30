@@ -3,17 +3,17 @@ import memoryStore from "../tokenStore/memory.js";
 import { TokenStoreDefinitions } from "../tokenStore/types.js";
 import {
   BaseFetchAdapter,
-  BaseFetchAdapterOptions,
-  GetTokenArguments,
+  type BaseFetchAdapterOptions,
+  type GetTokenArguments,
 } from "./fetch-base.js";
 
-export type FetchAdapterOptions = BaseFetchAdapterOptions & {
+export interface FetchAdapterOptions extends BaseFetchAdapterOptions {
   auth: {
     username: string;
     password: string;
   };
   tokenStore?: TokenStoreDefinitions;
-};
+}
 
 export class FetchAdapter extends BaseFetchAdapter {
   private username: string;
