@@ -1,4 +1,5 @@
-import { BaseFetchAdapter, BaseFetchAdapterOptions } from "./fetch-base.js";
+import { BaseFetchAdapter } from "./fetch-base.js";
+import type { BaseFetchAdapterOptions } from "./fetch-base-types.js";
 
 export type Otto3APIKey = `KEY_${string}`;
 export type OttoFMSAPIKey = `dk_${string}`;

@@ -1,11 +1,11 @@
 import { FileMakerError } from "../index.js";
 import memoryStore from "../tokenStore/memory.js";
 import { TokenStoreDefinitions } from "../tokenStore/types.js";
-import {
-  BaseFetchAdapter,
-  type BaseFetchAdapterOptions,
-  type GetTokenArguments,
-} from "./fetch-base.js";
+import type {
+  BaseFetchAdapterOptions,
+  GetTokenArguments,
+} from "./fetch-base-types.js";
+import { BaseFetchAdapter } from "./fetch-base.js";
 
 export interface FetchAdapterOptions extends BaseFetchAdapterOptions {
   auth: {

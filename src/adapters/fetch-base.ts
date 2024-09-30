@@ -22,17 +22,15 @@ import {
   ListOptions,
   UpdateOptions,
 } from "./core.js";
+import {
+  BaseFetchAdapterOptions,
+  GetTokenArguments,
+} from "./fetch-base-types.js";
 
 export type ExecuteScriptOptions = BaseRequest & {
   script: string;
   scriptParam?: string;
 };
-
-export type BaseFetchAdapterOptions = {
-  server: string;
-  db: string;
-};
-export type GetTokenArguments = { refresh?: boolean };
 
 export class BaseFetchAdapter implements Adapter {
   protected server: string;

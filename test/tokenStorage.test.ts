@@ -8,7 +8,10 @@ describe("TokenStorage", () => {
         auth: { username: "username", password: "password" },
         db: "db",
         server: "https://example.com",
-        tokenStore: upstashTokenStore({ token: "token", url: "url" }),
+        tokenStore: upstashTokenStore({
+          token: "token",
+          url: "https://example.com",
+        }),
       }),
     });
   });

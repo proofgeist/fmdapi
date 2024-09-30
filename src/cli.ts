@@ -2,11 +2,11 @@
 import { program } from "commander";
 import chalk from "chalk";
 import fs from "fs-extra";
-import { generateSchemas } from "./utils/index.js";
 import path from "path";
-import { GenerateSchemaOptions } from "./utils/codegen.js";
 import { config } from "dotenv";
 import { pathToFileURL, fileURLToPath } from "url";
+import { GenerateSchemaOptions } from "./utils/typegen/types.js";
+import { generateTypedClients } from "./utils/index.js";
 
 const defaultConfigPaths = ["./fmschema.config.mjs", "./fmschema.config.js"];
 type ConfigArgs = {
@@ -83,7 +83,7 @@ async function runCodegen({ configLocation }: ConfigArgs) {
     );
   }
 
-  await generateSchemas(config, configLocation).catch((err: unknown) => {
+  await generateTypedClients(config, configLocation).catch((err: unknown) => {
     console.error(err);
     return process.exit(1);
   });
