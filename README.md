@@ -51,7 +51,7 @@ Initialize the client with credentials, depending on your adapter
 
 ```typescript
 // to use the OttoFMS Data API Proxy
-import { DataApi, OttoAdapter } from "@proofgeist/fmdapi";
+import { DataApi, OttoAdapter } from '@proofgeist/fmdapi';
 const client = DataApi({
   adapter: new OttoAdapter({
     auth: { apiKey: process.env.OTTO_API_KEY },
@@ -63,7 +63,7 @@ const client = DataApi({
 
 ```typescript
 // to use the raw Data API
-import { DataApi, FetchAdapter } from "@proofgeist/fmdapi";
+import { DataApi, FetchAdapter } from '@proofgeist/fmdapi';
 const client = DataApi({
   adapter: new FetchAdapter({
     auth: {
@@ -81,7 +81,7 @@ Then, use the client to query your FileMaker database. [View all available metho
 Basic Example:
 
 ```typescript
-const result = await client.list({ layout: "Contacts" });
+const result = await client.list({ layout: 'Contacts' });
 ```
 
 ## TypeScript Support
@@ -94,7 +94,7 @@ type TContact = {
   email: string;
   phone: string;
 };
-const result = await client.list<TContact>({ layout: "Contacts" });
+const result = await client.list<TContact>({ layout: 'Contacts' });
 ```
 
 💡 TIP: For a more ergonomic TypeScript experience, use the [included codegen tool](https://github.com/proofgeist/fmdapi/wiki/codegen) to generate these types based on your FileMaker layout metadata.

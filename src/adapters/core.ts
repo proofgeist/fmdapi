@@ -11,7 +11,7 @@ import {
   Query,
   UpdateParams,
   UpdateResponse,
-} from "../client-types.js";
+} from '../client-types.js';
 
 export type BaseRequest = {
   layout: string;
@@ -47,6 +47,6 @@ export interface Adapter {
   delete: (opts: DeleteOptions) => Promise<DeleteResponse>;
 
   layoutMetadata: (
-    opts: LayoutMetadataOptions
+    opts: LayoutMetadataOptions,
   ) => Promise<LayoutMetadataResponse>;
 }

@@ -1,32 +1,32 @@
-import fs, { ensureDir } from "fs-extra";
-import { join } from "path";
-import ts, { type Statement } from "typescript";
+import fs, { ensureDir } from 'fs-extra';
+import { join } from 'path';
+import ts, { type Statement } from 'typescript';
 const createPrinter = ts.createPrinter;
 const createSourceFile = ts.createSourceFile;
 const factory = ts.factory;
-import { FileMakerError, DataApi } from "../index.js";
-import { FieldMetaData } from "../client-types.js";
-import { F } from "ts-toolbelt";
-import chalk from "chalk";
-import { memoryStore } from "../tokenStore/memory.js";
-import { TokenStoreDefinitions } from "../tokenStore/types.js";
+import { FileMakerError, DataApi } from '../index.js';
+import { FieldMetaData } from '../client-types.js';
+import { F } from 'ts-toolbelt';
+import chalk from 'chalk';
+import { memoryStore } from '../tokenStore/memory.js';
+import { TokenStoreDefinitions } from '../tokenStore/types.js';
 import {
   OttoAPIKey,
   OttoAdapter,
   OttoAdapterOptions,
   isOttoAuth,
-} from "../adapters/otto.js";
-import { FetchAdapter, FetchAdapterOptions } from "../adapters/fetch.js";
+} from '../adapters/otto.js';
+import { FetchAdapter, FetchAdapterOptions } from '../adapters/fetch.js';
 
 type ClientObjectProps = OttoAdapterOptions | FetchAdapterOptions;
 
 type TSchema = {
   name: string;
-  type: "string" | "fmnumber" | "valueList";
+  type: 'string' | 'fmnumber' | 'valueList';
   values?: string[];
 };
 
-const varname = (name: string) => name.replace(/[^a-zA-Z0-9_]/g, "");
+const varname = (name: string) => name.replace(/[^a-zA-Z0-9_]/g, '');
 
 const commentHeader = `
 /**
@@ -43,7 +43,7 @@ const commentHeader = `
 const importTypeStatement = (
   schemaName: string,
   hasPortals: boolean,
-  zod: boolean
+  zod: boolean,
 ) =>
   factory.createImportDeclaration(
     undefined,
@@ -54,14 +54,14 @@ const importTypeStatement = (
         factory.createImportSpecifier(
           false,
           undefined,
-          factory.createIdentifier(`T${schemaName}`)
+          factory.createIdentifier(`T${schemaName}`),
         ),
         ...(hasPortals
           ? [
               factory.createImportSpecifier(
                 false,
                 undefined,
-                factory.createIdentifier(`T${schemaName}Portals`)
+                factory.createIdentifier(`T${schemaName}Portals`),
               ),
             ]
           : []),
@@ -70,23 +70,23 @@ const importTypeStatement = (
               factory.createImportSpecifier(
                 false,
                 undefined,
-                factory.createIdentifier(`Z${schemaName}`)
+                factory.createIdentifier(`Z${schemaName}`),
               ),
               ...(hasPortals
                 ? [
                     factory.createImportSpecifier(
                       false,
                       undefined,
-                      factory.createIdentifier(`Z${schemaName}Portals`)
+                      factory.createIdentifier(`Z${schemaName}Portals`),
                     ),
                   ]
                 : []),
             ]
           : []),
-      ])
+      ]),
     ),
     factory.createStringLiteral(`../${schemaName}`),
-    undefined
+    undefined,
   );
 
 const exportIndexClientStatement = (schemaName: string) =>
@@ -97,14 +97,14 @@ const exportIndexClientStatement = (schemaName: string) =>
       factory.createExportSpecifier(
         false,
         factory.createIdentifier(`client`),
-        factory.createIdentifier(`${schemaName}Client`)
+        factory.createIdentifier(`${schemaName}Client`),
       ),
     ]),
     factory.createStringLiteral(`./${schemaName}`),
-    undefined
+    undefined,
   );
 
-const importStatement = (adapter: "Otto" | "Fetch" | "WebViewer") => [
+const importStatement = (adapter: 'Otto' | 'Fetch' | 'WebViewer') => [
   factory.createImportDeclaration(
     undefined,
     factory.createImportClause(
@@ -114,36 +114,36 @@ const importStatement = (adapter: "Otto" | "Fetch" | "WebViewer") => [
         factory.createImportSpecifier(
           false,
           undefined,
-          factory.createIdentifier("DataApi")
+          factory.createIdentifier('DataApi'),
         ),
-        ...(adapter === "Otto"
+        ...(adapter === 'Otto'
           ? [
               factory.createImportSpecifier(
                 false,
                 undefined,
-                factory.createIdentifier("OttoAdapter")
+                factory.createIdentifier('OttoAdapter'),
               ),
               factory.createImportSpecifier(
                 false,
                 undefined,
-                factory.createIdentifier("OttoAPIKey")
+                factory.createIdentifier('OttoAPIKey'),
               ),
             ]
-          : adapter === "Fetch"
-          ? [
-              factory.createImportSpecifier(
-                false,
-                undefined,
-                factory.createIdentifier("FetchAdapter")
-              ),
-            ]
-          : []),
-      ])
+          : adapter === 'Fetch'
+            ? [
+                factory.createImportSpecifier(
+                  false,
+                  undefined,
+                  factory.createIdentifier('FetchAdapter'),
+                ),
+              ]
+            : []),
+      ]),
     ),
     factory.createStringLiteral(`@proofgeist/fmdapi`),
-    undefined
+    undefined,
   ),
-  ...(adapter === "WebViewer"
+  ...(adapter === 'WebViewer'
     ? [
         factory.createImportDeclaration(
           undefined,
@@ -154,12 +154,12 @@ const importStatement = (adapter: "Otto" | "Fetch" | "WebViewer") => [
               factory.createImportSpecifier(
                 false,
                 undefined,
-                factory.createIdentifier("WebViewerAdapter")
+                factory.createIdentifier('WebViewerAdapter'),
               ),
-            ])
+            ]),
           ),
           factory.createStringLiteral(`@proofgeist/fm-webviewer-fetch/adapter`),
-          undefined
+          undefined,
         ),
       ]
     : []),
@@ -170,20 +170,20 @@ const undefinedTypeGuardStatement = (name: string) =>
       ts.SyntaxKind.ExclamationToken,
       factory.createPropertyAccessExpression(
         factory.createPropertyAccessExpression(
-          factory.createIdentifier("process"),
-          factory.createIdentifier("env")
+          factory.createIdentifier('process'),
+          factory.createIdentifier('env'),
         ),
-        factory.createIdentifier(name)
-      )
+        factory.createIdentifier(name),
+      ),
     ),
     factory.createThrowStatement(
       factory.createNewExpression(
-        factory.createIdentifier("Error"),
+        factory.createIdentifier('Error'),
         undefined,
-        [factory.createStringLiteral(`Missing env var: ${name}`)]
-      )
+        [factory.createStringLiteral(`Missing env var: ${name}`)],
+      ),
     ),
-    undefined
+    undefined,
   );
 const exportClientStatement = (args: {
   fieldTypeName: string;
@@ -191,16 +191,16 @@ const exportClientStatement = (args: {
   schemaName: string;
   layout: string;
   useZod: boolean;
-  envNames: Omit<ClientObjectProps, "layout" | "tokenStore">;
+  envNames: Omit<ClientObjectProps, 'layout' | 'tokenStore'>;
   tokenStore?: ts.Expression;
   webviewerScriptName?: string;
 }) => [
   ...importStatement(
     args.webviewerScriptName
-      ? "WebViewer"
+      ? 'WebViewer'
       : isOttoAuth(args.envNames.auth)
-      ? "Otto"
-      : "Fetch"
+        ? 'Otto'
+        : 'Fetch',
   ),
   ...(args.webviewerScriptName !== undefined
     ? []
@@ -223,19 +223,19 @@ const exportClientStatement = (args: {
           undefined,
           undefined,
           factory.createCallExpression(
-            factory.createIdentifier("DataApi"),
+            factory.createIdentifier('DataApi'),
             [
               factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
               factory.createTypeReferenceNode(
                 factory.createIdentifier(args.fieldTypeName),
-                undefined
+                undefined,
               ),
               // only add portal type if a portal type was passed
               ...(args.portalTypeName
                 ? [
                     factory.createTypeReferenceNode(
                       factory.createIdentifier(args.portalTypeName),
-                      undefined
+                      undefined,
                     ),
                   ]
                 : []),
@@ -244,14 +244,14 @@ const exportClientStatement = (args: {
               factory.createObjectLiteralExpression(
                 [
                   factory.createPropertyAssignment(
-                    factory.createIdentifier("adapter"),
+                    factory.createIdentifier('adapter'),
                     factory.createNewExpression(
                       factory.createIdentifier(
                         args.webviewerScriptName
-                          ? "WebViewerAdapter"
+                          ? 'WebViewerAdapter'
                           : isOttoAuth(args.envNames.auth)
-                          ? "OttoAdapter"
-                          : "FetchAdapter"
+                            ? 'OttoAdapter'
+                            : 'FetchAdapter',
                       ),
                       undefined,
                       [
@@ -260,10 +260,10 @@ const exportClientStatement = (args: {
                             ...(args.webviewerScriptName !== undefined
                               ? [
                                   factory.createPropertyAssignment(
-                                    factory.createIdentifier("scriptName"),
+                                    factory.createIdentifier('scriptName'),
                                     factory.createStringLiteral(
-                                      args.webviewerScriptName
-                                    )
+                                      args.webviewerScriptName,
+                                    ),
                                   ),
                                 ]
                               : [
@@ -272,158 +272,160 @@ const exportClientStatement = (args: {
                                     ? [
                                         factory.createPropertyAssignment(
                                           factory.createIdentifier(
-                                            "tokenStore"
+                                            'tokenStore',
                                           ),
-                                          args.tokenStore
+                                          args.tokenStore,
                                         ),
                                       ]
                                     : []),
                                   factory.createPropertyAssignment(
-                                    factory.createIdentifier("auth"),
+                                    factory.createIdentifier('auth'),
                                     factory.createObjectLiteralExpression(
                                       isOttoAuth(args.envNames.auth)
                                         ? [
                                             factory.createPropertyAssignment(
                                               factory.createIdentifier(
-                                                "apiKey"
+                                                'apiKey',
                                               ),
                                               factory.createAsExpression(
                                                 factory.createPropertyAccessExpression(
                                                   factory.createPropertyAccessExpression(
                                                     factory.createIdentifier(
-                                                      "process"
+                                                      'process',
                                                     ),
                                                     factory.createIdentifier(
-                                                      "env"
-                                                    )
+                                                      'env',
+                                                    ),
                                                   ),
                                                   factory.createIdentifier(
-                                                    args.envNames.auth.apiKey
-                                                  )
+                                                    args.envNames.auth.apiKey,
+                                                  ),
                                                 ),
                                                 factory.createTypeReferenceNode(
                                                   factory.createIdentifier(
-                                                    "OttoAPIKey"
+                                                    'OttoAPIKey',
                                                   ),
-                                                  undefined
-                                                )
-                                              )
+                                                  undefined,
+                                                ),
+                                              ),
                                             ),
                                           ]
                                         : [
                                             factory.createPropertyAssignment(
                                               factory.createIdentifier(
-                                                "username"
+                                                'username',
                                               ),
                                               factory.createPropertyAccessExpression(
                                                 factory.createPropertyAccessExpression(
                                                   factory.createIdentifier(
-                                                    "process"
+                                                    'process',
                                                   ),
                                                   factory.createIdentifier(
-                                                    "env"
-                                                  )
+                                                    'env',
+                                                  ),
                                                 ),
                                                 factory.createIdentifier(
-                                                  args.envNames.auth.username
-                                                )
-                                              )
+                                                  args.envNames.auth.username,
+                                                ),
+                                              ),
                                             ),
                                             factory.createPropertyAssignment(
                                               factory.createIdentifier(
-                                                "password"
+                                                'password',
                                               ),
                                               factory.createPropertyAccessExpression(
                                                 factory.createPropertyAccessExpression(
                                                   factory.createIdentifier(
-                                                    "process"
+                                                    'process',
                                                   ),
                                                   factory.createIdentifier(
-                                                    "env"
-                                                  )
+                                                    'env',
+                                                  ),
                                                 ),
                                                 factory.createIdentifier(
-                                                  args.envNames.auth.password
-                                                )
-                                              )
+                                                  args.envNames.auth.password,
+                                                ),
+                                              ),
                                             ),
                                           ],
-                                      false
-                                    )
+                                      false,
+                                    ),
                                   ),
                                   factory.createPropertyAssignment(
-                                    factory.createIdentifier("db"),
+                                    factory.createIdentifier('db'),
                                     factory.createPropertyAccessExpression(
                                       factory.createPropertyAccessExpression(
-                                        factory.createIdentifier("process"),
-                                        factory.createIdentifier("env")
-                                      ),
-                                      factory.createIdentifier(args.envNames.db)
-                                    )
-                                  ),
-                                  factory.createPropertyAssignment(
-                                    factory.createIdentifier("server"),
-                                    factory.createPropertyAccessExpression(
-                                      factory.createPropertyAccessExpression(
-                                        factory.createIdentifier("process"),
-                                        factory.createIdentifier("env")
+                                        factory.createIdentifier('process'),
+                                        factory.createIdentifier('env'),
                                       ),
                                       factory.createIdentifier(
-                                        args.envNames.server
-                                      )
-                                    )
+                                        args.envNames.db,
+                                      ),
+                                    ),
+                                  ),
+                                  factory.createPropertyAssignment(
+                                    factory.createIdentifier('server'),
+                                    factory.createPropertyAccessExpression(
+                                      factory.createPropertyAccessExpression(
+                                        factory.createIdentifier('process'),
+                                        factory.createIdentifier('env'),
+                                      ),
+                                      factory.createIdentifier(
+                                        args.envNames.server,
+                                      ),
+                                    ),
                                   ),
                                 ]),
                           ],
-                          true
+                          true,
                         ),
-                      ]
-                    )
+                      ],
+                    ),
                   ),
 
                   factory.createPropertyAssignment(
-                    factory.createIdentifier("layout"),
-                    factory.createStringLiteral(args.layout)
+                    factory.createIdentifier('layout'),
+                    factory.createStringLiteral(args.layout),
                   ),
 
                   ...(args.useZod
                     ? [
                         factory.createPropertyAssignment(
-                          factory.createIdentifier("zodValidators"),
+                          factory.createIdentifier('zodValidators'),
                           factory.createObjectLiteralExpression(
                             [
                               factory.createPropertyAssignment(
-                                factory.createIdentifier("fieldData"),
+                                factory.createIdentifier('fieldData'),
                                 factory.createIdentifier(
-                                  `Z${varname(args.schemaName)}`
-                                )
+                                  `Z${varname(args.schemaName)}`,
+                                ),
                               ),
                               // only add portal type if a portal type was passed
                               ...(args.portalTypeName
                                 ? [
                                     factory.createPropertyAssignment(
-                                      factory.createIdentifier("portalData"),
+                                      factory.createIdentifier('portalData'),
                                       factory.createIdentifier(
-                                        `Z${varname(args.schemaName)}Portals`
-                                      )
+                                        `Z${varname(args.schemaName)}Portals`,
+                                      ),
                                     ),
                                   ]
                                 : []),
                             ],
-                            false
-                          )
+                            false,
+                          ),
                         ),
                       ]
                     : []),
                 ],
-                true
+                true,
               ),
-            ]
-          )
+            ],
+          ),
         ),
       ],
-      ts.NodeFlags.Const
-    )
+      ts.NodeFlags.Const,
+    ),
   ),
 ];
 
@@ -432,19 +434,19 @@ const stringProperty = (name: string) =>
     undefined,
     factory.createStringLiteral(name),
     undefined,
-    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
+    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
   );
 const stringPropertyZod = (name: string) =>
   factory.createPropertyAssignment(
     factory.createStringLiteral(name),
     factory.createCallExpression(
       factory.createPropertyAccessExpression(
-        factory.createIdentifier("z"),
-        factory.createIdentifier("string")
+        factory.createIdentifier('z'),
+        factory.createIdentifier('string'),
       ),
       undefined,
-      []
-    )
+      [],
+    ),
   );
 const stringOrNumberProperty = (name: string) =>
   factory.createPropertySignature(
@@ -454,15 +456,15 @@ const stringOrNumberProperty = (name: string) =>
     factory.createUnionTypeNode([
       factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
       factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-    ])
+    ]),
   );
 const stringOrNumberPropertyZod = (name: string) =>
   factory.createPropertyAssignment(
     factory.createStringLiteral(name),
     factory.createCallExpression(
       factory.createPropertyAccessExpression(
-        factory.createIdentifier("z"),
-        factory.createIdentifier("union")
+        factory.createIdentifier('z'),
+        factory.createIdentifier('union'),
       ),
       undefined,
       [
@@ -470,25 +472,25 @@ const stringOrNumberPropertyZod = (name: string) =>
           [
             factory.createCallExpression(
               factory.createPropertyAccessExpression(
-                factory.createIdentifier("z"),
-                factory.createIdentifier("string")
+                factory.createIdentifier('z'),
+                factory.createIdentifier('string'),
               ),
               undefined,
-              []
+              [],
             ),
             factory.createCallExpression(
               factory.createPropertyAccessExpression(
-                factory.createIdentifier("z"),
-                factory.createIdentifier("number")
+                factory.createIdentifier('z'),
+                factory.createIdentifier('number'),
               ),
               undefined,
-              []
+              [],
             ),
           ],
-          false
+          false,
         ),
-      ]
-    )
+      ],
+    ),
   );
 const NumberOrNullProperty = (name: string) =>
   factory.createPropertySignature(
@@ -498,7 +500,7 @@ const NumberOrNullProperty = (name: string) =>
     factory.createUnionTypeNode([
       factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
       factory.createLiteralTypeNode(factory.createNull()),
-    ])
+    ]),
   );
 const NumberOrNullPropertyZod = (name: string) =>
   factory.createPropertyAssignment(
@@ -510,24 +512,24 @@ const NumberOrNullPropertyZod = (name: string) =>
             factory.createCallExpression(
               factory.createPropertyAccessExpression(
                 factory.createPropertyAccessExpression(
-                  factory.createIdentifier("z"),
-                  factory.createIdentifier("coerce")
+                  factory.createIdentifier('z'),
+                  factory.createIdentifier('coerce'),
                 ),
-                factory.createIdentifier("number")
+                factory.createIdentifier('number'),
               ),
               undefined,
-              []
+              [],
             ),
-            factory.createIdentifier("nullable")
+            factory.createIdentifier('nullable'),
           ),
           undefined,
-          []
+          [],
         ),
-        factory.createIdentifier("catch")
+        factory.createIdentifier('catch'),
       ),
       undefined,
-      [factory.createNull()]
-    )
+      [factory.createNull()],
+    ),
   );
 
 const valueListProperty = (name: string, vl: string[]) =>
@@ -537,32 +539,32 @@ const valueListProperty = (name: string, vl: string[]) =>
     undefined,
     factory.createUnionTypeNode(
       vl.map((v) =>
-        factory.createLiteralTypeNode(factory.createStringLiteral(v))
-      )
-    )
+        factory.createLiteralTypeNode(factory.createStringLiteral(v)),
+      ),
+    ),
   );
 const valueListPropertyZod = (name: string, vl: string[]) =>
   factory.createPropertyAssignment(
     factory.createStringLiteral(name),
     factory.createCallExpression(
       factory.createPropertyAccessExpression(
-        factory.createIdentifier("z"),
-        factory.createIdentifier("enum")
+        factory.createIdentifier('z'),
+        factory.createIdentifier('enum'),
       ),
       undefined,
       [
         factory.createArrayLiteralExpression(
           vl.map((v) => factory.createStringLiteral(v)),
-          false
+          false,
         ),
-      ]
-    )
+      ],
+    ),
   );
 
 const buildTypeZod = (
   schemaName: string,
   schema: Array<TSchema>,
-  strictNumbers = false
+  strictNumbers = false,
 ): Statement[] => [
   factory.createVariableStatement(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -574,30 +576,30 @@ const buildTypeZod = (
           undefined,
           factory.createCallExpression(
             factory.createPropertyAccessExpression(
-              factory.createIdentifier("z"),
-              factory.createIdentifier("object")
+              factory.createIdentifier('z'),
+              factory.createIdentifier('object'),
             ),
             undefined,
             [
               factory.createObjectLiteralExpression(
                 // for each field, create a z property
                 schema.map((item) =>
-                  item.type === "fmnumber"
+                  item.type === 'fmnumber'
                     ? strictNumbers
                       ? NumberOrNullPropertyZod(item.name)
                       : stringOrNumberPropertyZod(item.name)
                     : item.values
-                    ? valueListPropertyZod(item.name, item.values)
-                    : stringPropertyZod(item.name)
+                      ? valueListPropertyZod(item.name, item.values)
+                      : stringPropertyZod(item.name),
                 ),
-                true
+                true,
               ),
-            ]
-          )
+            ],
+          ),
         ),
       ],
-      ts.NodeFlags.Const
-    )
+      ts.NodeFlags.Const,
+    ),
   ),
   factory.createTypeAliasDeclaration(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -605,15 +607,15 @@ const buildTypeZod = (
     undefined,
     factory.createTypeReferenceNode(
       factory.createQualifiedName(
-        factory.createIdentifier("z"),
-        factory.createIdentifier("infer")
+        factory.createIdentifier('z'),
+        factory.createIdentifier('infer'),
       ),
       [
         factory.createTypeQueryNode(
-          factory.createIdentifier(`Z${varname(schemaName)}`)
+          factory.createIdentifier(`Z${varname(schemaName)}`),
         ),
-      ]
-    )
+      ],
+    ),
   ),
 ];
 const buildValueListZod = (name: string, values: string[]): Statement[] => [
@@ -627,21 +629,21 @@ const buildValueListZod = (name: string, values: string[]): Statement[] => [
           undefined,
           factory.createCallExpression(
             factory.createPropertyAccessExpression(
-              factory.createIdentifier("z"),
-              factory.createIdentifier("enum")
+              factory.createIdentifier('z'),
+              factory.createIdentifier('enum'),
             ),
             undefined,
             [
               factory.createArrayLiteralExpression(
                 values.map((v) => factory.createStringLiteral(v)),
-                false
+                false,
               ),
-            ]
-          )
+            ],
+          ),
         ),
       ],
-      ts.NodeFlags.Const
-    )
+      ts.NodeFlags.Const,
+    ),
   ),
   factory.createTypeAliasDeclaration(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -649,15 +651,15 @@ const buildValueListZod = (name: string, values: string[]): Statement[] => [
     undefined,
     factory.createTypeReferenceNode(
       factory.createQualifiedName(
-        factory.createIdentifier("z"),
-        factory.createIdentifier("infer")
+        factory.createIdentifier('z'),
+        factory.createIdentifier('infer'),
       ),
       [
         factory.createTypeQueryNode(
-          factory.createIdentifier(`ZVL${varname(name)}`)
+          factory.createIdentifier(`ZVL${varname(name)}`),
         ),
-      ]
-    )
+      ],
+    ),
   ),
 ];
 const buildValueListTS = (name: string, values: string[]): Statement =>
@@ -667,15 +669,15 @@ const buildValueListTS = (name: string, values: string[]): Statement =>
     undefined,
     factory.createUnionTypeNode(
       values.map((v) =>
-        factory.createLiteralTypeNode(factory.createStringLiteral(v))
-      )
-    )
+        factory.createLiteralTypeNode(factory.createStringLiteral(v)),
+      ),
+    ),
   );
 
 const buildTypeTS = (
   schemaName: string,
   schema: Array<TSchema>,
-  strictNumbers = false
+  strictNumbers = false,
 ): Statement =>
   factory.createTypeAliasDeclaration(
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -684,29 +686,29 @@ const buildTypeTS = (
     factory.createTypeLiteralNode(
       // for each field, create a property
       schema.map((item) => {
-        return item.type === "fmnumber"
+        return item.type === 'fmnumber'
           ? strictNumbers
             ? NumberOrNullProperty(item.name)
             : stringOrNumberProperty(item.name)
           : item.values
-          ? valueListProperty(item.name, item.values)
-          : stringProperty(item.name);
-      })
-    )
+            ? valueListProperty(item.name, item.values)
+            : stringProperty(item.name);
+      }),
+    ),
   );
 
 type BuildSchemaArgs = {
   schemaName: string;
   schema: Array<TSchema>;
-  type: "zod" | "ts";
+  type: 'zod' | 'ts';
   portalSchema?: { schemaName: string; schema: Array<TSchema> }[];
   valueLists?: { name: string; values: string[] }[];
-  envNames: Omit<ClientObjectProps, "layout" | "tokenStore">;
+  envNames: Omit<ClientObjectProps, 'layout' | 'tokenStore'>;
   layoutName: string;
   strictNumbers?: boolean;
   configLocation?: string;
   webviewerScriptName?: string;
-} & Pick<GenerateSchemaOptions, "tokenStore">;
+} & Pick<GenerateSchemaOptions, 'tokenStore'>;
 const buildClientFile = (args: BuildSchemaArgs) => {
   const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
   const file = buildClient(args);
@@ -719,23 +721,23 @@ export const buildSchema = ({ type, ...args }: BuildSchemaArgs) => {
       acc.find((o) => o.name === el.name)
         ? acc
         : ([...acc, el] as Array<TSchema>),
-    []
+    [],
   );
   // TODO same uniqueness validation for portals
   const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
-  const file = type === "ts" ? buildTSSchema(args) : buildZodSchema(args);
+  const file = type === 'ts' ? buildTSSchema(args) : buildZodSchema(args);
   return commentHeader + printer.printFile(file);
 };
 const buildClient = (args: BuildSchemaArgs) => {
   const { schemaName, portalSchema = [], envNames, type } = args;
   return factory.updateSourceFile(
-    createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
+    createSourceFile(`source.ts`, '', ts.ScriptTarget.Latest),
     [
-      importTypeStatement(schemaName, portalSchema.length > 0, type === "zod"),
+      importTypeStatement(schemaName, portalSchema.length > 0, type === 'zod'),
       // ...reimportConfigStatements(args.configLocation),
       ...exportClientStatement({
         envNames,
-        useZod: type === "zod",
+        useZod: type === 'zod',
         schemaName: args.schemaName,
         layout: args.layoutName,
         tokenStore: getTokenStoreFromConfig(args.configLocation),
@@ -745,10 +747,10 @@ const buildClient = (args: BuildSchemaArgs) => {
           : {}),
         webviewerScriptName: args.webviewerScriptName,
       }),
-    ]
+    ],
   );
 };
-const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
+const buildZodSchema = (args: Omit<BuildSchemaArgs, 'type'>) => {
   const {
     schema,
     schemaName,
@@ -775,8 +777,8 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
             undefined,
             factory.createCallExpression(
               factory.createPropertyAccessExpression(
-                factory.createIdentifier("z"),
-                factory.createIdentifier("object")
+                factory.createIdentifier('z'),
+                factory.createIdentifier('object'),
               ),
               undefined,
               [
@@ -784,17 +786,19 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
                   portalSchema.map((portal) =>
                     factory.createPropertyAssignment(
                       factory.createStringLiteral(portal.schemaName),
-                      factory.createIdentifier(`Z${varname(portal.schemaName)}`)
-                    )
+                      factory.createIdentifier(
+                        `Z${varname(portal.schemaName)}`,
+                      ),
+                    ),
                   ),
-                  true
+                  true,
                 ),
-              ]
-            )
+              ],
+            ),
           ),
         ],
-        ts.NodeFlags.Const
-      )
+        ts.NodeFlags.Const,
+      ),
     ),
     factory.createTypeAliasDeclaration(
       [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -802,20 +806,20 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
       undefined,
       factory.createTypeReferenceNode(
         factory.createQualifiedName(
-          factory.createIdentifier("z"),
-          factory.createIdentifier("infer")
+          factory.createIdentifier('z'),
+          factory.createIdentifier('infer'),
         ),
         [
           factory.createTypeQueryNode(
-            factory.createIdentifier(`Z${varname(schemaName)}Portals`)
+            factory.createIdentifier(`Z${varname(schemaName)}Portals`),
           ),
-        ]
-      )
+        ],
+      ),
     ),
   ];
 
   return factory.updateSourceFile(
-    createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
+    createSourceFile(`source.ts`, '', ts.ScriptTarget.Latest),
     [
       factory.createImportDeclaration(
         undefined,
@@ -826,11 +830,11 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
             factory.createImportSpecifier(
               false,
               undefined,
-              factory.createIdentifier("z")
+              factory.createIdentifier('z'),
             ),
-          ])
+          ]),
         ),
-        factory.createStringLiteral("zod")
+        factory.createStringLiteral('zod'),
       ),
       // for each table, create a ZodSchema variable and inferred type
       ...buildTypeZod(schemaName, schema, strictNumbers),
@@ -843,11 +847,11 @@ const buildZodSchema = (args: Omit<BuildSchemaArgs, "type">) => {
 
       // now add types for any values lists
       ...vls,
-    ]
+    ],
   );
 };
 
-const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
+const buildTSSchema = (args: Omit<BuildSchemaArgs, 'type'>) => {
   const {
     schema,
     schemaName,
@@ -856,7 +860,7 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
     strictNumbers = false,
   } = args;
   const portals = portalSchema.map((p) =>
-    buildTypeTS(p.schemaName, p.schema, strictNumbers)
+    buildTypeTS(p.schemaName, p.schema, strictNumbers),
   );
   const vls = valueLists
     .filter((vl) => vl.values.length > 0)
@@ -874,23 +878,23 @@ const buildTSSchema = (args: Omit<BuildSchemaArgs, "type">) => {
           factory.createArrayTypeNode(
             factory.createTypeReferenceNode(
               factory.createIdentifier(`T${varname(portal.schemaName)}`),
-              undefined
-            )
-          )
-        )
-      )
-    )
+              undefined,
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 
   return factory.updateSourceFile(
-    createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
+    createSourceFile(`source.ts`, '', ts.ScriptTarget.Latest),
     [
       buildTypeTS(schemaName, schema, strictNumbers),
       ...portals,
       // if there are portals, export single portal type for the layout
       ...(portalSchema.length > 0 ? [portalStatement] : []),
       ...vls,
-    ]
+    ],
   );
 };
 
@@ -906,7 +910,7 @@ export const getSchema = async (args: {
         meta &&
         field.valueList &&
         meta.valueLists &&
-        valueLists !== "ignore"
+        valueLists !== 'ignore'
       ) {
         const list = meta.valueLists.find((o) => o.name === field.valueList);
         const values = list?.values.map((o) => o.value) ?? [];
@@ -914,8 +918,8 @@ export const getSchema = async (args: {
           ...acc,
           {
             name: field.name,
-            type: "valueList",
-            values: valueLists === "allowEmpty" ? [...values, ""] : values,
+            type: 'valueList',
+            values: valueLists === 'allowEmpty' ? [...values, ''] : values,
           },
         ];
       }
@@ -923,19 +927,19 @@ export const getSchema = async (args: {
         ...acc,
         {
           name: field.name,
-          type: field.result === "number" ? "fmnumber" : "string",
+          type: field.result === 'number' ? 'fmnumber' : 'string',
         },
       ];
     }, [] as TSchema[]);
 
-  const { client, layout, valueLists = "ignore" } = args;
+  const { client, layout, valueLists = 'ignore' } = args;
   const meta = await client.layoutMetadata({ layout }).catch((err) => {
-    if (err instanceof FileMakerError && err.code === "105") {
+    if (err instanceof FileMakerError && err.code === '105') {
       console.log(
-        chalk.bold.red("ERROR:"),
-        "Skipping schema generation for layout:",
+        chalk.bold.red('ERROR:'),
+        'Skipping schema generation for layout:',
         chalk.bold.underline(layout),
-        "(not found)"
+        '(not found)',
       );
       return;
     }
@@ -953,10 +957,13 @@ export const getSchema = async (args: {
       values: vl.values.map((o) => o.value),
     })) ?? [];
   // remove duplicates from valueListValues
-  const valueListValuesUnique = valueListValues.reduce((acc, vl) => {
-    if (acc.find((o) => o.name === vl.name)) return acc;
-    return [...acc, vl];
-  }, [] as typeof valueListValues);
+  const valueListValuesUnique = valueListValues.reduce(
+    (acc, vl) => {
+      if (acc.find((o) => o.name === vl.name)) return acc;
+      return [...acc, vl];
+    },
+    [] as typeof valueListValues,
+  );
 
   return { schema, portalSchema, valueLists: valueListValuesUnique };
 };
@@ -964,11 +971,11 @@ export const getSchema = async (args: {
 function reimportConfigStatements(configLocation?: string) {
   if (!configLocation) return [];
 
-  const sourceFileText = fs.readFileSync(configLocation, "utf-8");
+  const sourceFileText = fs.readFileSync(configLocation, 'utf-8');
   const sourceFile = ts.createSourceFile(
-    "x.ts",
+    'x.ts',
     sourceFileText,
-    ts.ScriptTarget.Latest
+    ts.ScriptTarget.Latest,
   );
 
   const imports: ts.ImportDeclaration[] = [];
@@ -978,9 +985,9 @@ function reimportConfigStatements(configLocation?: string) {
     const shouldIgnore = ts
       .getLeadingCommentRanges(sourceFileText, child.getFullStart())
       ?.map((range) =>
-        sourceFileText.slice(range.pos, range.end).replace(" ", "")
+        sourceFileText.slice(range.pos, range.end).replace(' ', ''),
       )
-      .some((o) => o.search("codgen-ignore"));
+      .some((o) => o.search('codgen-ignore'));
 
     if (shouldIgnore) return;
 
@@ -990,15 +997,15 @@ function reimportConfigStatements(configLocation?: string) {
 }
 
 function getTokenStoreFromConfig(
-  configLocation?: string
+  configLocation?: string,
 ): ts.Expression | undefined {
   if (!configLocation) return undefined;
 
-  const sourceFileText = fs.readFileSync(configLocation, "utf-8");
+  const sourceFileText = fs.readFileSync(configLocation, 'utf-8');
   const sourceFile = ts.createSourceFile(
-    "x.ts",
+    'x.ts',
     sourceFileText,
-    ts.ScriptTarget.Latest
+    ts.ScriptTarget.Latest,
   );
 
   let result: ts.Expression | undefined = undefined;
@@ -1006,14 +1013,14 @@ function getTokenStoreFromConfig(
   sourceFile.forEachChild((child) => {
     if (!ts.isVariableStatement(child)) return;
     const testID = child.declarationList.declarations[0].name;
-    if (!ts.isIdentifier(testID) || testID.escapedText !== "config") return;
+    if (!ts.isIdentifier(testID) || testID.escapedText !== 'config') return;
 
     const init = child.declarationList.declarations[0].initializer;
 
     if (init && ts.isObjectLiteralExpression(init)) {
       const tokenStore = init.properties.find((o) => {
         if (o.name && ts.isIdentifier(o.name)) {
-          return o.name.escapedText === "tokenStore";
+          return o.name.escapedText === 'tokenStore';
         }
         return false;
       });
@@ -1023,7 +1030,7 @@ function getTokenStoreFromConfig(
           result = factory.createCallExpression(
             tokenStore.initializer,
             undefined,
-            []
+            [],
           );
         } else if (
           ts.isArrowFunction(tokenStore.initializer) &&
@@ -1041,9 +1048,9 @@ function getTokenStoreFromConfig(
   return result;
 }
 
-export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
+export type ValueListsOptions = 'strict' | 'allowEmpty' | 'ignore';
 export type GenerateSchemaOptions = {
-  envNames?: Partial<Omit<ClientObjectProps, "layout">>;
+  envNames?: Partial<Omit<ClientObjectProps, 'layout'>>;
   schemas: Array<{
     layout: string;
     schemaName: string;
@@ -1078,31 +1085,31 @@ export type GenerateSchemaOptions = {
 };
 export const generateSchemas = async (
   options: GenerateSchemaOptions,
-  configLocation?: string
+  configLocation?: string,
 ) => {
   const {
     envNames,
     schemas,
-    path = "schema",
+    path = 'schema',
     useZod = true,
     generateClient = true,
     webviewerScriptName,
   } = options;
 
   const defaultEnvNames = {
-    apiKey: "OTTO_API_KEY",
-    ottoPort: "OTTO_PORT",
-    username: "FM_USERNAME",
-    password: "FM_PASSWORD",
-    server: "FM_SERVER",
-    db: "FM_DATABASE",
+    apiKey: 'OTTO_API_KEY',
+    ottoPort: 'OTTO_PORT',
+    username: 'FM_USERNAME',
+    password: 'FM_PASSWORD',
+    server: 'FM_SERVER',
+    db: 'FM_DATABASE',
   };
 
   if (webviewerScriptName !== undefined && !!options.tokenStore)
     console.log(
       `${chalk.yellow(
-        "NOTE:"
-      )} The webviewer client does not store any tokens. The tokenStore option will be ignored.`
+        'NOTE:',
+      )} The webviewer client does not store any tokens. The tokenStore option will be ignored.`,
     );
 
   // if (configLocation) {
@@ -1119,7 +1126,7 @@ export const generateSchemas = async (
   const ottoPort =
     (envNames?.auth && isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.ottoPort ?? defaultEnvNames.ottoPort]
-      : undefined) ?? "3030";
+      : undefined) ?? '3030';
   const username =
     (envNames?.auth && !isOttoAuth(envNames.auth)
       ? process.env[envNames.auth.username ?? defaultEnvNames.username]
@@ -1129,13 +1136,13 @@ export const generateSchemas = async (
       ? process.env[envNames.auth.password ?? defaultEnvNames.password]
       : undefined) ?? process.env[defaultEnvNames.password];
 
-  const auth: ClientObjectProps["auth"] = apiKey
+  const auth: ClientObjectProps['auth'] = apiKey
     ? { apiKey: apiKey as OttoAPIKey }
-    : { username: username ?? "", password: password ?? "" };
+    : { username: username ?? '', password: password ?? '' };
 
   if (!server || !db || (!apiKey && !username)) {
-    console.log(chalk.red("ERROR: Could not get all required config values"));
-    console.log("Ensure the following environment variables are set:");
+    console.log(chalk.red('ERROR: Could not get all required config values'));
+    console.log('Ensure the following environment variables are set:');
     if (!server) console.log(`${envNames?.server ?? defaultEnvNames.server}`);
     if (!db) console.log(`${envNames?.db ?? defaultEnvNames.db}`);
     if (!apiKey)
@@ -1155,7 +1162,7 @@ export const generateSchemas = async (
             !isOttoAuth(envNames.auth) &&
             envNames.auth.password) ??
           defaultEnvNames.password
-        })`
+        })`,
       );
 
     console.log();
@@ -1192,7 +1199,7 @@ export const generateSchemas = async (
       layoutName: item.layout,
       portalSchema,
       valueLists,
-      type: useZod ? "zod" : "ts",
+      type: useZod ? 'zod' : 'ts',
       strictNumbers: item.strictNumbers,
       configLocation,
       webviewerScriptName: options.webviewerScriptName,
@@ -1200,17 +1207,17 @@ export const generateSchemas = async (
         auth: isOttoAuth(auth)
           ? {
               apiKey:
-                envNames?.auth && "apiKey" in envNames.auth
+                envNames?.auth && 'apiKey' in envNames.auth
                   ? envNames.auth.apiKey
                   : (defaultEnvNames.apiKey as OttoAPIKey),
             }
           : {
               username:
-                envNames?.auth && "username" in envNames.auth
+                envNames?.auth && 'username' in envNames.auth
                   ? envNames.auth.username
                   : defaultEnvNames.username,
               password:
-                envNames?.auth && "password" in envNames.auth
+                envNames?.auth && 'password' in envNames.auth
                   ? envNames.auth.password
                   : defaultEnvNames.password,
             },
@@ -1222,11 +1229,11 @@ export const generateSchemas = async (
     fs.writeFile(join(path, `${item.schemaName}.ts`), code);
 
     if (item.generateClient ?? generateClient) {
-      await ensureDir(join(path, "client"));
+      await ensureDir(join(path, 'client'));
       const clientCode = buildClientFile(args);
       const clientExport = exportIndexClientStatement(item.schemaName);
       clientExportsMap[item.schemaName] = clientExport;
-      fs.writeFile(join(path, "client", `${item.schemaName}.ts`), clientCode);
+      fs.writeFile(join(path, 'client', `${item.schemaName}.ts`), clientCode);
     }
   }
 
@@ -1240,10 +1247,10 @@ export const generateSchemas = async (
 
     const printer = createPrinter({ newLine: ts.NewLineKind.LineFeed });
     const file = factory.updateSourceFile(
-      createSourceFile(`source.ts`, "", ts.ScriptTarget.Latest),
-      clientExports
+      createSourceFile(`source.ts`, '', ts.ScriptTarget.Latest),
+      clientExports,
     );
     const indexCode = printer.printFile(file);
-    fs.writeFile(join(path, "client", `index.ts`), indexCode);
+    fs.writeFile(join(path, 'client', `index.ts`), indexCode);
   }
 };

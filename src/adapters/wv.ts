@@ -1,4 +1,4 @@
-import { fmFetch } from "@proofgeist/fm-webviewer-fetch";
+import { fmFetch } from '@proofgeist/fm-webviewer-fetch';
 import {
   CreateResponse,
   DeleteResponse,
@@ -6,8 +6,8 @@ import {
   LayoutMetadataResponse,
   RawFMResponse,
   UpdateResponse,
-} from "../client-types.js";
-import { FileMakerError } from "../index.js";
+} from '../client-types.js';
+import { FileMakerError } from '../index.js';
 import {
   Adapter,
   BaseRequest,
@@ -18,7 +18,7 @@ import {
   LayoutMetadataOptions,
   ListOptions,
   UpdateOptions,
-} from "./core.js";
+} from './core.js';
 
 export type ExecuteScriptOptions = BaseRequest & {
   data: { script: string; scriptParam?: string };
@@ -38,23 +38,23 @@ export class WebViewerAdapter implements Adapter {
   protected request = async (params: {
     layout: string;
     body: object;
-    action?: "read" | "metaData" | "create" | "update" | "delete" | "duplicate";
+    action?: 'read' | 'metaData' | 'create' | 'update' | 'delete' | 'duplicate';
   }): Promise<unknown> => {
-    const { action = "read", layout, body } = params;
+    const { action = 'read', layout, body } = params;
 
     const resp = await fmFetch<RawFMResponse>(this.scriptName, {
       ...body,
       layouts: layout,
       action,
-      version: "vLatest",
+      version: 'vLatest',
     });
 
-    if (resp.messages?.[0].code !== "0") {
+    if (resp.messages?.[0].code !== '0') {
       throw new FileMakerError(
-        resp?.messages?.[0].code ?? "500",
+        resp?.messages?.[0].code ?? '500',
         `Filemaker Data API failed with (${
           resp.messages?.[0].code
-        }): ${JSON.stringify(resp, null, 2)}`
+        }): ${JSON.stringify(resp, null, 2)}`,
       );
     }
 
@@ -91,7 +91,7 @@ export class WebViewerAdapter implements Adapter {
   public create = async (opts: CreateOptions): Promise<CreateResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
-      action: "create",
+      action: 'create',
       body: data,
       layout,
     });
@@ -101,7 +101,7 @@ export class WebViewerAdapter implements Adapter {
   public update = async (opts: UpdateOptions): Promise<UpdateResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
-      action: "update",
+      action: 'update',
       layout,
       body: data,
     });
@@ -111,7 +111,7 @@ export class WebViewerAdapter implements Adapter {
   public delete = async (opts: DeleteOptions): Promise<DeleteResponse> => {
     const { data, layout } = opts;
     const resp = await this.request({
-      action: "delete",
+      action: 'delete',
       body: data,
       layout,
     });
@@ -119,10 +119,10 @@ export class WebViewerAdapter implements Adapter {
   };
 
   public layoutMetadata = async (
-    opts: LayoutMetadataOptions
+    opts: LayoutMetadataOptions,
   ): Promise<LayoutMetadataResponse> => {
     return (await this.request({
-      action: "metaData",
+      action: 'metaData',
       layout: opts.layout,
       body: {},
     })) as LayoutMetadataResponse;

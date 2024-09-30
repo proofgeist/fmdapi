@@ -11,12 +11,12 @@ import { z } from "zod";
 export const ZtestLayout = z.object({
   anything: z.string(),
   recordId: z.union([z.string(), z.number()]),
-  values: z.enum(["value1", "value2", "value3", ""]).catch(""),
+  values: z.enum(['value1', 'value2', 'value3', '']).catch(''),
 });
 export type TtestLayout = z.infer<typeof ZtestLayout>;
 export const Ztest = z.object({
-  "related::related_field": z.string(),
-  "related::recordId": z.union([z.string(), z.number()]),
+  'related::related_field': z.string(),
+  'related::recordId': z.union([z.string(), z.number()]),
 });
 export type Ttest = z.infer<typeof Ztest>;
 export const ZtestLayoutPortals = z.object({

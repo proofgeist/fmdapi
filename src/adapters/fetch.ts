@@ -1,11 +1,11 @@
-import { FileMakerError } from "../index.js";
-import memoryStore from "../tokenStore/memory.js";
-import { TokenStoreDefinitions } from "../tokenStore/types.js";
+import { FileMakerError } from '../index.js';
+import memoryStore from '../tokenStore/memory.js';
+import { TokenStoreDefinitions } from '../tokenStore/types.js';
 import type {
   BaseFetchAdapterOptions,
   GetTokenArguments,
-} from "./fetch-base-types.js";
-import { BaseFetchAdapter } from "./fetch-base.js";
+} from './fetch-base-types.js';
+import { BaseFetchAdapter } from './fetch-base.js';
 
 export interface FetchAdapterOptions extends BaseFetchAdapterOptions {
   auth: {
@@ -18,8 +18,8 @@ export interface FetchAdapterOptions extends BaseFetchAdapterOptions {
 export class FetchAdapter extends BaseFetchAdapter {
   private username: string;
   private password: string;
-  private tokenStore: Omit<TokenStoreDefinitions, "getKey">;
-  private getTokenKey: Required<TokenStoreDefinitions>["getKey"];
+  private tokenStore: Omit<TokenStoreDefinitions, 'getKey'>;
+  private getTokenKey: Required<TokenStoreDefinitions>['getKey'];
 
   constructor(args: FetchAdapterOptions) {
     super(args);
@@ -29,8 +29,8 @@ export class FetchAdapter extends BaseFetchAdapter {
     this.getTokenKey =
       args.tokenStore?.getKey ?? (() => `${args.server}/${args.db}`);
 
-    if (this.username === "") throw new Error("Username is required");
-    if (this.password === "") throw new Error("Password is required");
+    if (this.username === '') throw new Error('Username is required');
+    if (this.password === '') throw new Error('Password is required');
   }
 
   protected getToken = async (args?: GetTokenArguments): Promise<string> => {
@@ -42,12 +42,12 @@ export class FetchAdapter extends BaseFetchAdapter {
 
     if (!token) {
       const res = await fetch(`${this.baseUrl}/sessions`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Basic ${Buffer.from(
-            `${this.username}:${this.password}`
-          ).toString("base64")}`,
+            `${this.username}:${this.password}`,
+          ).toString('base64')}`,
         },
       });
 
@@ -55,11 +55,11 @@ export class FetchAdapter extends BaseFetchAdapter {
         const data = await res.json();
         throw new FileMakerError(
           data.messages[0].code,
-          data.messages[0].message
+          data.messages[0].message,
         );
       }
-      token = res.headers.get("X-FM-Data-Access-Token");
-      if (!token) throw new Error("Could not get token");
+      token = res.headers.get('X-FM-Data-Access-Token');
+      if (!token) throw new Error('Could not get token');
       this.tokenStore.setToken(this.getTokenKey(), token);
     }
 
@@ -72,11 +72,11 @@ export class FetchAdapter extends BaseFetchAdapter {
     if (token) {
       await this.request({
         url: `/sessions/${token}`,
-        method: "DELETE",
+        method: 'DELETE',
         fetchOptions: {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         },
       });

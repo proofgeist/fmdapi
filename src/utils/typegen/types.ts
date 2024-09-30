@@ -1,13 +1,13 @@
-import { FetchAdapterOptions } from "../../adapters/fetch.js";
-import { OttoAdapterOptions } from "../../adapters/otto.js";
-import { TokenStoreDefinitions } from "../../tokenStore/types.js";
+import { FetchAdapterOptions } from '../../adapters/fetch.js';
+import { OttoAdapterOptions } from '../../adapters/otto.js';
+import { TokenStoreDefinitions } from '../../tokenStore/types.js';
 
 export type ClientObjectProps = OttoAdapterOptions | FetchAdapterOptions;
 
-export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
+export type ValueListsOptions = 'strict' | 'allowEmpty' | 'ignore';
 
 export type GenerateSchemaOptions = {
-  envNames?: Partial<Omit<ClientObjectProps, "layout">>;
+  envNames?: Partial<Omit<ClientObjectProps, 'layout'>>;
   schemas: Array<{
     layout: string;
     schemaName: string;
@@ -43,19 +43,19 @@ export type GenerateSchemaOptions = {
 
 export type TSchema = {
   name: string;
-  type: "string" | "fmnumber" | "valueList";
+  type: 'string' | 'fmnumber' | 'valueList';
   values?: string[];
 };
 
 export type BuildSchemaArgs = {
   schemaName: string;
   schema: Array<TSchema>;
-  type: "zod" | "ts";
+  type: 'zod' | 'ts';
   portalSchema?: { schemaName: string; schema: Array<TSchema> }[];
   valueLists?: { name: string; values: string[] }[];
-  envNames: Omit<ClientObjectProps, "layout" | "tokenStore">;
+  envNames: Omit<ClientObjectProps, 'layout' | 'tokenStore'>;
   layoutName: string;
   strictNumbers?: boolean;
   configLocation?: string;
   webviewerScriptName?: string;
-} & Pick<GenerateSchemaOptions, "tokenStore">;
+} & Pick<GenerateSchemaOptions, 'tokenStore'>;

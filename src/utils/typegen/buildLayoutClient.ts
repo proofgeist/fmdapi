@@ -1,10 +1,10 @@
-import { CodeBlockWriter, SourceFile, VariableDeclarationKind } from "ts-morph";
-import { BuildSchemaArgs } from "./types.js";
-import { isOttoAuth } from "../../adapters/otto.js";
+import { CodeBlockWriter, SourceFile, VariableDeclarationKind } from 'ts-morph';
+import { BuildSchemaArgs } from './types.js';
+import { isOttoAuth } from '../../adapters/otto.js';
 
 export function buildLayoutClient(
   sourceFile: SourceFile,
-  args: BuildSchemaArgs
+  args: BuildSchemaArgs,
 ) {
   const {
     schemaName,
@@ -15,24 +15,24 @@ export function buildLayoutClient(
     layoutName,
   } = args;
   const fmdapiImport = sourceFile.addImportDeclaration({
-    moduleSpecifier: "@proofgeist/fmdapi",
-    namedImports: ["DataApi"],
+    moduleSpecifier: '@proofgeist/fmdapi',
+    namedImports: ['DataApi'],
   });
   const hasPortals = (portalSchema ?? []).length > 0;
 
   if (webviewerScriptName) {
     sourceFile.addImportDeclaration({
       moduleSpecifier: `@proofgeist/fm-webviewer-fetch/adapter`,
-      namedImports: ["WebViewerAdapter"],
+      namedImports: ['WebViewerAdapter'],
     });
   } else if (isOttoAuth(envNames.auth)) {
     // if otto, add the OttoAdapter and OttoAPIKey imports
     fmdapiImport.addNamedImports([
-      { name: "OttoAdapter" },
-      { name: "OttoAPIKey", isTypeOnly: true },
+      { name: 'OttoAdapter' },
+      { name: 'OttoAPIKey', isTypeOnly: true },
     ]);
   } else {
-    fmdapiImport.addNamedImport({ name: "FetchAdapter" });
+    fmdapiImport.addNamedImport({ name: 'FetchAdapter' });
   }
 
   // import the types
@@ -40,12 +40,12 @@ export function buildLayoutClient(
     moduleSpecifier: `../${schemaName}`,
     namedImports: [`T${schemaName}`],
   });
-  if (type === "zod") schemaImport.addNamedImport(`Z${schemaName}`);
+  if (type === 'zod') schemaImport.addNamedImport(`Z${schemaName}`);
 
   // add portal imports
   if (hasPortals) {
     schemaImport.addNamedImport(`T${schemaName}Portals`);
-    if (type === "zod") schemaImport.addNamedImport(`Z${schemaName}Portals`);
+    if (type === 'zod') schemaImport.addNamedImport(`Z${schemaName}Portals`);
   }
 
   if (!webviewerScriptName) {
@@ -68,26 +68,26 @@ export function buildLayoutClient(
     isExported: true,
     declarations: [
       {
-        name: "client",
+        name: 'client',
         initializer: (writer) => {
           writer
             .writeLine(
               `DataApi<any, T${schemaName}${
-                hasPortals ? ", T${schemaName}Portals" : ""
-              }>({`
+                hasPortals ? ', T${schemaName}Portals' : ''
+              }>({`,
             )
             .block(() => {
               writer.writeLine(`adapter: ${buildAdapter(writer, args)},`);
               writer.writeLine(`layout: ${writer.quote(layoutName)},`);
-              if (type === "zod") {
+              if (type === 'zod') {
                 writer.writeLine(
                   `zodValidators: { fieldData: Z${schemaName}${
-                    hasPortals ? ", portalData: Z${schemaName}Portals" : ""
-                  } },`
+                    hasPortals ? ', portalData: Z${schemaName}Portals' : ''
+                  } },`,
                 );
               }
             })
-            .write(")");
+            .write(')');
         },
       },
     ],
@@ -98,11 +98,11 @@ export function buildLayoutClient(
 
 function addTypeGuardStatements(
   sourceFile: SourceFile,
-  { envVarName }: { envVarName: string }
+  { envVarName }: { envVarName: string },
 ) {
   sourceFile.addStatements((writer) => {
     writer.writeLine(
-      `if (!process.env.${envVarName}) throw new Error("Missing env var: ${envVarName}")`
+      `if (!process.env.${envVarName}) throw new Error("Missing env var: ${envVarName}")`,
     );
   });
 }
@@ -112,7 +112,7 @@ function buildAdapter(writer: CodeBlockWriter, args: BuildSchemaArgs) {
 
   if (webviewerScriptName) {
     writer.write(
-      `new WebViewerAdapter({scriptName: ${writer.quote(webviewerScriptName)})`
+      `new WebViewerAdapter({scriptName: ${writer.quote(webviewerScriptName)})`,
     );
   } else if (isOttoAuth(envNames.auth)) {
     writer
@@ -121,11 +121,11 @@ function buildAdapter(writer: CodeBlockWriter, args: BuildSchemaArgs) {
         if (!isOttoAuth(envNames.auth)) return;
         writer
           .write(
-            `auth: { apiKey: process.env.${envNames.auth.apiKey} as OttoAPIKey }`
+            `auth: { apiKey: process.env.${envNames.auth.apiKey} as OttoAPIKey }`,
           )
-          .write(",");
-        writer.write(`db: process.env.${envNames.db}`).write(",");
-        writer.write(`server: process.env.${envNames.server}`).write(",");
+          .write(',');
+        writer.write(`db: process.env.${envNames.db}`).write(',');
+        writer.write(`server: process.env.${envNames.server}`).write(',');
       })
       .write(`)`);
   } else {
@@ -139,13 +139,13 @@ function buildAdapter(writer: CodeBlockWriter, args: BuildSchemaArgs) {
             if (isOttoAuth(envNames.auth)) return;
             writer
               .write(`username: process.env.${envNames.auth.username}`)
-              .write(",");
+              .write(',');
             writer.write(`password: process.env.${envNames.auth.password}`);
           })
-          .write(",")
+          .write(',')
           .writeLine(`db: process.env.${envNames.db},`)
           .writeLine(`server: process.env.${envNames.server}`);
       })
-      .write(")");
+      .write(')');
   }
 }

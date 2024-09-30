@@ -9,8 +9,8 @@ import {
   ScriptResponse,
   ScriptsMetadataResponse,
   UpdateResponse,
-} from "../client-types.js";
-import { FileMakerError } from "../index.js";
+} from '../client-types.js';
+import { FileMakerError } from '../index.js';
 import {
   Adapter,
   BaseRequest,
@@ -21,11 +21,11 @@ import {
   LayoutMetadataOptions,
   ListOptions,
   UpdateOptions,
-} from "./core.js";
+} from './core.js';
 import {
   BaseFetchAdapterOptions,
   GetTokenArguments,
-} from "./fetch-base-types.js";
+} from './fetch-base-types.js';
 
 export type ExecuteScriptOptions = BaseRequest & {
   script: string;
@@ -43,16 +43,16 @@ export class BaseFetchAdapter implements Adapter {
     this.db = options.db;
     this.refreshToken = options.refreshToken ?? false;
     this.baseUrl = new URL(
-      `${this.server}/fmi/data/vLatest/databases/${this.db}`
+      `${this.server}/fmi/data/vLatest/databases/${this.db}`,
     );
 
-    if (this.db === "") throw new Error("Database name is required");
+    if (this.db === '') throw new Error('Database name is required');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected getToken = async (args?: GetTokenArguments): Promise<string> => {
     // method must be implemented in subclass
-    throw new Error("getToken method not implemented by Fetch Adapter");
+    throw new Error('getToken method not implemented by Fetch Adapter');
   };
 
   protected request = async (params: {
@@ -68,7 +68,7 @@ export class BaseFetchAdapter implements Adapter {
     const {
       query,
       body,
-      method = "GET",
+      method = 'GET',
       retry = false,
       fetchOptions = {},
     } = params;
@@ -76,41 +76,41 @@ export class BaseFetchAdapter implements Adapter {
 
     if (query) {
       const searchParams = new URLSearchParams(query);
-      if (query.portalRanges && typeof query.portalRanges === "object") {
+      if (query.portalRanges && typeof query.portalRanges === 'object') {
         for (const [portalName, value] of Object.entries(
-          query.portalRanges as PortalRanges
+          query.portalRanges as PortalRanges,
         )) {
           if (value) {
             value.offset &&
               value.offset > 0 &&
               searchParams.set(
                 `_offset.${portalName}`,
-                value.offset.toString()
+                value.offset.toString(),
               );
             value.limit &&
               searchParams.set(`_limit.${portalName}`, value.limit.toString());
           }
         }
       }
-      searchParams.delete("portalRanges");
+      searchParams.delete('portalRanges');
       url.search = searchParams.toString();
     }
 
-    if (body && "portalRanges" in body) {
+    if (body && 'portalRanges' in body) {
       for (const [portalName, value] of Object.entries(
-        body.portalRanges as PortalRanges
+        body.portalRanges as PortalRanges,
       )) {
         if (value) {
           value.offset &&
             value.offset > 0 &&
             url.searchParams.set(
               `_offset.${portalName}`,
-              value.offset.toString()
+              value.offset.toString(),
             );
           value.limit &&
             url.searchParams.set(
               `_limit.${portalName}`,
-              value.limit.toString()
+              value.limit.toString(),
             );
         }
       }
@@ -130,7 +130,7 @@ export class BaseFetchAdapter implements Adapter {
       headers: {
         ...fetchOptions?.headers,
         Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -148,7 +148,7 @@ export class BaseFetchAdapter implements Adapter {
 
     if (!res.ok) {
       if (
-        respData?.messages?.[0].code === "952" &&
+        respData?.messages?.[0].code === '952' &&
         !retry &&
         this.refreshToken
       ) {
@@ -156,12 +156,12 @@ export class BaseFetchAdapter implements Adapter {
         return this.request({ ...params, retry: true });
       } else {
         throw new FileMakerError(
-          respData?.messages?.[0].code ?? "500",
+          respData?.messages?.[0].code ?? '500',
           `Filemaker Data API failed with (${res.status}): ${JSON.stringify(
             respData,
             null,
-            2
-          )}`
+            2,
+          )}`,
         );
       }
     }
@@ -195,7 +195,7 @@ export class BaseFetchAdapter implements Adapter {
     const resp = await this.request({
       url: `/layouts/${layout}/_find`,
       body: data,
-      method: "POST",
+      method: 'POST',
       fetchOptions: opts.fetch,
       timeout: opts.timeout,
     });
@@ -207,7 +207,7 @@ export class BaseFetchAdapter implements Adapter {
     const resp = await this.request({
       url: `/layouts/${layout}/records`,
       body: data,
-      method: "POST",
+      method: 'POST',
       fetchOptions: opts.fetch,
       timeout: opts.timeout,
     });
@@ -222,7 +222,7 @@ export class BaseFetchAdapter implements Adapter {
     const resp = await this.request({
       url: `/layouts/${layout}/records/${recordId}`,
       body: data,
-      method: "PATCH",
+      method: 'PATCH',
       fetchOptions: opts.fetch,
       timeout: opts.timeout,
     });
@@ -233,7 +233,7 @@ export class BaseFetchAdapter implements Adapter {
     const { data, layout } = opts;
     const resp = await this.request({
       url: `/layouts/${layout}/records/${data.recordId}`,
-      method: "DELETE",
+      method: 'DELETE',
       fetchOptions: opts.fetch,
       timeout: opts.timeout,
     });
@@ -241,7 +241,7 @@ export class BaseFetchAdapter implements Adapter {
   };
 
   public layoutMetadata = async (
-    opts: LayoutMetadataOptions
+    opts: LayoutMetadataOptions,
   ): Promise<LayoutMetadataResponse> => {
     return (await this.request({
       url: `/layouts/${opts.layout}`,
@@ -257,7 +257,7 @@ export class BaseFetchAdapter implements Adapter {
     const { script, scriptParam, layout } = opts;
     const resp = await this.request({
       url: `/layouts/${layout}/script/${script}`,
-      query: scriptParam ? { "script.param": scriptParam } : undefined,
+      query: scriptParam ? { 'script.param': scriptParam } : undefined,
       fetchOptions: opts.fetch,
       timeout: opts.timeout,
     });
@@ -267,9 +267,9 @@ export class BaseFetchAdapter implements Adapter {
   /**
    * Returns a list of available layouts on the database.
    */
-  public layouts = async (opts?: Omit<BaseRequest, "layout">) => {
+  public layouts = async (opts?: Omit<BaseRequest, 'layout'>) => {
     return (await this.request({
-      url: "/layouts",
+      url: '/layouts',
       fetchOptions: opts?.fetch,
       timeout: opts?.timeout,
     })) as AllLayoutsMetadataResponse;
@@ -278,9 +278,9 @@ export class BaseFetchAdapter implements Adapter {
   /**
    * Returns a list of available scripts on the database.
    */
-  public scripts = async (opts?: Omit<BaseRequest, "layout">) => {
+  public scripts = async (opts?: Omit<BaseRequest, 'layout'>) => {
     return (await this.request({
-      url: "/scripts",
+      url: '/scripts',
       fetchOptions: opts?.fetch,
       timeout: opts?.timeout,
     })) as ScriptsMetadataResponse;
@@ -290,13 +290,13 @@ export class BaseFetchAdapter implements Adapter {
    * Set global fields for the current session
    */
   public globals = async (
-    opts: Omit<BaseRequest, "layout"> & {
+    opts: Omit<BaseRequest, 'layout'> & {
       globalFields: Record<string, string | number>;
-    }
+    },
   ) => {
     return (await this.request({
-      url: "/globals",
-      method: "PATCH",
+      url: '/globals',
+      method: 'PATCH',
       body: { globalFields: opts.globalFields },
       fetchOptions: opts?.fetch,
       timeout: opts?.timeout,

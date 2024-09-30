@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-import { program } from "commander";
-import chalk from "chalk";
-import fs from "fs-extra";
-import path from "path";
-import { config } from "dotenv";
-import { pathToFileURL, fileURLToPath } from "url";
-import { GenerateSchemaOptions } from "./utils/typegen/types.js";
-import { generateTypedClients } from "./utils/index.js";
+import { program } from 'commander';
+import chalk from 'chalk';
+import fs from 'fs-extra';
+import path from 'path';
+import { config } from 'dotenv';
+import { pathToFileURL, fileURLToPath } from 'url';
+import { GenerateSchemaOptions } from './utils/typegen/types.js';
+import { generateTypedClients } from './utils/index.js';
 
-const defaultConfigPaths = ["./fmschema.config.mjs", "./fmschema.config.js"];
+const defaultConfigPaths = ['./fmschema.config.mjs', './fmschema.config.js'];
 type ConfigArgs = {
   configLocation: string;
 };
@@ -17,21 +17,21 @@ function init({ configLocation }: ConfigArgs) {
   console.log();
   if (fs.existsSync(configLocation)) {
     console.log(
-      chalk.yellow(`⚠️ ${path.basename(configLocation)} already exists`)
+      chalk.yellow(`⚠️ ${path.basename(configLocation)} already exists`),
     );
   } else {
     const stubFile = fs.readFileSync(
       path.resolve(
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        typeof __dirname !== "undefined"
+        typeof __dirname !== 'undefined'
           ? __dirname
-          : fileURLToPath(new URL(".", import.meta.url)),
-        "../stubs/fmschema.config.stub.mjs"
+          : fileURLToPath(new URL('.', import.meta.url)),
+        '../stubs/fmschema.config.stub.mjs',
       ),
-      "utf8"
+      'utf8',
     );
-    fs.writeFileSync(configLocation, stubFile, "utf8");
+    fs.writeFileSync(configLocation, stubFile, 'utf8');
     console.log(`✅ Created config file: ${path.basename(configLocation)}`);
   }
 }
@@ -41,21 +41,21 @@ async function runCodegen({ configLocation }: ConfigArgs) {
     console.error(
       chalk.red(
         `Could not find ${path.basename(
-          configLocation
-        )} at the root of your project.`
-      )
+          configLocation,
+        )} at the root of your project.`,
+      ),
     );
     console.log();
-    console.log("run `codegen --init` to create a new config file");
+    console.log('run `codegen --init` to create a new config file');
     return process.exit(1);
   }
   await fs.access(configLocation, fs.constants.R_OK).catch(() => {
     console.error(
       chalk.red(
         `You do not have read access to ${path.basename(
-          configLocation
-        )} at the root of your project.`
-      )
+          configLocation,
+        )} at the root of your project.`,
+      ),
     );
     return process.exit(1);
   });
@@ -64,7 +64,7 @@ async function runCodegen({ configLocation }: ConfigArgs) {
 
   console.log(`🔍 Reading config from ${configLocation}`);
 
-  if (configLocation.endsWith(".mjs")) {
+  if (configLocation.endsWith('.mjs')) {
     const module: { config: GenerateSchemaOptions } = await import(
       pathToFileURL(configLocation).toString()
     );
@@ -77,9 +77,9 @@ async function runCodegen({ configLocation }: ConfigArgs) {
     console.error(
       chalk.red(
         `Error reading the config object from ${path.basename(
-          configLocation
-        )}. Are you sure you have a "config" object exported?`
-      )
+          configLocation,
+        )}. Are you sure you have a "config" object exported?`,
+      ),
     );
   }
 
@@ -91,20 +91,20 @@ async function runCodegen({ configLocation }: ConfigArgs) {
 }
 
 program
-  .option("--init", "Add the configuration file to your project")
-  .option("--config <filename>", "optional config file name")
-  .option("--env-path <path>", "optional path to your .env file", ".env.local")
+  .option('--init', 'Add the configuration file to your project')
+  .option('--config <filename>', 'optional config file name')
+  .option('--env-path <path>', 'optional path to your .env file', '.env.local')
   .option(
-    "--skip-env-check",
-    "Ignore loading environment variables from a file.",
-    false
+    '--skip-env-check',
+    'Ignore loading environment variables from a file.',
+    false,
   )
   .action(async (options) => {
     // check if options.config resolves to a file
 
     const configPath = getConfigPath(options.config);
     const configLocation = path.toNamespacedPath(
-      path.resolve(configPath ?? defaultConfigPaths[0])
+      path.resolve(configPath ?? defaultConfigPaths[0]),
     );
     if (options.init) return init({ configLocation });
 
@@ -113,8 +113,8 @@ program
       if (envRes.error)
         return console.log(
           chalk.red(
-            `Could not resolve your environment variables.\n${envRes.error.message}\n`
-          )
+            `Could not resolve your environment variables.\n${envRes.error.message}\n`,
+          ),
         );
     }
 

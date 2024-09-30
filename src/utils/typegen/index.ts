@@ -1,24 +1,24 @@
-import { Project, ScriptKind } from "ts-morph";
+import { Project, ScriptKind } from 'ts-morph';
 import {
   BuildSchemaArgs,
   ClientObjectProps,
   GenerateSchemaOptions,
-} from "./types.js";
-import chalk from "chalk";
-import { isOttoAuth, OttoAdapter, OttoAPIKey } from "../../adapters/otto.js";
-import DataApi from "../../client.js";
-import { FetchAdapter } from "../../adapters/fetch.js";
-import { memoryStore } from "../../tokenStore/index.js";
-import fs from "fs-extra";
-import path from "path";
-import { commentHeader } from "./constants.js";
-import { buildSchema } from "./buildSchema.js";
-import { getLayoutMetadata } from "./getLayoutMetadata.js";
-import { buildLayoutClient } from "./buildLayoutClient.js";
+} from './types.js';
+import chalk from 'chalk';
+import { isOttoAuth, OttoAdapter, OttoAPIKey } from '../../adapters/otto.js';
+import DataApi from '../../client.js';
+import { FetchAdapter } from '../../adapters/fetch.js';
+import { memoryStore } from '../../tokenStore/index.js';
+import fs from 'fs-extra';
+import path from 'path';
+import { commentHeader } from './constants.js';
+import { buildSchema } from './buildSchema.js';
+import { getLayoutMetadata } from './getLayoutMetadata.js';
+import { buildLayoutClient } from './buildLayoutClient.js';
 
 export const generateTypedClients = async (
   options: GenerateSchemaOptions,
-  configLocation?: string
+  configLocation?: string,
 ) => {
   const {
     envNames,
@@ -30,15 +30,15 @@ export const generateTypedClients = async (
     ...rest
   } = options;
 
-  const rootDir = rest.path ?? "schema";
+  const rootDir = rest.path ?? 'schema';
 
   const defaultEnvNames = {
-    apiKey: "OTTO_API_KEY",
-    ottoPort: "OTTO_PORT",
-    username: "FM_USERNAME",
-    password: "FM_PASSWORD",
-    server: "FM_SERVER",
-    db: "FM_DATABASE",
+    apiKey: 'OTTO_API_KEY',
+    ottoPort: 'OTTO_PORT',
+    username: 'FM_USERNAME',
+    password: 'FM_PASSWORD',
+    server: 'FM_SERVER',
+    db: 'FM_DATABASE',
   };
 
   const project = new Project({});
@@ -46,8 +46,8 @@ export const generateTypedClients = async (
   if (webviewerScriptName !== undefined && !!options.tokenStore)
     console.log(
       `${chalk.yellow(
-        "NOTE:"
-      )} The webviewer client does not store any tokens. The tokenStore option will be ignored.`
+        'NOTE:',
+      )} The webviewer client does not store any tokens. The tokenStore option will be ignored.`,
     );
 
   // if (configLocation) {
@@ -70,13 +70,13 @@ export const generateTypedClients = async (
       ? process.env[envNames.auth.password ?? defaultEnvNames.password]
       : undefined) ?? process.env[defaultEnvNames.password];
 
-  const auth: ClientObjectProps["auth"] = apiKey
+  const auth: ClientObjectProps['auth'] = apiKey
     ? { apiKey: apiKey as OttoAPIKey }
-    : { username: username ?? "", password: password ?? "" };
+    : { username: username ?? '', password: password ?? '' };
 
   if (!server || !db || (!apiKey && !username)) {
-    console.log(chalk.red("ERROR: Could not get all required config values"));
-    console.log("Ensure the following environment variables are set:");
+    console.log(chalk.red('ERROR: Could not get all required config values'));
+    console.log('Ensure the following environment variables are set:');
     if (!server) console.log(`${envNames?.server ?? defaultEnvNames.server}`);
     if (!db) console.log(`${envNames?.db ?? defaultEnvNames.db}`);
     if (!apiKey)
@@ -96,7 +96,7 @@ export const generateTypedClients = async (
             !isOttoAuth(envNames.auth) &&
             envNames.auth.password) ??
           defaultEnvNames.password
-        })`
+        })`,
       );
 
     console.log();
@@ -132,7 +132,7 @@ export const generateTypedClients = async (
       layoutName: item.layout,
       portalSchema,
       valueLists,
-      type: useZod ? "zod" : "ts",
+      type: useZod ? 'zod' : 'ts',
       strictNumbers: item.strictNumbers,
       configLocation,
       webviewerScriptName: options.webviewerScriptName,
@@ -140,17 +140,17 @@ export const generateTypedClients = async (
         auth: isOttoAuth(auth)
           ? {
               apiKey:
-                envNames?.auth && "apiKey" in envNames.auth
+                envNames?.auth && 'apiKey' in envNames.auth
                   ? envNames.auth.apiKey
                   : (defaultEnvNames.apiKey as OttoAPIKey),
             }
           : {
               username:
-                envNames?.auth && "username" in envNames.auth
+                envNames?.auth && 'username' in envNames.auth
                   ? envNames.auth.username
                   : defaultEnvNames.username,
               password:
-                envNames?.auth && "password" in envNames.auth
+                envNames?.auth && 'password' in envNames.auth
                   ? envNames.auth.password
                   : defaultEnvNames.password,
             },
@@ -164,28 +164,28 @@ export const generateTypedClients = async (
       {
         overwrite: true,
         scriptKind: ScriptKind.TS,
-      }
+      },
     );
     buildSchema(schemaFile, args);
 
     if (item.generateClient ?? generateClient) {
-      await fs.ensureDir(path.join(rootDir, "client"));
+      await fs.ensureDir(path.join(rootDir, 'client'));
       const layoutClientFile = project.createSourceFile(
-        path.join(rootDir, "client", `${item.schemaName}.ts`),
+        path.join(rootDir, 'client', `${item.schemaName}.ts`),
         { leadingTrivia: commentHeader },
         {
           overwrite: true,
           scriptKind: ScriptKind.TS,
-        }
+        },
       );
       buildLayoutClient(layoutClientFile, args);
 
-      const clientIndexFilePath = path.join(rootDir, "client", "index.ts");
+      const clientIndexFilePath = path.join(rootDir, 'client', 'index.ts');
 
       fs.ensureFile(clientIndexFilePath);
       const clientIndexFile = project.addSourceFileAtPath(clientIndexFilePath);
       clientIndexFile.addExportDeclaration({
-        namedExports: [{ name: "client", alias: `${item.schemaName}Layout` }],
+        namedExports: [{ name: 'client', alias: `${item.schemaName}Layout` }],
         moduleSpecifier: `./${item.schemaName}`,
       });
     }

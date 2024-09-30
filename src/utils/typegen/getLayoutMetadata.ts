@@ -1,8 +1,8 @@
-import { type DataApi } from "../../client.js";
-import { TSchema, ValueListsOptions } from "./types.js";
-import { F } from "ts-toolbelt";
-import chalk from "chalk";
-import { FieldMetaData, FileMakerError } from "../../client-types.js";
+import { type DataApi } from '../../client.js';
+import { TSchema, ValueListsOptions } from './types.js';
+import { F } from 'ts-toolbelt';
+import chalk from 'chalk';
+import { FieldMetaData, FileMakerError } from '../../client-types.js';
 
 /**
  * Calls the FileMaker Data API to get the layout metadata and returns a schema
@@ -19,7 +19,7 @@ export const getLayoutMetadata = async (args: {
         meta &&
         field.valueList &&
         meta.valueLists &&
-        valueLists !== "ignore"
+        valueLists !== 'ignore'
       ) {
         const list = meta.valueLists.find((o) => o.name === field.valueList);
         const values = list?.values.map((o) => o.value) ?? [];
@@ -27,8 +27,8 @@ export const getLayoutMetadata = async (args: {
           ...acc,
           {
             name: field.name,
-            type: "valueList",
-            values: valueLists === "allowEmpty" ? [...values, ""] : values,
+            type: 'valueList',
+            values: valueLists === 'allowEmpty' ? [...values, ''] : values,
           },
         ];
       }
@@ -36,19 +36,19 @@ export const getLayoutMetadata = async (args: {
         ...acc,
         {
           name: field.name,
-          type: field.result === "number" ? "fmnumber" : "string",
+          type: field.result === 'number' ? 'fmnumber' : 'string',
         },
       ];
     }, [] as TSchema[]);
 
-  const { client, layout, valueLists = "ignore" } = args;
+  const { client, layout, valueLists = 'ignore' } = args;
   const meta = await client.layoutMetadata({ layout }).catch((err) => {
-    if (err instanceof FileMakerError && err.code === "105") {
+    if (err instanceof FileMakerError && err.code === '105') {
       console.log(
-        chalk.bold.red("ERROR:"),
-        "Skipping schema generation for layout:",
+        chalk.bold.red('ERROR:'),
+        'Skipping schema generation for layout:',
         chalk.bold.underline(layout),
-        "(not found)"
+        '(not found)',
       );
       return;
     }
@@ -66,10 +66,13 @@ export const getLayoutMetadata = async (args: {
       values: vl.values.map((o) => o.value),
     })) ?? [];
   // remove duplicates from valueListValues
-  const valueListValuesUnique = valueListValues.reduce((acc, vl) => {
-    if (acc.find((o) => o.name === vl.name)) return acc;
-    return [...acc, vl];
-  }, [] as typeof valueListValues);
+  const valueListValuesUnique = valueListValues.reduce(
+    (acc, vl) => {
+      if (acc.find((o) => o.name === vl.name)) return acc;
+      return [...acc, vl];
+    },
+    [] as typeof valueListValues,
+  );
 
   return { schema, portalSchema, valueLists: valueListValuesUnique };
 };
