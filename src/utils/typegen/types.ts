@@ -27,7 +27,15 @@ export type GenerateSchemaOptions = {
    * @default true
    */
   generateClient?: boolean;
+  /**
+   * The path to the directory where the generated files will be saved.
+   * @default `schema`
+   */
   path?: string;
+  /**
+   * If `true`, the generated files will also generate a `Zod` schema and validate the data returned from FileMaker using the zod schemas to give you runtime checks for your data.
+   * @default true
+   */
   useZod?: boolean;
   tokenStore?: () => TokenStoreDefinitions;
   /**
@@ -39,6 +47,12 @@ export type GenerateSchemaOptions = {
    * @link https://fm-webviewer-fetch.proofgeist.com/
    */
   webviewerScriptName?: string;
+
+  /**
+   * The suffix to add at the end of the generated layout-specific Data API client name.
+   * @default `Client`
+   */
+  clientSuffix?: string;
 };
 
 export type TSchema = {

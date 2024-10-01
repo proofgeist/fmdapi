@@ -8,6 +8,7 @@ export const commentHeader = `
 // @generated
 // prettier-ignore
 /* eslint-disable */
+
 `;
 
 export const varname = (name: string) => name.replace(/[^a-zA-Z0-9_]/g, "");

@@ -8,7 +8,7 @@ dotenv.config({ path: ".env.local" });
 export const config: GenerateSchemaOptions = {
   schemas: [
     // add your layouts and name schemas here
-    { layout: "layout", schemaName: "testLayout" },
+    { layout: "layout", schemaName: "testLayout", valueLists: "allowEmpty" },
     { layout: "Weird Portals", schemaName: "weirdPortals" },
 
     // repeat as needed for each schema...
@@ -16,6 +16,7 @@ export const config: GenerateSchemaOptions = {
   ],
   path: "./test/typegen",
   // webviewerScriptName: "webviewer",
+  clientSuffix: "Layout",
   // tokenStore: () => upstashTokenStore({ token: "", url: "" }),
 };
 

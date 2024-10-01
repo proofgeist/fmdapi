@@ -19,6 +19,7 @@ import { commentHeader } from "./constants.js";
 import { buildSchema } from "./buildSchema.js";
 import { getLayoutMetadata } from "./getLayoutMetadata.js";
 import { buildLayoutClient } from "./buildLayoutClient.js";
+import { SemicolonPreference } from "typescript";
 
 export const generateTypedClients = async (
   options: GenerateSchemaOptions,
@@ -27,7 +28,7 @@ export const generateTypedClients = async (
   const {
     envNames,
     schemas,
-
+    clientSuffix = "Client",
     useZod = true,
     generateClient = true,
     webviewerScriptName,
@@ -120,6 +121,8 @@ export const generateTypedClients = async (
         }),
       });
   await fs.ensureDir(rootDir);
+  const clientIndexFilePath = path.join(rootDir, "client", "index.ts");
+  fs.rmSync(clientIndexFilePath, { force: true }); // ensure clean slate for this file
 
   for await (const item of schemas) {
     const result = await getLayoutMetadata({
@@ -184,16 +187,24 @@ export const generateTypedClients = async (
       );
       buildLayoutClient(layoutClientFile, args);
 
-      const clientIndexFilePath = path.join(rootDir, "client", "index.ts");
-
-      fs.ensureFile(clientIndexFilePath);
+      await fs.ensureFile(clientIndexFilePath);
       const clientIndexFile = project.addSourceFileAtPath(clientIndexFilePath);
       clientIndexFile.addExportDeclaration({
-        namedExports: [{ name: "client", alias: `${item.schemaName}Layout` }],
+        namedExports: [
+          { name: "client", alias: `${item.schemaName}${clientSuffix}` },
+        ],
         moduleSpecifier: `./${item.schemaName}`,
       });
     }
   }
+
+  // format all files
+  project.getSourceFiles().forEach((file) => {
+    file.formatText({
+      baseIndentSize: 2,
+      semicolons: SemicolonPreference.Insert,
+    });
+  });
 
   await project.save();
 };

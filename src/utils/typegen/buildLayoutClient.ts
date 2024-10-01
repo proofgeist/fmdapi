@@ -6,7 +6,6 @@ export function buildLayoutClient(
   sourceFile: SourceFile,
   args: BuildSchemaArgs,
 ) {
-  console.log("buildLayoutClient", args);
   const {
     schemaName,
     portalSchema,
@@ -20,7 +19,6 @@ export function buildLayoutClient(
     namedImports: ["DataApi"],
   });
   const hasPortals = (portalSchema ?? []).length > 0;
-
   if (webviewerScriptName) {
     sourceFile.addImportDeclaration({
       moduleSpecifier: `@proofgeist/fm-webviewer-fetch/adapter`,
@@ -72,18 +70,20 @@ export function buildLayoutClient(
         name: "client",
         initializer: (writer) => {
           writer
-            .writeLine(
+            .write(
               `DataApi<any, T${schemaName}${
-                hasPortals ? ", T${schemaName}Portals" : ""
-              }>({`,
+                hasPortals ? `, T${schemaName}Portals` : ""
+              }>(`,
             )
-            .block(() => {
-              writer.writeLine(`adapter: ${buildAdapter(writer, args)},`);
-              writer.writeLine(`layout: ${writer.quote(layoutName)},`);
+            .inlineBlock(() => {
+              writer.write(`adapter: `);
+              buildAdapter(writer, args);
+              writer.write(",").newLine();
+              writer.write(`layout: `).quote(layoutName).write(`,`).newLine();
               if (type === "zod") {
                 writer.writeLine(
                   `zodValidators: { fieldData: Z${schemaName}${
-                    hasPortals ? ", portalData: Z${schemaName}Portals" : ""
+                    hasPortals ? `, portalData: Z${schemaName}Portals` : ""
                   } },`,
                 );
               }
@@ -108,39 +108,44 @@ function addTypeGuardStatements(
   });
 }
 
-function buildAdapter(writer: CodeBlockWriter, args: BuildSchemaArgs) {
+function buildAdapter(writer: CodeBlockWriter, args: BuildSchemaArgs): string {
   const { envNames, tokenStore, webviewerScriptName } = args;
 
   if (webviewerScriptName) {
-    writer.write(
-      `new WebViewerAdapter({scriptName: ${writer.quote(webviewerScriptName)})`,
-    );
+    writer.write(`new WebViewerAdapter({scriptName: `);
+    writer.quote(webviewerScriptName);
+    writer.write("})");
   } else if (isOttoAuth(envNames.auth)) {
     writer
       .write(`new OttoAdapter(`)
-      .block(() => {
+      .inlineBlock(() => {
         if (!isOttoAuth(envNames.auth)) return;
         writer
           .write(
             `auth: { apiKey: process.env.${envNames.auth.apiKey} as OttoAPIKey }`,
           )
-          .write(",");
-        writer.write(`db: process.env.${envNames.db}`).write(",");
-        writer.write(`server: process.env.${envNames.server}`).write(",");
+          .write(",")
+          .newLine();
+        writer.write(`db: process.env.${envNames.db}`).write(",").newLine();
+        writer
+          .write(`server: process.env.${envNames.server}`)
+          .write(",")
+          .newLine();
       })
       .write(`)`);
   } else {
     writer
       .write(`new FetchAdapter({`)
-      .block(() => {
+      .inlineBlock(() => {
         if (isOttoAuth(envNames.auth)) return;
         writer
           .writeLine(`auth:`)
-          .block(() => {
+          .inlineBlock(() => {
             if (isOttoAuth(envNames.auth)) return;
             writer
               .write(`username: process.env.${envNames.auth.username}`)
-              .write(",");
+              .write(",")
+              .newLine();
             writer.write(`password: process.env.${envNames.auth.password}`);
           })
           .write(",")
@@ -149,4 +154,6 @@ function buildAdapter(writer: CodeBlockWriter, args: BuildSchemaArgs) {
       })
       .write(")");
   }
+
+  return writer.toString();
 }
