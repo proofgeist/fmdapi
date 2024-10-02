@@ -30,7 +30,6 @@ export const generateTypedClients = async (
     clientSuffix = "Client",
     useZod = true,
     generateClient = true,
-    webviewerScriptName,
     ...rest
   } = options;
 
@@ -47,17 +46,12 @@ export const generateTypedClients = async (
 
   const project = new Project({});
 
-  if (webviewerScriptName !== undefined && !!options.tokenStore)
+  if (options.tokenStore)
     console.log(
       `${chalk.yellow(
         "NOTE:",
-      )} The webviewer client does not store any tokens. The tokenStore option will be ignored.`,
+      )} The tokenStore option is deprecated and will NOT be included in the generated client.`,
     );
-
-  // if (configLocation) {
-  //   getTokenStoreFromConfig(configLocation);
-  //   return;
-  // }
 
   const server = process.env[envNames?.server ?? defaultEnvNames.server];
   const db = process.env[envNames?.db ?? defaultEnvNames.db];
