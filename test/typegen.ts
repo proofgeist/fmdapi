@@ -1,4 +1,3 @@
-// codegen-ignore-import
 import { generateTypedClients } from "../src/utils/typegen/index.js";
 import type { GenerateSchemaOptions } from "../src/utils/typegen/types.js";
 
@@ -17,7 +16,6 @@ export const config: GenerateSchemaOptions = {
   path: "./test/typegen",
   // webviewerScriptName: "webviewer",
   clientSuffix: "Layout",
-  // tokenStore: () => upstashTokenStore({ token: "", url: "" }),
 };
 
 generateTypedClients(config);

@@ -19,7 +19,6 @@ import { commentHeader } from "./constants.js";
 import { buildSchema } from "./buildSchema.js";
 import { getLayoutMetadata } from "./getLayoutMetadata.js";
 import { buildLayoutClient } from "./buildLayoutClient.js";
-import { SemicolonPreference } from "typescript";
 
 export const generateTypedClients = async (
   options: GenerateSchemaOptions,
@@ -202,7 +201,6 @@ export const generateTypedClients = async (
   project.getSourceFiles().forEach((file) => {
     file.formatText({
       baseIndentSize: 2,
-      semicolons: SemicolonPreference.Insert,
     });
   });
 

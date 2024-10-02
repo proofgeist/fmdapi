@@ -1,5 +1,35 @@
 # @proofgeist/fmdapi
 
+## 4.1.0-beta.5
+
+### Patch Changes
+
+- remove typscript depenency
+
+## 4.1.0-beta.4
+
+### Patch Changes
+
+- remove extra binary
+
+## 4.1.0-beta.3
+
+### Patch Changes
+
+- portal import type
+
+## 4.1.0-beta.2
+
+### Patch Changes
+
+- fix type import
+
+## 4.1.0-beta.1
+
+### Patch Changes
+
+- typegen: fix type imports and fetch adapter extra {
+
 ## 4.1.0-beta.0
 
 ### Minor Changes

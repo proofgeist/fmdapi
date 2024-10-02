@@ -37,13 +37,16 @@ export function buildLayoutClient(
   // import the types
   const schemaImport = sourceFile.addImportDeclaration({
     moduleSpecifier: `../${schemaName}`,
-    namedImports: [`T${schemaName}`],
+    namedImports: [{ name: `T${schemaName}`, isTypeOnly: true }],
   });
   if (type === "zod") schemaImport.addNamedImport(`Z${schemaName}`);
 
   // add portal imports
   if (hasPortals) {
-    schemaImport.addNamedImport(`T${schemaName}Portals`);
+    schemaImport.addNamedImport({
+      name: `T${schemaName}Portals`,
+      isTypeOnly: true,
+    });
     if (type === "zod") schemaImport.addNamedImport(`Z${schemaName}Portals`);
   }
 
@@ -109,7 +112,7 @@ function addTypeGuardStatements(
 }
 
 function buildAdapter(writer: CodeBlockWriter, args: BuildSchemaArgs): string {
-  const { envNames, tokenStore, webviewerScriptName } = args;
+  const { envNames, webviewerScriptName } = args;
 
   if (webviewerScriptName) {
     writer.write(`new WebViewerAdapter({scriptName: `);
@@ -135,7 +138,7 @@ function buildAdapter(writer: CodeBlockWriter, args: BuildSchemaArgs): string {
       .write(`)`);
   } else {
     writer
-      .write(`new FetchAdapter({`)
+      .write(`new FetchAdapter(`)
       .inlineBlock(() => {
         if (isOttoAuth(envNames.auth)) return;
         writer

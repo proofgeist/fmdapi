@@ -4,5 +4,12 @@
   "initialVersions": {
     "@proofgeist/fmdapi": "4.0.2"
   },
-  "changesets": ["purple-boxes-breathe"]
+  "changesets": [
+    "chilly-sheep-visit",
+    "cool-frogs-notice",
+    "eighty-bottles-rest",
+    "fast-shirts-grow",
+    "purple-boxes-breathe",
+    "six-items-judge"
+  ]
 }

@@ -37,6 +37,9 @@ export type GenerateSchemaOptions = {
    * @default true
    */
   useZod?: boolean;
+  /**
+   * @deprecated This function was only relevant for the FetchAdapter and will not be included in your generated layout client anyway.
+   */
   tokenStore?: () => TokenStoreDefinitions;
   /**
    * If set, the generated files will include the webviewer client instead of the standard REST API client.
