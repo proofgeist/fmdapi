@@ -1,4 +1,3 @@
-import { removeFMTableNames } from "./utils.js";
-import { generateTypedClients } from "./typegen/index.js";
-
-export { removeFMTableNames, generateTypedClients };
+export { removeFMTableNames } from "./utils.js";
+export { generateTypedClients } from "./typegen/index.js";
+export { generateSchemas } from "./codegen.js";

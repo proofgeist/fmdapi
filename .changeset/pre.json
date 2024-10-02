@@ -1,0 +1,8 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@proofgeist/fmdapi": "4.0.2"
+  },
+  "changesets": ["purple-boxes-breathe"]
+}

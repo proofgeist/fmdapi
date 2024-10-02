@@ -1,6 +1,6 @@
 {
   "name": "@proofgeist/fmdapi",
-  "version": "4.0.2",
+  "version": "4.1.0-beta.0",
   "description": "FileMaker Data API client",
   "main": "dist/index.js",
   "repository": "git@github.com:proofgeist/fm-dapi.git",
@@ -10,17 +10,19 @@
   "type": "module",
   "types": "dist/index.d.ts",
   "bin": {
-    "typegen": "dist/cli.js"
+    "typegen": "dist/cli.js",
+    "codegen": "dist/cli.js"
   },
   "exports": {
     ".": "./dist/index.js",
     "./utils/*": "./dist/utils/*",
+    "./typegen/*": "./dist/utils/typegen/*",
     "./tokenStore/*": "./dist/tokenStore/*",
     "./dist/*": "./dist/*",
     "./adapters/*": "./dist/adapters/*"
   },
   "scripts": {
-    "prepublishOnly": "pnpm ci",
+    "prepublishOnly": "pnpm run ci",
     "build": "tsc",
     "check-format": "prettier --check .",
     "format": "prettier --write .",
@@ -51,10 +53,10 @@
     "@types/node": "^20.16.10",
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.62.0",
-    "@upstash/redis": "^1.34.0",
+    "@upstash/redis": "^1.34.1",
     "esbuild-runner": "^2.2.2",
     "eslint": "^8.57.1",
-    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react": "^7.37.1",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.1",
     "typescript": "^5.6.2",

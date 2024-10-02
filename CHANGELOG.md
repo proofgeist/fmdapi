@@ -1,5 +1,13 @@
 # @proofgeist/fmdapi
 
+## 4.1.0-beta.0
+
+### Minor Changes
+
+- ca692ee: Rewrote codegen command to use ts-morph instead of typescript. This allows for the script to be run directly from npm, and increses maintainability.
+  Added a new alias `typegen` command. Same as `codegen`
+  Update tests to vitest
+
 ## 4.0.2
 
 ### Patch Changes
