@@ -56,6 +56,11 @@ export type GenerateSchemaOptions = {
    * @default `Client`
    */
   clientSuffix?: string;
+  /**
+   * If `true`, the directory specified in `path` will be cleared before generating the new files, ensuring that old schema files are removed from your project.
+   * @default false
+   */
+  clearOldFiles?: boolean;
 };
 
 export type TSchema = {

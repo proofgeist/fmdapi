@@ -30,6 +30,7 @@ export const generateTypedClients = async (
     clientSuffix = "Client",
     useZod = true,
     generateClient = true,
+    clearOldFiles = false,
     ...rest
   } = options;
 
@@ -114,6 +115,9 @@ export const generateTypedClients = async (
         }),
       });
   await fs.ensureDir(rootDir);
+  if (clearOldFiles) {
+    fs.emptyDirSync(rootDir);
+  }
   const clientIndexFilePath = path.join(rootDir, "client", "index.ts");
   fs.rmSync(clientIndexFilePath, { force: true }); // ensure clean slate for this file
 

@@ -12,5 +12,6 @@ const config = {
   ],
   // change this value to generate the files in a different directory
   path: "schema",
+  clearOldFiles: true,
 };
 module.exports = config;

@@ -25,6 +25,7 @@
     "build": "tsc",
     "check-format": "prettier --check .",
     "format": "prettier --write .",
+    "dev": "tsc --watch",
     "ci": "pnpm build && pnpm check-format && pnpm check-exports && pnpm test",
     "check-exports": "attw --pack . --ignore-rules=cjs-resolves-to-esm",
     "test": "op inject -i op.env -o .env.local -f && vitest run",
