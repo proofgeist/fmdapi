@@ -83,7 +83,7 @@ async function runCodegen({ configLocation }: ConfigArgs) {
     );
   }
 
-  await generateTypedClients(config, configLocation).catch((err: unknown) => {
+  await generateTypedClients(config).catch((err: unknown) => {
     console.error(err);
     return process.exit(1);
   });

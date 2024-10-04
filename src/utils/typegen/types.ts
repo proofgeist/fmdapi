@@ -6,7 +6,7 @@ export type ClientObjectProps = OttoAdapterOptions | FetchAdapterOptions;
 
 export type ValueListsOptions = "strict" | "allowEmpty" | "ignore";
 
-export type GenerateSchemaOptions = {
+export type GenerateSchemaOptionsSingle = {
   envNames?: Partial<Omit<ClientObjectProps, "layout">>;
   schemas: Array<{
     layout: string;
@@ -63,6 +63,10 @@ export type GenerateSchemaOptions = {
   clearOldFiles?: boolean;
 };
 
+export type GenerateSchemaOptions =
+  | GenerateSchemaOptionsSingle
+  | GenerateSchemaOptionsSingle[];
+
 export type TSchema = {
   name: string;
   type: "string" | "fmnumber" | "valueList";
@@ -78,6 +82,5 @@ export type BuildSchemaArgs = {
   envNames: Omit<ClientObjectProps, "layout" | "tokenStore">;
   layoutName: string;
   strictNumbers?: boolean;
-  configLocation?: string;
   webviewerScriptName?: string;
-} & Pick<GenerateSchemaOptions, "tokenStore">;
+} & Pick<GenerateSchemaOptionsSingle, "tokenStore">;

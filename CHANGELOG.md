@@ -1,5 +1,12 @@
 # @proofgeist/fmdapi
 
+## 4.1.1
+
+### Patch Changes
+
+- Allow array of config to support multiple servers in a single config file
+- f5751fb: add new option to clean out old files prior to running codegen, so removed schemas don't remain in your codebase
+
 ## 4.1.0
 
 ### Minor Changes

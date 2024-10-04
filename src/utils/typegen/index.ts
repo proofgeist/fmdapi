@@ -3,6 +3,7 @@ import {
   type BuildSchemaArgs,
   type ClientObjectProps,
   type GenerateSchemaOptions,
+  type GenerateSchemaOptionsSingle,
 } from "./types.js";
 import chalk from "chalk";
 import {
@@ -20,9 +21,18 @@ import { buildSchema } from "./buildSchema.js";
 import { getLayoutMetadata } from "./getLayoutMetadata.js";
 import { buildLayoutClient } from "./buildLayoutClient.js";
 
-export const generateTypedClients = async (
-  options: GenerateSchemaOptions,
-  configLocation?: string,
+export const generateTypedClients = async (options: GenerateSchemaOptions) => {
+  if (Array.isArray(options)) {
+    for (const option of options) {
+      await generateTypedClientsSingle(option);
+    }
+  } else {
+    await generateTypedClientsSingle(options);
+  }
+};
+
+const generateTypedClientsSingle = async (
+  options: GenerateSchemaOptionsSingle,
 ) => {
   const {
     envNames,
@@ -138,7 +148,6 @@ export const generateTypedClients = async (
       valueLists,
       type: useZod ? "zod" : "ts",
       strictNumbers: item.strictNumbers,
-      configLocation,
       webviewerScriptName: options.webviewerScriptName,
       envNames: {
         auth: isOttoAuth(auth)
