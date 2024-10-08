@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.1.2
+
+### Patch Changes
+
+- Added console warning when not using pagination params and not all data is returned
+
 ## 4.1.1
 
 ### Patch Changes

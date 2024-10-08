@@ -127,6 +127,16 @@ function DataApi<
       timeout,
     });
 
+    if (result.dataInfo.foundCount > result.dataInfo.returnedCount) {
+      // more records found than returned
+      if (args?.limit === undefined && args?.offset === undefined) {
+        // and the user didn't specify a limit or offset, so we should warn them
+        console.warn(
+          `🚨 @proofgeist/fmdapi: Loaded only ${result.dataInfo.returnedCount} of the ${result.dataInfo.foundCount} records from your "${layout}" layout. Use the "listAll" method to automatically paginate through all records, or specify a "limit" and "offset" to handle pagination yourself.`,
+        );
+      }
+    }
+
     if (zodTypes) ZGetResponse(zodTypes).parse(result);
     return result as GetResponse<T, U>;
   }
@@ -306,6 +316,16 @@ function DataApi<
         return { data: [] };
       throw e;
     })) as GetResponse<T, U>;
+
+    if (data.dataInfo.foundCount > data.dataInfo.returnedCount) {
+      // more records found than returned
+      if (args?.limit === undefined && args?.offset === undefined) {
+        console.warn(
+          `🚨 @proofgeistfmdapi: Loaded only ${data.dataInfo.returnedCount} of the ${data.dataInfo.foundCount} records from your "${layout}" layout. Use the "findAll" method to automatically paginate through all records, or specify a "limit" and "offset" to handle pagination yourself.`,
+        );
+      }
+    }
+
     if (zodTypes && ignoreEmptyResult && data.data.length !== 0) {
       // only parse this if we have data. Ignoring empty result won't match this anyway
       ZGetResponse(zodTypes).parse(data);
