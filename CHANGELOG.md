@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.1.3
+
+### Patch Changes
+
+- 3ec78d9: Fix `refreshToken` value in the FetchAdapter
+
 ## 4.1.2
 
 ### Patch Changes
