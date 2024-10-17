@@ -22,7 +22,7 @@ export class FetchAdapter extends BaseFetchAdapter {
   private getTokenKey: Required<TokenStoreDefinitions>["getKey"];
 
   constructor(args: FetchAdapterOptions) {
-    super(args);
+    super({ ...args, refreshToken: true });
     this.username = args.auth.username;
     this.password = args.auth.password;
     this.tokenStore = args.tokenStore ?? memoryStore();
