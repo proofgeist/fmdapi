@@ -75,7 +75,8 @@ export class BaseFetchAdapter implements Adapter {
     const url = new URL(`${this.baseUrl}${params.url}`);
 
     if (query) {
-      const searchParams = new URLSearchParams(query);
+      const { _sort, ...rest } = query;
+      const searchParams = new URLSearchParams(rest);
       if (query.portalRanges && typeof query.portalRanges === "object") {
         for (const [portalName, value] of Object.entries(
           query.portalRanges as PortalRanges,
@@ -91,6 +92,9 @@ export class BaseFetchAdapter implements Adapter {
               searchParams.set(`_limit.${portalName}`, value.limit.toString());
           }
         }
+      }
+      if (_sort) {
+        searchParams.set("_sort", JSON.stringify(_sort));
       }
       searchParams.delete("portalRanges");
       url.search = searchParams.toString();
@@ -171,6 +175,7 @@ export class BaseFetchAdapter implements Adapter {
 
   public list = async (opts: ListOptions): Promise<GetResponse> => {
     const { data, layout } = opts;
+
     const resp = await this.request({
       url: `/layouts/${layout}/records`,
       query: data as Record<string, string>,

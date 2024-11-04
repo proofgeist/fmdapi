@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.1.4
+
+### Patch Changes
+
+- Fix sorting query in base fetch adapter
+
 ## 4.1.3
 
 ### Patch Changes

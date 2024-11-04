@@ -8,6 +8,27 @@ import {
 import { config, layoutClient, weirdPortalClient } from "./setup";
 import { describe, test, expect, it } from "vitest";
 
+describe("sort methods", () => {
+  test("should sort descending", async () => {
+    const resp = await layoutClient.list({
+      sort: { fieldName: "recordId", sortOrder: "descend" },
+    });
+    expect(resp.data.length).toBe(3);
+    const firstRecord = parseInt(resp.data[0].fieldData.recordId as string);
+    const secondRecord = parseInt(resp.data[1].fieldData.recordId as string);
+    expect(firstRecord).toBeGreaterThan(secondRecord);
+  });
+  test("should sort ascending by default", async () => {
+    const resp = await layoutClient.list({
+      sort: { fieldName: "recordId" },
+    });
+
+    const firstRecord = parseInt(resp.data[0].fieldData.recordId as string);
+    const secondRecord = parseInt(resp.data[1].fieldData.recordId as string);
+    expect(secondRecord).toBeGreaterThan(firstRecord);
+  });
+});
+
 describe("find methods", () => {
   const client = DataApi({
     adapter: new OttoAdapter({

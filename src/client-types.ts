@@ -140,7 +140,8 @@ export type GetParams<U extends GenericPortalData = GenericPortalData> =
 
 export type Sort<T extends FieldData = FieldData> = {
   fieldName: keyof T;
-  sortOrder: "ascend" | "descend" | string;
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  sortOrder?: "ascend" | "descend" | (string & {});
 };
 
 export type ListParams<

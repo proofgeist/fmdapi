@@ -26,6 +26,9 @@ importers:
       fs-extra:
         specifier: ^11.1.1
         version: 11.2.0
+      infinite-table:
+        specifier: link:/Users/ericluce/Documents/Code/work/test-alpaca-projects/infinite-table
+        version: link:../test-alpaca-projects/infinite-table
       ts-morph:
         specifier: ^24.0.0
         version: 24.0.0

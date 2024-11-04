@@ -1,6 +1,6 @@
 {
   "name": "@proofgeist/fmdapi",
-  "version": "4.1.3",
+  "version": "4.1.4",
   "description": "FileMaker Data API client",
   "main": "dist/index.js",
   "repository": "git@github.com:proofgeist/fm-dapi.git",
@@ -40,6 +40,7 @@
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
     "fs-extra": "^11.1.1",
+    "infinite-table": "link:/Users/ericluce/Documents/Code/work/test-alpaca-projects/infinite-table",
     "ts-morph": "^24.0.0",
     "ts-toolbelt": "^9.6.0"
   },
