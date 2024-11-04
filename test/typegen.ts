@@ -1,3 +1,4 @@
+import { OttoAPIKey } from "../src/index.js";
 import { generateTypedClients } from "../src/utils/typegen/index.js";
 import type { GenerateSchemaOptions } from "../src/utils/typegen/types.js";
 
@@ -15,6 +16,11 @@ export const config: GenerateSchemaOptions = {
   ],
   path: "./test/typegen",
   // webviewerScriptName: "webviewer",
+  envNames: {
+    auth: { apiKey: "DIFFERENT_OTTO_API_KEY" as OttoAPIKey },
+    server: "DIFFERENT_FM_SERVER",
+    db: "DIFFERENT_FM_DATABASE",
+  },
   clientSuffix: "Layout",
 };
 
