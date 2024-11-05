@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.1.5
+
+### Patch Changes
+
+- fix broken directory link
+
 ## 4.1.4
 
 ### Patch Changes
