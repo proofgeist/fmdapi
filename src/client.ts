@@ -364,6 +364,20 @@ function DataApi<
   }
 
   /**
+   * Helper method for `find`. Will return the first result or null if no results are found.
+   */
+  async function maybeFindFirst<T extends Td = Td, U extends Ud = Ud>(
+    args: Opts["layout"] extends string
+      ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout> & FetchOptions
+      : FindArgs<T, U> & IgnoreEmptyResult & WithLayout & FetchOptions,
+  ): Promise<GetResponseOne<T, U> | null> {
+    const res = await _find<T, U>(args);
+    if (zodTypes) ZGetResponse(zodTypes).parse(res);
+    if (!res.data[0]) return null;
+    return { ...res, data: res.data[0] };
+  }
+
+  /**
    * Helper method for `find` to page through all found results.
    * ⚠️ WARNING: Use with caution as this can be a slow operation with large datasets
    */
@@ -419,6 +433,7 @@ function DataApi<
     find: _find,
     findOne,
     findFirst,
+    maybeFindFirst,
     findAll,
     layoutMetadata: _layoutMetadata,
   };

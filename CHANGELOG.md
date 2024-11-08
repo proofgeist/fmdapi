@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.2.0
+
+### Minor Changes
+
+- new method: maybeFindFirst. Will return the first record if it exists, or null without erroring
+
 ## 4.1.5
 
 ### Patch Changes
