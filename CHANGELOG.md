@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.2.1
+
+### Patch Changes
+
+- update maybeFindFirst to include ignore empty result by default
+
 ## 4.2.0
 
 ### Minor Changes

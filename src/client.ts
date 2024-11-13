@@ -313,7 +313,7 @@ function DataApi<
       timeout,
     }).catch((e: unknown) => {
       if (ignoreEmptyResult && e instanceof FileMakerError && e.code === "401")
-        return { data: [] };
+        return { data: [], dataInfo: { foundCount: 0, returnedCount: 0 } };
       throw e;
     })) as GetResponse<T, U>;
 
@@ -371,7 +371,7 @@ function DataApi<
       ? FindArgs<T, U> & IgnoreEmptyResult & Partial<WithLayout> & FetchOptions
       : FindArgs<T, U> & IgnoreEmptyResult & WithLayout & FetchOptions,
   ): Promise<GetResponseOne<T, U> | null> {
-    const res = await _find<T, U>(args);
+    const res = await _find<T, U>({ ...args, ignoreEmptyResult: true });
     if (zodTypes) ZGetResponse(zodTypes).parse(res);
     if (!res.data[0]) return null;
     return { ...res, data: res.data[0] };
