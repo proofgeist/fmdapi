@@ -65,7 +65,6 @@ export class FetchAdapter extends BaseFetchAdapter {
       this.tokenStore.setToken(this.getTokenKey(), token);
     }
 
-    this.tokenStore.setToken(this.getTokenKey(), token);
     return token;
   };
 
