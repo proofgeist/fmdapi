@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.2.2
+
+### Patch Changes
+
+- 79547a1: [fix] Removed the redundant setToken call at the end of getToken method
+
 ## 4.2.1
 
 ### Patch Changes
