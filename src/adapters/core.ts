@@ -39,7 +39,7 @@ export type ContainerUploadOptions = BaseRequest & {
   data: {
     containerFieldName: string;
     repetition?: string | number;
-    file: Buffer;
+    file: Blob;
     recordId: string | number;
     modId?: number;
   };

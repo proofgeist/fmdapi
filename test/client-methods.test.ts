@@ -269,7 +269,7 @@ describe("container field methods", () => {
   it("should upload a file to a container field", async () => {
     await containerClient.containerUpload({
       containerFieldName: "myContainer",
-      file: Buffer.from("test/fixtures/test.txt"),
+      file: new Blob([Buffer.from("test/fixtures/test.txt")]),
       recordId: "1",
     });
   });
@@ -278,7 +278,7 @@ describe("container field methods", () => {
     await containerClient.containerUpload({
       containerFieldName: "repeatingContainer",
       containerFieldRepetition: 2,
-      file: Buffer.from("test/fixtures/test.txt"),
+      file: new Blob([Buffer.from("test/fixtures/test.txt")]),
       recordId: "1",
     });
   });

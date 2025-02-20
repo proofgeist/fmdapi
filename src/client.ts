@@ -77,7 +77,7 @@ function DataApi<
   type ContainerUploadArgs<T extends Td = Td> = {
     containerFieldName: keyof T;
     containerFieldRepetition?: string | number;
-    file: Buffer;
+    file: Blob;
     recordId: number | string;
     modId?: number;
     timeout?: number;

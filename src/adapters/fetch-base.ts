@@ -307,8 +307,7 @@ export class BaseFetchAdapter implements Adapter {
     let url = `/layouts/${opts.layout}/records/${opts.data.recordId}/containers/${opts.data.containerFieldName}`;
     if (opts.data.repetition) url += `/${opts.data.repetition}`;
     const formData = new FormData();
-    const blob = new Blob([opts.data.file]);
-    formData.append("upload", blob, "file");
+    formData.append("upload", opts.data.file);
 
     await this.request({
       url,
