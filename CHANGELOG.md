@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.3.0
+
+### Minor Changes
+
+- e806a30: New method for uploading container data
+
 ## 4.2.2
 
 ### Patch Changes
