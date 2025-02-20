@@ -45,7 +45,7 @@ export class OttoAdapter extends BaseFetchAdapter {
       this.baseUrl.port = (this.port ?? 3030).toString();
     } else if (this.apiKey.startsWith("dk_")) {
       // otto v4 uses default port, but with /otto prefix
-      this.baseUrl.pathname = `/otto/${this.baseUrl.pathname}`;
+      this.baseUrl.pathname = `otto/${this.baseUrl.pathname.replace(/^\/+|\/+$/g, "")}`;
     } else {
       throw new Error(
         "Invalid Otto API key format. Must start with 'KEY_' (Otto v3) or 'dk_' (OttoFMS)",

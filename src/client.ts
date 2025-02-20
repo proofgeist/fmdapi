@@ -60,6 +60,7 @@ function DataApi<
     list,
     update,
     layoutMetadata,
+    containerUpload,
     ...otherMethods
   } = options.adapter;
 
@@ -72,6 +73,14 @@ function DataApi<
   type UpdateArgs<T extends Td = Td, U extends Ud = Ud> = UpdateParams<U> & {
     fieldData: Partial<T>;
     recordId: number | string;
+  };
+  type ContainerUploadArgs<T extends Td = Td> = {
+    containerFieldName: keyof T;
+    containerFieldRepetition?: string | number;
+    file: Buffer;
+    recordId: number | string;
+    modId?: number;
+    timeout?: number;
   };
   type DeleteArgs = DeleteParams & {
     recordId: number | string;
@@ -421,6 +430,25 @@ function DataApi<
     });
   }
 
+  async function _containerUpload<T extends Td = Td>(
+    args: Opts["layout"] extends string
+      ? ContainerUploadArgs<T> & Partial<WithLayout> & FetchOptions
+      : ContainerUploadArgs<T> & WithLayout & FetchOptions,
+  ) {
+    const { layout = options.layout, ...params } = args;
+    if (layout === undefined) throw new Error("Layout is required");
+    return await containerUpload({
+      layout,
+      data: {
+        ...params,
+        containerFieldName: params.containerFieldName as string,
+        repetition: params.containerFieldRepetition,
+      },
+      fetch: params.fetch,
+      timeout: params.timeout,
+    });
+  }
+
   return {
     ...otherMethods,
     layout: options.layout as Opts["layout"],
@@ -436,6 +464,7 @@ function DataApi<
     maybeFindFirst,
     findAll,
     layoutMetadata: _layoutMetadata,
+    containerUpload: _containerUpload,
   };
 }
 

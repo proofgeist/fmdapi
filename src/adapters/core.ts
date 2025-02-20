@@ -35,6 +35,15 @@ export type UpdateOptions = BaseRequest & {
 export type DeleteOptions = BaseRequest & {
   data: DeleteParams & { recordId: number };
 };
+export type ContainerUploadOptions = BaseRequest & {
+  data: {
+    containerFieldName: string;
+    repetition?: string | number;
+    file: Buffer;
+    recordId: string | number;
+    modId?: number;
+  };
+};
 
 export type LayoutMetadataOptions = BaseRequest;
 
@@ -45,6 +54,7 @@ export interface Adapter {
   create: (opts: CreateOptions) => Promise<CreateResponse>;
   update: (opts: UpdateOptions) => Promise<UpdateResponse>;
   delete: (opts: DeleteOptions) => Promise<DeleteResponse>;
+  containerUpload: (opts: ContainerUploadOptions) => Promise<void>;
 
   layoutMetadata: (
     opts: LayoutMetadataOptions,

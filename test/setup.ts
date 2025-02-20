@@ -42,3 +42,15 @@ export const weirdPortalClient = DataApi({
   }),
   layout: "Weird Portals",
 });
+
+export const containerClient = DataApi<
+  any,
+  { myContainer: string; repeatingContainer: string }
+>({
+  adapter: new OttoAdapter({
+    auth: { apiKey: process.env.OTTO_API_KEY as OttoFMSAPIKey },
+    db: process.env.FM_DATABASE,
+    server: process.env.FM_SERVER,
+  }),
+  layout: "container",
+});

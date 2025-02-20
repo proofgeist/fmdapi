@@ -5,7 +5,12 @@ import {
   ScriptOrFolder,
   AllLayoutsMetadataResponse,
 } from "../src/client-types";
-import { config, layoutClient, weirdPortalClient } from "./setup";
+import {
+  config,
+  layoutClient,
+  weirdPortalClient,
+  containerClient,
+} from "./setup";
 import { describe, test, expect, it } from "vitest";
 
 describe("sort methods", () => {
@@ -136,7 +141,7 @@ describe("other methods", () => {
       }),
     });
 
-    expect(client.list()).rejects.toThrow();
+    await expect(client.list()).rejects.toThrow();
   });
 
   it("findOne with 2 results should fail", async () => {
@@ -148,7 +153,7 @@ describe("other methods", () => {
       }),
     });
 
-    expect(
+    await expect(
       client.findOne({
         layout: "layout",
         query: { anything: "anything" },
@@ -257,5 +262,24 @@ describe("other methods", () => {
     });
 
     expect(resp.scriptResult).toBe("result");
+  });
+});
+
+describe("container field methods", () => {
+  it("should upload a file to a container field", async () => {
+    await containerClient.containerUpload({
+      containerFieldName: "myContainer",
+      file: Buffer.from("test/fixtures/test.txt"),
+      recordId: "1",
+    });
+  });
+
+  it("should handle container field repetition", async () => {
+    await containerClient.containerUpload({
+      containerFieldName: "repeatingContainer",
+      containerFieldRepetition: 2,
+      file: Buffer.from("test/fixtures/test.txt"),
+      recordId: "1",
+    });
   });
 });

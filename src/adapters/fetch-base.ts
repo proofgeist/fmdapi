@@ -14,6 +14,7 @@ import { FileMakerError } from "../index.js";
 import type {
   Adapter,
   BaseRequest,
+  ContainerUploadOptions,
   CreateOptions,
   DeleteOptions,
   FindOptions,
@@ -57,7 +58,7 @@ export class BaseFetchAdapter implements Adapter {
 
   protected request = async (params: {
     url: string;
-    body?: object;
+    body?: object | FormData;
     query?: Record<string, string>;
     method?: string;
     retry?: boolean;
@@ -72,6 +73,7 @@ export class BaseFetchAdapter implements Adapter {
       retry = false,
       fetchOptions = {},
     } = params;
+
     const url = new URL(`${this.baseUrl}${params.url}`);
 
     if (query) {
@@ -127,15 +129,25 @@ export class BaseFetchAdapter implements Adapter {
       timeout = setTimeout(() => controller.abort(), params.timeout);
 
     const token = await this.getToken({ refresh: retry });
+
+    const headers = new Headers(fetchOptions?.headers);
+    headers.set("Authorization", `Bearer ${token}`);
+
+    // Only set Content-Type for JSON bodies
+    if (!(body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
+
     const res = await fetch(url.toString(), {
       ...fetchOptions,
       method,
-      body: body ? JSON.stringify(body) : undefined,
-      headers: {
-        ...fetchOptions?.headers,
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      body:
+        body instanceof FormData
+          ? body
+          : body
+            ? JSON.stringify(body)
+            : undefined,
+      headers,
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       signal: controller.signal,
@@ -289,6 +301,22 @@ export class BaseFetchAdapter implements Adapter {
       fetchOptions: opts?.fetch,
       timeout: opts?.timeout,
     })) as ScriptsMetadataResponse;
+  };
+
+  public containerUpload = async (opts: ContainerUploadOptions) => {
+    let url = `/layouts/${opts.layout}/records/${opts.data.recordId}/containers/${opts.data.containerFieldName}`;
+    if (opts.data.repetition) url += `/${opts.data.repetition}`;
+    const formData = new FormData();
+    const blob = new Blob([opts.data.file]);
+    formData.append("upload", blob, "file");
+
+    await this.request({
+      url,
+      method: "POST",
+      body: formData,
+      timeout: opts.timeout,
+      fetchOptions: opts.fetch,
+    });
   };
 
   /**
