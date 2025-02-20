@@ -141,7 +141,7 @@ describe("other methods", () => {
       }),
     });
 
-    expect(client.list()).rejects.toThrow();
+    await expect(client.list()).rejects.toThrow();
   });
 
   it("findOne with 2 results should fail", async () => {
@@ -153,7 +153,7 @@ describe("other methods", () => {
       }),
     });
 
-    expect(
+    await expect(
       client.findOne({
         layout: "layout",
         query: { anything: "anything" },
