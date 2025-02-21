@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.3.1
+
+### Patch Changes
+
+- dfbdcd2: Expose the getToken method for the fetch adapter
+
 ## 4.3.0
 
 ### Minor Changes
