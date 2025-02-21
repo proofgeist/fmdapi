@@ -40,7 +40,7 @@
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
     "fs-extra": "^11.3.0",
-    "ts-morph": "^24.0.0",
+    "ts-morph": "^25.0.1",
     "ts-toolbelt": "^9.6.0"
   },
   "peerDependencies": {
