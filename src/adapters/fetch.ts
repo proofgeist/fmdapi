@@ -33,7 +33,15 @@ export class FetchAdapter extends BaseFetchAdapter {
     if (this.password === "") throw new Error("Password is required");
   }
 
-  protected override getToken = async (
+  /**
+   * Gets a FileMaker Data API token for authentication.
+   *
+   * This token is **NOT** guaranteed to be valid, since it expires 15 minutes after the last use. Pass `refresh=true` to forcibly get a fresh token
+   *
+   * @param args.refresh - If true, forces getting a new token instead of using cached token
+   * @internal This method is intended for internal use, you should not need to use it in most cases.
+   */
+  public override getToken = async (
     args?: GetTokenArguments,
   ): Promise<string> => {
     const { refresh = false } = args ?? {};
