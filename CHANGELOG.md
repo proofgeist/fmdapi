@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.3.2
+
+### Patch Changes
+
+- 570610f: fix: zod validators weren't running for find requests unless "ignoreEmptyResult" was true
+
 ## 4.3.1
 
 ### Patch Changes
