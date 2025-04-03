@@ -47,7 +47,7 @@
     "zod": ">=3.21.4"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.16.4",
+    "@arethetypeswrong/cli": "^0.17.4",
     "@proofgeist/fm-webviewer-fetch": "^2.1.0",
     "@types/fs-extra": "^11.0.3",
     "@types/node": "^22.14.0",
