@@ -212,6 +212,79 @@ describe("other methods", () => {
     expect(resp.scripts[1] as ScriptOrFolder).toHaveProperty("isFolder");
   });
 
+  it("should retrieve layout metadata with only the layout parameter", async () => {
+    const client = DataApi({
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
+    });
+    const layoutName = "layout"; // Assuming "layout" is a valid layout in the test DB
+
+    // Call the method with only the required layout parameter
+    const response = await client.layoutMetadata({ layout: layoutName });
+
+    // Assertion 1: Ensure the call succeeded and returned a response object
+    expect(response).toBeDefined();
+    expect(response).toBeTypeOf("object");
+
+    // Assertion 2: Check for the presence of core metadata properties
+    expect(response).toHaveProperty("fieldMetaData");
+    expect(response).toHaveProperty("portalMetaData");
+    // valueLists is optional, check type if present
+    if (response.valueLists) {
+      expect(Array.isArray(response.valueLists)).toBe(true);
+    }
+
+    // Assertion 3: Verify the types of the core properties
+    expect(Array.isArray(response.fieldMetaData)).toBe(true);
+    expect(typeof response.portalMetaData).toBe("object");
+
+    // Assertion 4 (Optional but recommended): Check structure of metadata
+    if (response.fieldMetaData.length > 0) {
+      expect(response.fieldMetaData[0]).toHaveProperty("name");
+      expect(response.fieldMetaData[0]).toHaveProperty("type");
+    }
+  });
+
+  it("should retrieve layout metadata when layout is configured on the client", async () => {
+    const client = DataApi({
+      adapter: new OttoAdapter({
+        auth: config.auth,
+        db: config.db,
+        server: config.server,
+      }),
+      layout: "layout", // Configure layout on the client
+    });
+
+    // Call the method without the layout parameter (expecting it to use the client's layout)
+    // No arguments should be needed when layout is configured on the client.
+    const response = await client.layoutMetadata();
+
+    // Assertion 1: Ensure the call succeeded and returned a response object
+    expect(response).toBeDefined();
+    expect(response).toBeTypeOf("object");
+
+    // Assertion 2: Check for the presence of core metadata properties
+    expect(response).toHaveProperty("fieldMetaData");
+    expect(response).toHaveProperty("portalMetaData");
+    // valueLists is optional, check type if present
+    if (response.valueLists) {
+      expect(Array.isArray(response.valueLists)).toBe(true);
+    }
+
+    // Assertion 3: Verify the types of the core properties
+    expect(Array.isArray(response.fieldMetaData)).toBe(true);
+    expect(typeof response.portalMetaData).toBe("object");
+
+    // Assertion 4 (Optional but recommended): Check structure of metadata
+    if (response.fieldMetaData.length > 0) {
+      expect(response.fieldMetaData[0]).toHaveProperty("name");
+      expect(response.fieldMetaData[0]).toHaveProperty("type");
+    }
+  });
+
   it("should paginate through all records", async () => {
     const client = DataApi({
       adapter: new OttoAdapter({
