@@ -1,5 +1,11 @@
 # @proofgeist/fmdapi
 
+## 4.3.3
+
+### Patch Changes
+
+- 50895ad: Allow `layoutMetadata` to be called without arguments when layout is pre-configured on the client.
+
 ## 4.3.2
 
 ### Patch Changes
