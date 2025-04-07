@@ -419,16 +419,19 @@ function DataApi<
   }
 
   async function _layoutMetadata(
-    args: Opts["layout"] extends string
+    args?: Opts["layout"] extends string
       ? { timeout?: number } & Partial<WithLayout> & FetchOptions
       : { timeout?: number } & WithLayout & FetchOptions,
   ) {
-    const { layout, ...params } = args;
+    const { layout = options.layout, ...restArgs } = args ?? {};
+    // Explicitly define the type for params based on FetchOptions
+    const params: FetchOptions & { timeout?: number } = restArgs;
+
     if (layout === undefined) throw new Error("Layout is required");
     return await layoutMetadata({
       layout,
-      fetch: params.fetch,
-      timeout: params.timeout,
+      fetch: params.fetch, // Now should correctly resolve to undefined if not present
+      timeout: params.timeout, // Now should correctly resolve to undefined if not present
     });
   }
 
