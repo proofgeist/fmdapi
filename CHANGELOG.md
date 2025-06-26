@@ -1,5 +1,32 @@
 # @proofgeist/fmdapi
 
+## 4.4.0
+
+### Minor Changes
+
+- Add upgrade command for easy migration to @proofkit/fmdapi and @proofkit/typegen
+
+### Patch Changes
+
+- 50895ad: Allow `layoutMetadata` to be called without arguments when layout is pre-configured on the client.
+- Use latest typegen package and types
+
+## 4.4.0-beta.1
+
+### Patch Changes
+
+- Use latest typegen package and types
+
+## 4.4.0-beta.0
+
+### Minor Changes
+
+- Add upgrade command for easy migration to @proofkit/fmdapi and @proofkit/typegen
+
+### Patch Changes
+
+- 50895ad: Allow `layoutMetadata` to be called without arguments when layout is pre-configured on the client.
+
 ## 4.3.2
 
 ### Patch Changes

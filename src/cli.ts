@@ -7,6 +7,7 @@ import { config } from "dotenv";
 import { pathToFileURL, fileURLToPath } from "url";
 import type { GenerateSchemaOptions } from "./utils/typegen/types.js";
 import { generateTypedClients } from "./utils/index.js";
+import { upgradeConfig } from "./utils/ugprade.js";
 
 const defaultConfigPaths = ["./fmschema.config.mjs", "./fmschema.config.js"];
 type ConfigArgs = {
@@ -36,7 +37,7 @@ function init({ configLocation }: ConfigArgs) {
   }
 }
 
-async function runCodegen({ configLocation }: ConfigArgs) {
+async function getConfig(configLocation: string) {
   if (!fs.existsSync(configLocation)) {
     console.error(
       chalk.red(
@@ -82,6 +83,11 @@ async function runCodegen({ configLocation }: ConfigArgs) {
       ),
     );
   }
+  return config;
+}
+
+async function runCodegen({ configLocation }: ConfigArgs) {
+  const config = await getConfig(configLocation);
 
   await generateTypedClients(config).catch((err: unknown) => {
     console.error(err);
@@ -120,6 +126,19 @@ program
 
     // default command
     await runCodegen({ configLocation });
+  });
+
+program
+  .command("upgrade", { hidden: true })
+  .option("--config <filename>", "optional config file name")
+  .action(async (options) => {
+    const configPath = getConfigPath(options.config);
+    const configLocation = path.toNamespacedPath(
+      path.resolve(configPath ?? defaultConfigPaths[0] ?? ""),
+    );
+    const config = await getConfig(configLocation);
+
+    await upgradeConfig(config, configLocation);
   });
 
 program.parse();
